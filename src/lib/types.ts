@@ -136,6 +136,23 @@ export interface Setting {
   updated_at: string
 }
 
+export interface Lead {
+  id: string
+  name: string
+  email?: string
+  phone?: string
+  event_date?: string
+  event_type?: string
+  guest_count?: number
+  budget?: number
+  source: 'instagram' | 'word_of_mouth' | 'website' | 'referral' | 'other'
+  status: 'new' | 'quoted' | 'negotiating' | 'booked' | 'lost'
+  notes?: string
+  converted_event_id?: string
+  created_at: string
+  updated_at: string
+}
+
 // Dashboard KPIs
 export interface DashboardKPIs {
   totalRevenue: number

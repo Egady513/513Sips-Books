@@ -10,6 +10,7 @@ import ExpensesPage from './pages/ExpensesPage'
 import TaxPage from './pages/TaxPage'
 import BankPage from './pages/BankPage'
 import SettingsPage from './pages/SettingsPage'
+import LeadsPage from './pages/LeadsPage'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -27,6 +28,7 @@ export default function App() {
         <Routes>
           <Route element={<AppShell />}>
             <Route path="/" element={<DashboardPage />} />
+            <Route path="/leads" element={<LeadsPage />} />
             <Route path="/events" element={<EventsPage />} />
             <Route path="/ar" element={<ARPage />} />
             <Route path="/ap" element={<APPage />} />
