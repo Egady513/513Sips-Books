@@ -23,7 +23,7 @@ const queryClient = new QueryClient({
 export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
+      <BrowserRouter basename="/513Sips-Books">
         <Routes>
           <Route element={<AppShell />}>
             <Route path="/" element={<DashboardPage />} />
