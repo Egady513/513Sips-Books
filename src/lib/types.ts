@@ -8,9 +8,14 @@ export interface Event {
   event_name?: string
   event_date: string
   location?: string
+  venue_contact_name?: string
+  venue_contact_phone?: string
+  venue_address?: string
   event_type?: string
   guest_count?: number
   service_hours?: number
+  service_start_time?: string
+  service_end_time?: string
   services_description?: string
   description?: string
   total_amount: number
@@ -149,6 +154,12 @@ export interface Lead {
   status: 'new' | 'quoted' | 'negotiating' | 'booked' | 'lost'
   notes?: string
   converted_event_id?: string
+  venue_name?: string
+  venue_contact_name?: string
+  venue_contact_phone?: string
+  venue_address?: string
+  service_start_time?: string  // "HH:MM" format
+  service_end_time?: string    // "HH:MM" format
   created_at: string
   updated_at: string
 }

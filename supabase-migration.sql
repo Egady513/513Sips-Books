@@ -118,3 +118,28 @@ CREATE POLICY "Allow all" ON settings FOR ALL USING (true) WITH CHECK (true);
 -- Bucket name: receipts
 -- Public access: true
 -- Allowed file types: image/*, application/pdf
+
+-- ============================================
+-- 6. SPRINT 1: Add venue/timing fields to leads, addon_notes to quotes
+-- ============================================
+
+ALTER TABLE leads ADD COLUMN IF NOT EXISTS venue_name TEXT;
+ALTER TABLE leads ADD COLUMN IF NOT EXISTS venue_contact_name TEXT;
+ALTER TABLE leads ADD COLUMN IF NOT EXISTS venue_contact_phone TEXT;
+ALTER TABLE leads ADD COLUMN IF NOT EXISTS venue_address TEXT;
+ALTER TABLE leads ADD COLUMN IF NOT EXISTS service_start_time TEXT;
+ALTER TABLE leads ADD COLUMN IF NOT EXISTS service_end_time TEXT;
+
+ALTER TABLE quotes ADD COLUMN IF NOT EXISTS addon_notes TEXT;
+
+-- ============================================
+-- 7. SPRINT 2: Add venue/timing fields to events, converted_event_id to leads
+-- ============================================
+
+ALTER TABLE events ADD COLUMN IF NOT EXISTS venue_contact_name TEXT;
+ALTER TABLE events ADD COLUMN IF NOT EXISTS venue_contact_phone TEXT;
+ALTER TABLE events ADD COLUMN IF NOT EXISTS venue_address TEXT;
+ALTER TABLE events ADD COLUMN IF NOT EXISTS service_start_time TEXT;
+ALTER TABLE events ADD COLUMN IF NOT EXISTS service_end_time TEXT;
+
+ALTER TABLE leads ADD COLUMN IF NOT EXISTS converted_event_id UUID REFERENCES events(id) ON DELETE SET NULL;

@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 import { useDashboardKPIs, useRevenueByMonth } from '../hooks/useDashboard'
 import { StatCard, Card } from '../components/ui/Card'
@@ -73,15 +74,18 @@ export default function DashboardPage() {
         <Card>
           <h3 className="text-sm text-cream/50 uppercase tracking-wider mb-3">Quick Actions</h3>
           <div className="space-y-2">
-            <a href="/events" className="block px-4 py-2 bg-navy-lighter rounded-lg text-sm text-cream/80 hover:text-gold transition-colors">
+            <Link to="/leads" className="block px-4 py-2 bg-navy-lighter rounded-lg text-sm text-cream/80 hover:text-gold transition-colors">
+              + New Lead
+            </Link>
+            <Link to="/events" className="block px-4 py-2 bg-navy-lighter rounded-lg text-sm text-cream/80 hover:text-gold transition-colors">
               + New Event
-            </a>
-            <a href="/expenses" className="block px-4 py-2 bg-navy-lighter rounded-lg text-sm text-cream/80 hover:text-gold transition-colors">
+            </Link>
+            <Link to="/expenses" className="block px-4 py-2 bg-navy-lighter rounded-lg text-sm text-cream/80 hover:text-gold transition-colors">
               + Log Expense
-            </a>
-            <a href="/ar" className="block px-4 py-2 bg-navy-lighter rounded-lg text-sm text-cream/80 hover:text-gold transition-colors">
+            </Link>
+            <Link to="/ar" className="block px-4 py-2 bg-navy-lighter rounded-lg text-sm text-cream/80 hover:text-gold transition-colors">
               + Record Payment
-            </a>
+            </Link>
           </div>
         </Card>
       </div>

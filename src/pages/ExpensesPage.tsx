@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { useExpenses, useCreateExpense, useDeleteExpense, useMileage, useCreateMileage } from '../hooks/useExpenses'
+import { useState, useRef } from 'react'
+import { useExpenses, useCreateExpense, useDeleteExpense, useUploadReceipt, useMileage, useCreateMileage } from '../hooks/useExpenses'
 import { useEvents } from '../hooks/useEvents'
 import { Card, StatCard } from '../components/ui/Card'
 import Button from '../components/ui/Button'
@@ -7,23 +7,41 @@ import Modal from '../components/ui/Modal'
 import { formatCurrency, formatDate, getCurrentYear } from '../utils/formatters'
 import { EXPENSE_CATEGORIES, MILEAGE_RATES } from '../lib/constants'
 import { getScheduleCLine } from '../utils/taxCalc'
-import { Plus, Receipt, Car, Trash2 } from 'lucide-react'
+import { Plus, Receipt, Car, Trash2, Paperclip, ExternalLink } from 'lucide-react'
 
 export default function ExpensesPage() {
   const [year] = useState(getCurrentYear())
   const [tab, setTab] = useState<'expenses' | 'mileage'>('expenses')
+  const [expenseFilter, setExpenseFilter] = useState<'all' | 'event' | 'general'>('all')
   const [showExpenseForm, setShowExpenseForm] = useState(false)
   const [showMileageForm, setShowMileageForm] = useState(false)
+  const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({})
   const { data: expenses, isLoading: loadingExpenses } = useExpenses(year)
   const { data: mileage, isLoading: loadingMileage } = useMileage(year)
   const { data: events } = useEvents()
   const createExpense = useCreateExpense()
   const deleteExpense = useDeleteExpense()
+  const uploadReceipt = useUploadReceipt()
   const createMileage = useCreateMileage()
 
   const totalExpenses = (expenses || []).reduce((s, e) => s + Number(e.amount), 0)
   const totalMiles = (mileage || []).reduce((s, m) => s + Number(m.miles), 0)
   const totalMileageDeduction = (mileage || []).reduce((s, m) => s + Number(m.deduction_amount), 0)
+
+  // Sprint 5: filter expenses
+  const filteredExpenses = (expenses || []).filter(exp => {
+    if (expenseFilter === 'event') return !!exp.event_id
+    if (expenseFilter === 'general') return !exp.event_id
+    return true
+  })
+
+  async function handleReceiptUpload(expenseId: string, file: File) {
+    try {
+      await uploadReceipt.mutateAsync({ file, expenseId })
+    } catch {
+      // toast handled by mutation or silently fail
+    }
+  }
 
   const handleCreateExpense = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -82,7 +100,7 @@ export default function ExpensesPage() {
       </div>
 
       {/* Tab toggle */}
-      <div className="flex gap-2">
+      <div className="flex gap-2 flex-wrap">
         <button onClick={() => setTab('expenses')}
           className={`px-4 py-2 rounded-lg text-sm font-medium ${tab === 'expenses' ? 'bg-gold text-navy' : 'bg-navy-lighter text-cream/60'}`}>
           <Receipt size={14} className="inline mr-1" /> Expenses
@@ -93,15 +111,34 @@ export default function ExpensesPage() {
         </button>
       </div>
 
+      {/* Sprint 5: Expense type filter (only shown on expenses tab) */}
+      {tab === 'expenses' && (
+        <div className="flex gap-2">
+          {(['all', 'event', 'general'] as const).map(f => (
+            <button
+              key={f}
+              onClick={() => setExpenseFilter(f)}
+              className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
+                expenseFilter === f
+                  ? 'bg-gold/20 text-gold border border-gold/30'
+                  : 'bg-white/5 text-cream/50 hover:text-cream border border-transparent'
+              }`}
+            >
+              {f === 'all' ? 'All' : f === 'event' ? 'Event Expenses' : 'General Expenses'}
+            </button>
+          ))}
+        </div>
+      )}
+
       {/* Expenses Tab */}
       {tab === 'expenses' && (
         loadingExpenses ? (
           <div className="text-cream/50 text-center py-12">Loading...</div>
-        ) : !expenses?.length ? (
+        ) : !filteredExpenses.length ? (
           <Card className="text-center py-12 text-cream/50">No expenses logged yet</Card>
         ) : (
           <div className="space-y-3">
-            {expenses.map(exp => (
+            {filteredExpenses.map(exp => (
               <Card key={exp.id} className="hover:border-gold/40 transition-colors">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div className="flex-1">
@@ -109,6 +146,9 @@ export default function ExpensesPage() {
                       <span className="font-semibold text-cream">{exp.description}</span>
                       {exp.is_tax_deductible && (
                         <span className="text-xs px-2 py-0.5 bg-success/20 text-success rounded">Tax Deductible</span>
+                      )}
+                      {exp.event_id && (
+                        <span className="text-xs px-2 py-0.5 bg-blue-500/20 text-blue-300 rounded">Event</span>
                       )}
                     </div>
                     <div className="text-sm text-cream/50">
@@ -118,8 +158,40 @@ export default function ExpensesPage() {
                       {exp.schedule_c_line && <span className="text-cream/30"> (Line {exp.schedule_c_line})</span>}
                     </div>
                   </div>
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2">
                     <span className="text-lg font-bold text-danger">{formatCurrency(exp.amount)}</span>
+                    {/* Sprint 5: Receipt upload */}
+                    {exp.receipt_url ? (
+                      <a
+                        href={exp.receipt_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-gold/60 hover:text-gold transition-colors p-1"
+                        title="View receipt"
+                      >
+                        <ExternalLink size={14} />
+                      </a>
+                    ) : (
+                      <>
+                        <input
+                          type="file"
+                          accept="image/*,application/pdf"
+                          className="hidden"
+                          ref={el => { fileInputRefs.current[exp.id] = el }}
+                          onChange={e => {
+                            const file = e.target.files?.[0]
+                            if (file) handleReceiptUpload(exp.id, file)
+                          }}
+                        />
+                        <button
+                          onClick={() => fileInputRefs.current[exp.id]?.click()}
+                          className="text-cream/30 hover:text-gold transition-colors p-1"
+                          title="Upload receipt"
+                        >
+                          <Paperclip size={14} />
+                        </button>
+                      </>
+                    )}
                     <Button size="sm" variant="ghost" onClick={() => deleteExpense.mutate(exp.id)}>
                       <Trash2 size={14} />
                     </Button>

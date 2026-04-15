@@ -53,6 +53,26 @@ export function useDeleteExpense() {
   })
 }
 
+export function useUpdateExpense() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ id, ...updates }: Partial<Expense> & { id: string }) => {
+      const { data, error } = await supabase
+        .from('expenses')
+        .update(updates)
+        .eq('id', id)
+        .select()
+        .single()
+      if (error) throw error
+      return data
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['expenses'] })
+      qc.invalidateQueries({ queryKey: ['dashboard'] })
+    },
+  })
+}
+
 export function useUploadReceipt() {
   return useMutation({
     mutationFn: async ({ file, expenseId }: { file: File; expenseId: string }) => {
