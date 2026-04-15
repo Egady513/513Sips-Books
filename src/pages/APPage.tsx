@@ -13,8 +13,9 @@ import { Plus, DollarSign, UserPlus } from 'lucide-react'
 export default function APPage() {
   const [filter, setFilter] = useState('all')
   const [showForm, setShowForm] = useState(false)
+  const [reimbMode, setReimbMode] = useState(false)
   const [showVendorForm, setShowVendorForm] = useState(false)
-  const { data: bills, isLoading } = useBills(filter)
+  const { data: bills, isLoading } = useBills(filter === 'owner_draw' ? undefined : filter)
   const { data: vendors } = useVendors()
   const { data: events } = useEvents()
   const createBill = useCreateBill()
@@ -24,6 +25,12 @@ export default function APPage() {
   const pending = bills?.filter(b => b.status === 'pending') || []
   const totalOutstanding = pending.reduce((s, b) => s + Number(b.amount), 0)
   const totalPaid = (bills?.filter(b => b.status === 'paid') || []).reduce((s, b) => s + Number(b.amount), 0)
+  const owedToYou = pending.filter(b => b.is_owner_draw).reduce((s, b) => s + Number(b.amount), 0)
+
+  // client-side filter for owner draw tab
+  const displayedBills = filter === 'owner_draw'
+    ? (bills?.filter(b => b.is_owner_draw) || [])
+    : (bills || [])
 
   const handleCreateBill = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -59,38 +66,48 @@ export default function APPage() {
     <div className="space-y-6 max-w-6xl">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <h1 className="text-2xl font-bold text-gold">Accounts Payable</h1>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
           <Button variant="secondary" onClick={() => setShowVendorForm(true)}>
             <UserPlus size={16} /> Add Vendor
           </Button>
-          <Button onClick={() => setShowForm(true)}>
+          <Button variant="secondary" onClick={() => { setReimbMode(true); setShowForm(true) }}>
+            💰 Log Reimbursement
+          </Button>
+          <Button onClick={() => { setReimbMode(false); setShowForm(true) }}>
             <Plus size={16} /> New Bill
           </Button>
         </div>
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard label="Outstanding" value={formatCurrency(totalOutstanding)} color="text-danger" />
         <StatCard label="Paid (YTD)" value={formatCurrency(totalPaid)} color="text-success" />
         <StatCard label="Pending Count" value={String(pending.length)} color="text-warning" />
+        <StatCard label="Owed to You" value={formatCurrency(owedToYou)} color="text-gold" />
       </div>
 
       <div className="flex flex-wrap gap-2">
-        {['all', 'pending', 'paid', 'overdue'].map(f => (
-          <button key={f} onClick={() => setFilter(f)}
-            className={`px-3 py-1.5 rounded-lg text-sm capitalize ${filter === f ? 'bg-gold text-navy font-semibold' : 'bg-navy-lighter text-cream/60'}`}>
-            {f}
+        {[
+          { value: 'all', label: 'All' },
+          { value: 'pending', label: 'Pending' },
+          { value: 'paid', label: 'Paid' },
+          { value: 'overdue', label: 'Overdue' },
+          { value: 'owner_draw', label: '💰 Reimbursements' },
+        ].map(f => (
+          <button key={f.value} onClick={() => setFilter(f.value)}
+            className={`px-3 py-1.5 rounded-lg text-sm ${filter === f.value ? 'bg-gold text-navy font-semibold' : 'bg-navy-lighter text-cream/60'}`}>
+            {f.label}
           </button>
         ))}
       </div>
 
       {isLoading ? (
         <div className="text-cream/50 text-center py-12">Loading...</div>
-      ) : !bills?.length ? (
+      ) : !displayedBills.length ? (
         <Card className="text-center py-12 text-cream/50">No bills found</Card>
       ) : (
         <div className="space-y-3">
-          {bills.map(bill => {
+          {displayedBills.map(bill => {
             const days = daysUntil(bill.due_date)
             const isOverdue = days < 0 && bill.status === 'pending'
             return (
@@ -135,13 +152,20 @@ export default function APPage() {
         </div>
       )}
 
-      {/* New Bill Modal */}
-      <Modal open={showForm} onClose={() => setShowForm(false)} title="New Bill" wide>
+      {/* New Bill / Reimbursement Modal */}
+      <Modal open={showForm} onClose={() => { setShowForm(false); setReimbMode(false) }}
+        title={reimbMode ? '💰 Log Reimbursement (Owed to You)' : 'New Bill'} wide>
+        {reimbMode && (
+          <p className="text-xs text-gold/70 bg-gold/10 border border-gold/20 rounded-lg px-3 py-2 mb-4">
+            Log a business expense you paid out of pocket. It will appear in "Reimbursements" and count as owed to you until you pay yourself back.
+          </p>
+        )}
         <form onSubmit={handleCreateBill} className="space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-xs text-cream/50 mb-1">Vendor</label>
               <select name="vendor_id"
+                defaultValue={reimbMode ? (vendors?.find(v => v.name.toLowerCase().includes('eddie') || v.name.toLowerCase().includes('gady'))?.id || '') : ''}
                 className="w-full bg-navy-lighter border border-gold-dim rounded-lg px-3 py-2 text-cream text-sm">
                 <option value="">Select vendor...</option>
                 {vendors?.map(v => <option key={v.id} value={v.id}>{v.name}</option>)}
@@ -179,8 +203,8 @@ export default function APPage() {
             </div>
           </div>
           <label className="flex items-center gap-2 text-sm text-cream/60">
-            <input type="checkbox" name="is_owner_draw" className="rounded" />
-            This is an owner draw / personal payment
+            <input type="checkbox" name="is_owner_draw" className="rounded" defaultChecked={reimbMode} />
+            {reimbMode ? 'This is a reimbursement (paid out of pocket)' : 'This is an owner draw / personal payment'}
           </label>
           <div className="flex gap-3 pt-2">
             <Button type="submit" className="flex-1">Add Bill</Button>
