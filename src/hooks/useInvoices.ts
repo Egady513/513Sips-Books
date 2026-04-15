@@ -9,7 +9,7 @@ export function useAREntries(statusFilter?: string) {
       let query = supabase
         .from('ar_entries')
         .select('*, events(*)')
-        .order('created_at', { ascending: false })
+        .order('due_date', { ascending: true })  // Most urgent first
 
       if (statusFilter && statusFilter !== 'all') {
         query = query.eq('status', statusFilter)
