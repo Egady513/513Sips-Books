@@ -54,6 +54,20 @@ export function useMarkBillPaid() {
   })
 }
 
+export function useDeleteBill() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from('ap_entries').delete().eq('id', id)
+      if (error) throw error
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['ap_entries'] })
+      qc.invalidateQueries({ queryKey: ['dashboard'] })
+    },
+  })
+}
+
 export function useVendors() {
   return useQuery({
     queryKey: ['vendors'],

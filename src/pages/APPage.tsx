@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useBills, useCreateBill, useMarkBillPaid, useVendors, useCreateVendor } from '../hooks/useBills'
+import { useBills, useCreateBill, useMarkBillPaid, useDeleteBill, useVendors, useCreateVendor } from '../hooks/useBills'
 import { useEvents } from '../hooks/useEvents'
 import { Card, StatCard } from '../components/ui/Card'
 import Button from '../components/ui/Button'
@@ -8,7 +8,7 @@ import Modal from '../components/ui/Modal'
 import { formatCurrency, formatDate, daysUntil } from '../utils/formatters'
 import { EXPENSE_CATEGORIES } from '../lib/constants'
 import { getScheduleCLine } from '../utils/taxCalc'
-import { Plus, DollarSign, UserPlus } from 'lucide-react'
+import { Plus, DollarSign, UserPlus, Trash2 } from 'lucide-react'
 
 export default function APPage() {
   const [filter, setFilter] = useState('all')
@@ -20,6 +20,7 @@ export default function APPage() {
   const { data: events } = useEvents()
   const createBill = useCreateBill()
   const markPaid = useMarkBillPaid()
+  const deleteBill = useDeleteBill()
   const createVendor = useCreateVendor()
 
   const pending = bills?.filter(b => b.status === 'pending') || []
@@ -144,6 +145,13 @@ export default function APPage() {
                         <DollarSign size={14} /> Mark Paid
                       </Button>
                     )}
+                    <button
+                      onClick={() => { if (confirm('Delete this bill?')) deleteBill.mutate(bill.id) }}
+                      className="text-cream/30 hover:text-red-400 transition-colors p-1.5 rounded"
+                      title="Delete bill"
+                    >
+                      <Trash2 size={14} />
+                    </button>
                   </div>
                 </div>
               </Card>
