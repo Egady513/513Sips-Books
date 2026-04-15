@@ -73,6 +73,10 @@ export default function LeadsPage() {
   const [contractValidationLead, setContractValidationLead] = useState<Lead | null>(null)
   const [missingFields, setMissingFields] = useState<string[]>([])
 
+  // Quote quick-edit
+  const [editingQuoteId, setEditingQuoteId] = useState<string | null>(null)
+  const [quoteEditForm, setQuoteEditForm] = useState({ total: '', deposit: '', balance: '', guest_count: '', hours: '' })
+
   const { data: leads = [], isLoading } = useLeads(filter === 'all' ? undefined : filter)
   const createLead = useCreateLead()
   const updateLead = useUpdateLead()
@@ -356,6 +360,41 @@ export default function LeadsPage() {
     window.open(url, '_blank')
   }
 
+  // Quote quick-edit handlers
+  function openQuoteEdit(quote: Quote) {
+    setEditingQuoteId(quote.id)
+    setQuoteEditForm({
+      total: String(quote.total),
+      deposit: String(quote.deposit),
+      balance: String(quote.balance),
+      guest_count: String(quote.guest_count ?? ''),
+      hours: String(quote.hours ?? ''),
+    })
+  }
+
+  async function handleSaveQuoteEdit(quoteId: string) {
+    const total = parseFloat(quoteEditForm.total) || 0
+    const deposit = parseFloat(quoteEditForm.deposit) || 0
+    const balance = parseFloat(quoteEditForm.balance) || 0
+    try {
+      await updateQuote.mutateAsync({
+        id: quoteId,
+        total,
+        deposit,
+        balance,
+        guest_count: parseInt(quoteEditForm.guest_count) || undefined,
+        hours: parseFloat(quoteEditForm.hours) || undefined,
+      })
+      // Update lead budget to match new quote total
+      const lead = leads.find(l => recentQuotes.find(q => q.id === quoteId && q.lead_id === l.id))
+      if (lead) await updateLead.mutateAsync({ id: lead.id, budget: total })
+      toast.success('Quote updated')
+      setEditingQuoteId(null)
+    } catch {
+      toast.error('Failed to update quote')
+    }
+  }
+
   // Sprint 3: save addon notes edit
   async function handleSaveAddonNotes(quoteId: string) {
     try {
@@ -503,22 +542,93 @@ export default function LeadsPage() {
 
                 {/* Linked quote summary strip */}
                 {linkedQuote && (
-                  <div className="mb-3 rounded-md bg-gold/5 border border-gold/15 px-3 py-2 flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-3 text-xs">
-                      <span className="text-gold font-semibold">{formatCurrency(linkedQuote.total)}</span>
-                      <span className="text-cream/40">·</span>
-                      <span className="text-cream/50">Dep: {formatCurrency(linkedQuote.deposit)}</span>
-                      <span className="text-cream/40">·</span>
-                      <span className="text-cream/50">Bal: {formatCurrency(linkedQuote.balance)}</span>
-                    </div>
-                    <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${
-                      linkedQuote.status === 'accepted' ? 'bg-green-500/20 text-green-300' :
-                      linkedQuote.status === 'sent'     ? 'bg-blue-500/20 text-blue-300' :
-                      linkedQuote.status === 'declined' ? 'bg-red-500/20 text-red-400' :
-                                                          'bg-white/5 text-cream/40'
-                    }`}>
-                      {linkedQuote.status}
-                    </span>
+                  <div className="mb-3 rounded-md bg-gold/5 border border-gold/15 px-3 py-2 space-y-2">
+                    {editingQuoteId === linkedQuote.id ? (
+                      <div className="space-y-2">
+                        <div className="grid grid-cols-3 gap-2">
+                          {[
+                            { key: 'total', label: 'Total' },
+                            { key: 'deposit', label: 'Deposit' },
+                            { key: 'balance', label: 'Balance' },
+                          ].map(({ key, label }) => (
+                            <div key={key}>
+                              <label className="text-xs text-cream/40 block mb-0.5">{label}</label>
+                              <input
+                                type="number"
+                                step="0.01"
+                                className="w-full text-xs bg-navy-dark border border-white/10 rounded px-2 py-1 text-cream focus:outline-none focus:border-gold/50"
+                                value={quoteEditForm[key as keyof typeof quoteEditForm]}
+                                onChange={e => setQuoteEditForm(f => ({ ...f, [key]: e.target.value }))}
+                              />
+                            </div>
+                          ))}
+                        </div>
+                        <div className="grid grid-cols-2 gap-2">
+                          {[
+                            { key: 'guest_count', label: 'Guests' },
+                            { key: 'hours', label: 'Hours' },
+                          ].map(({ key, label }) => (
+                            <div key={key}>
+                              <label className="text-xs text-cream/40 block mb-0.5">{label}</label>
+                              <input
+                                type="number"
+                                className="w-full text-xs bg-navy-dark border border-white/10 rounded px-2 py-1 text-cream focus:outline-none focus:border-gold/50"
+                                value={quoteEditForm[key as keyof typeof quoteEditForm]}
+                                onChange={e => setQuoteEditForm(f => ({ ...f, [key]: e.target.value }))}
+                              />
+                            </div>
+                          ))}
+                        </div>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => handleSaveQuoteEdit(linkedQuote.id)}
+                            className="text-xs px-3 py-1 bg-gold/20 text-gold rounded hover:bg-gold/30 transition-colors"
+                          >Save</button>
+                          <button
+                            onClick={() => setEditingQuoteId(null)}
+                            className="text-xs px-3 py-1 bg-white/5 text-cream/50 rounded hover:bg-white/10 transition-colors"
+                          >Cancel</button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-3 text-xs">
+                            <span className="text-gold font-semibold">{formatCurrency(linkedQuote.total)}</span>
+                            <span className="text-cream/40">·</span>
+                            <span className="text-cream/50">Dep: {formatCurrency(linkedQuote.deposit)}</span>
+                            <span className="text-cream/40">·</span>
+                            <span className="text-cream/50">Bal: {formatCurrency(linkedQuote.balance)}</span>
+                          </div>
+                          {(linkedQuote.guest_count || linkedQuote.hours || linkedQuote.bartenders) && (
+                            <div className="text-xs text-cream/35 mt-0.5">
+                              {[
+                                linkedQuote.guest_count && `${linkedQuote.guest_count} guests`,
+                                linkedQuote.hours && `${linkedQuote.hours}h`,
+                                linkedQuote.bartenders && `${linkedQuote.bartenders} bar staff`,
+                              ].filter(Boolean).join(' · ')}
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${
+                            linkedQuote.status === 'accepted' ? 'bg-green-500/20 text-green-300' :
+                            linkedQuote.status === 'sent'     ? 'bg-blue-500/20 text-blue-300' :
+                            linkedQuote.status === 'declined' ? 'bg-red-500/20 text-red-400' :
+                                                                'bg-white/5 text-cream/40'
+                          }`}>
+                            {linkedQuote.status}
+                          </span>
+                          <button
+                            onClick={() => openQuoteEdit(linkedQuote)}
+                            className="text-cream/25 hover:text-gold transition-colors"
+                            title="Edit quote numbers"
+                          >
+                            <Pencil size={11} />
+                          </button>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
 
