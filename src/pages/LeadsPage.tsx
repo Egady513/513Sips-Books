@@ -53,6 +53,7 @@ const emptyForm = {
 export default function LeadsPage() {
   const navigate = useNavigate()
   const [filter, setFilter] = useState('all')
+  const [search, setSearch] = useState('')
   const [showForm, setShowForm] = useState(false)
   const [editLead, setEditLead] = useState<Lead | null>(null)
   const [form, setForm] = useState(emptyForm)
@@ -455,21 +456,30 @@ export default function LeadsPage() {
         <StatCard label="Pipeline Value" value={formatCurrency(stats.pipeline)} color="text-warning" />
       </div>
 
-      {/* Filter tabs */}
-      <div className="flex gap-2 flex-wrap">
-        {FILTER_TABS.map(tab => (
-          <button
-            key={tab.value}
-            onClick={() => setFilter(tab.value)}
-            className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
-              filter === tab.value
-                ? 'bg-gold text-navy-dark'
-                : 'bg-white/5 text-cream/60 hover:text-cream'
-            }`}
-          >
-            {tab.label}
-          </button>
-        ))}
+      {/* Search + Filter */}
+      <div className="flex flex-col sm:flex-row gap-3">
+        <input
+          type="text"
+          placeholder="Search by name, email, venue..."
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          className="flex-1 bg-navy-lighter border border-gold-dim rounded-lg px-3 py-1.5 text-cream text-sm placeholder:text-cream/30 focus:outline-none focus:border-gold/50"
+        />
+        <div className="flex gap-2 flex-wrap">
+          {FILTER_TABS.map(tab => (
+            <button
+              key={tab.value}
+              onClick={() => setFilter(tab.value)}
+              className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                filter === tab.value
+                  ? 'bg-gold text-navy-dark'
+                  : 'bg-white/5 text-cream/60 hover:text-cream'
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Lead Cards */}
@@ -485,7 +495,18 @@ export default function LeadsPage() {
         </Card>
       ) : (
         <div className="grid gap-4 md:grid-cols-2">
-          {leads.map(lead => {
+          {leads.filter(lead => {
+            if (!search.trim()) return true
+            const q = search.toLowerCase()
+            return (
+              lead.name.toLowerCase().includes(q) ||
+              lead.email?.toLowerCase().includes(q) ||
+              lead.phone?.includes(q) ||
+              lead.venue_name?.toLowerCase().includes(q) ||
+              lead.notes?.toLowerCase().includes(q) ||
+              lead.event_type?.toLowerCase().includes(q)
+            )
+          }).map(lead => {
             const linkedQuote = recentQuotes.find(q => q.lead_id === lead.id)
             return (
               <Card key={lead.id} className="hover:border-gold/30 transition-colors">
