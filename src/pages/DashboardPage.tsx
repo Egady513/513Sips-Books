@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 import { useDashboardKPIs, useRevenueByMonth } from '../hooks/useDashboard'
+import { useLeads } from '../hooks/useLeads'
 import { StatCard, Card } from '../components/ui/Card'
 import { formatCurrency, getCurrentYear } from '../utils/formatters'
 
@@ -10,6 +11,13 @@ export default function DashboardPage() {
   const [year] = useState(getCurrentYear())
   const { data: kpis, isLoading } = useDashboardKPIs(year)
   const { data: revenueData } = useRevenueByMonth(year)
+  const { data: allLeads = [] } = useLeads()
+
+  const leadStats = {
+    newCount:      allLeads.filter(l => l.status === 'new').length,
+    quotedCount:   allLeads.filter(l => l.status === 'quoted' || l.status === 'negotiating').length,
+    pipeline:      allLeads.filter(l => l.status !== 'lost' && l.status !== 'booked' && l.budget).reduce((s, l) => s + (l.budget || 0), 0),
+  }
 
   if (isLoading) return <div className="text-cream/50 text-center py-20">Loading dashboard...</div>
 
@@ -49,8 +57,8 @@ export default function DashboardPage() {
         </div>
       </Card>
 
-      {/* Quick Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {/* Bottom cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card>
           <h3 className="text-sm text-cream/50 uppercase tracking-wider mb-3">P&L Summary</h3>
           <div className="space-y-2">
@@ -69,6 +77,27 @@ export default function DashboardPage() {
               </span>
             </div>
           </div>
+        </Card>
+
+        <Card>
+          <h3 className="text-sm text-cream/50 uppercase tracking-wider mb-3">Lead Pipeline</h3>
+          <div className="space-y-2">
+            <div className="flex justify-between">
+              <span className="text-cream/60">New Inquiries</span>
+              <span className="text-blue-300 font-medium">{leadStats.newCount}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-cream/60">Quoted / Negotiating</span>
+              <span className="text-yellow-300 font-medium">{leadStats.quotedCount}</span>
+            </div>
+            <div className="border-t border-gold-dim pt-2 flex justify-between">
+              <span className="text-cream font-medium">Pipeline Value</span>
+              <span className="text-gold font-bold">{formatCurrency(leadStats.pipeline)}</span>
+            </div>
+          </div>
+          <Link to="/leads" className="block mt-3 text-xs text-gold/60 hover:text-gold transition-colors">
+            View all leads →
+          </Link>
         </Card>
 
         <Card>

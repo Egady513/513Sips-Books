@@ -243,6 +243,11 @@ export default function LeadsPage() {
         converted_event_id: newEvent.id,
       })
 
+      // P2: mark linked quote as accepted
+      if (quote) {
+        try { await updateQuote.mutateAsync({ id: quote.id, status: 'accepted' }) } catch { /* non-blocking */ }
+      }
+
       toast.success(`Booked! Event created for ${lead.name}`)
       setShowBookConfirm(false)
       setBookingLead(null)
@@ -277,7 +282,7 @@ export default function LeadsPage() {
     toast.success('Lead deleted')
   }
 
-  function handleGenerateContract(lead: Lead) {
+  async function handleGenerateContract(lead: Lead) {
     const linkedQuote = recentQuotes.find(q => q.lead_id === lead.id)
 
     // Sprint 4: validate required fields
@@ -340,12 +345,14 @@ export default function LeadsPage() {
       breakdown: quote.breakdown,
       promoCode: quote.promo_code,
     }))
-    window.open('https://egady513.github.io/513sips-tools/tools/contract.html', '_blank')
+    // P2: auto-advance quote status to 'sent'
+    try { await updateQuote.mutateAsync({ id: quote.id, status: 'sent' }) } catch { /* non-blocking */ }
+    window.open('https://www.513sips.com/tools/contract.html', '_blank')
   }
 
   // Sprint 2: open calculator pre-filled for a lead
   function handleCreateQuote(lead: Lead) {
-    const url = `https://egady513.github.io/513sips-tools/tools/calculator.html?lead_id=${lead.id}&name=${encodeURIComponent(lead.name)}&guests=${lead.guest_count || ''}&date=${lead.event_date || ''}`
+    const url = `https://www.513sips.com/tools/calculator.html?lead_id=${lead.id}&name=${encodeURIComponent(lead.name)}&guests=${lead.guest_count || ''}&date=${lead.event_date || ''}`
     window.open(url, '_blank')
   }
 
@@ -374,7 +381,7 @@ export default function LeadsPage() {
       addonNotes: quote.addon_notes,
     }
     localStorage.setItem('513sips_quote', JSON.stringify(quoteForContract))
-    window.open('https://egady513.github.io/513sips-tools/tools/contract.html', '_blank')
+    window.open('https://www.513sips.com/tools/contract.html', '_blank')
   }
 
   const set = (k: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
@@ -492,6 +499,27 @@ export default function LeadsPage() {
 
                 {lead.notes && (
                   <p className="text-xs text-cream/50 italic mb-3 line-clamp-2">"{lead.notes}"</p>
+                )}
+
+                {/* Linked quote summary strip */}
+                {linkedQuote && (
+                  <div className="mb-3 rounded-md bg-gold/5 border border-gold/15 px-3 py-2 flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-3 text-xs">
+                      <span className="text-gold font-semibold">{formatCurrency(linkedQuote.total)}</span>
+                      <span className="text-cream/40">·</span>
+                      <span className="text-cream/50">Dep: {formatCurrency(linkedQuote.deposit)}</span>
+                      <span className="text-cream/40">·</span>
+                      <span className="text-cream/50">Bal: {formatCurrency(linkedQuote.balance)}</span>
+                    </div>
+                    <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${
+                      linkedQuote.status === 'accepted' ? 'bg-green-500/20 text-green-300' :
+                      linkedQuote.status === 'sent'     ? 'bg-blue-500/20 text-blue-300' :
+                      linkedQuote.status === 'declined' ? 'bg-red-500/20 text-red-400' :
+                                                          'bg-white/5 text-cream/40'
+                    }`}>
+                      {linkedQuote.status}
+                    </span>
+                  </div>
                 )}
 
                 {/* Status change + actions */}
@@ -622,7 +650,7 @@ export default function LeadsPage() {
             <div className="text-center py-8">
               <p className="text-cream/50 mb-4">No unlinked quotes found.</p>
               <a
-                href="https://egady513.github.io/513sips-tools/tools/calculator.html"
+                href="https://www.513sips.com/tools/calculator.html"
                 target="_blank"
                 rel="noopener noreferrer"
               >
@@ -730,7 +758,7 @@ export default function LeadsPage() {
           )}
           <div className="pt-2 border-t border-white/5 text-center">
             <a
-              href="https://egady513.github.io/513sips-tools/tools/calculator.html"
+              href="https://www.513sips.com/tools/calculator.html"
               target="_blank"
               rel="noopener noreferrer"
               className="text-xs text-gold/60 hover:text-gold flex items-center justify-center gap-1"
