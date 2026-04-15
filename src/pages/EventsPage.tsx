@@ -1,13 +1,14 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { useEvents, useCreateEvent, useUpdateEvent, useUploadContract } from '../hooks/useEvents'
 import { useCreateAREntry } from '../hooks/useInvoices'
+import { useExpenses } from '../hooks/useExpenses'
 import { Card } from '../components/ui/Card'
 import Button from '../components/ui/Button'
 import StatusBadge from '../components/ui/StatusBadge'
 import Modal from '../components/ui/Modal'
 import { formatCurrency, formatDate } from '../utils/formatters'
 import { EVENT_STATUSES, EVENT_TYPES } from '../lib/constants'
-import { Plus, Upload, FileText } from 'lucide-react'
+import { Plus, Upload, FileText, TrendingUp } from 'lucide-react'
 import type { Event } from '../lib/types'
 
 export default function EventsPage() {
@@ -15,10 +16,22 @@ export default function EventsPage() {
   const [showForm, setShowForm] = useState(false)
   const [editEvent, setEditEvent] = useState<Event | null>(null)
   const { data: events, isLoading } = useEvents(filter)
+  const { data: allExpenses } = useExpenses()
   const createEvent = useCreateEvent()
   const updateEvent = useUpdateEvent()
   const uploadContract = useUploadContract()
   const createAREntry = useCreateAREntry()
+
+  // Build event_id → total expenses map
+  const expensesByEvent = useMemo(() => {
+    const map: Record<string, number> = {}
+    for (const exp of allExpenses || []) {
+      if (exp.event_id) {
+        map[exp.event_id] = (map[exp.event_id] || 0) + Number(exp.amount)
+      }
+    }
+    return map
+  }, [allExpenses])
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -125,6 +138,8 @@ export default function EventsPage() {
           {events.map(event => {
             const depositPaid = event.ar_entries?.some(e => e.entry_type === 'deposit' && e.status === 'received')
             const balancePaid = event.ar_entries?.some(e => e.entry_type === 'balance' && e.status === 'received')
+            const eventCosts = expensesByEvent[event.id] || 0
+            const eventNet = event.total_amount - eventCosts
 
             return (
               <Card key={event.id} className="hover:border-gold/40 transition-colors">
@@ -142,9 +157,16 @@ export default function EventsPage() {
                       {event.location && <span>{event.location}</span>}
                       {event.event_type && <span>{event.event_type}</span>}
                     </div>
-                    <div className="text-xs text-cream/40 mt-1 flex gap-4">
+                    <div className="text-xs text-cream/40 mt-1 flex flex-wrap gap-x-4">
                       <span>Deposit: {depositPaid ? '✓' : '○'} {formatCurrency(event.deposit_amount)}</span>
                       <span>Balance: {balancePaid ? '✓' : '○'} {formatCurrency(event.balance_amount)}</span>
+                      {eventCosts > 0 && (
+                        <span className="flex items-center gap-1">
+                          <TrendingUp size={11} className={eventNet >= 0 ? 'text-success' : 'text-danger'} />
+                          <span>Costs: {formatCurrency(eventCosts)} · Net: </span>
+                          <span className={eventNet >= 0 ? 'text-success' : 'text-danger'}>{formatCurrency(eventNet)}</span>
+                        </span>
+                      )}
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
