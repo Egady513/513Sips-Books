@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react'
-import { useExpenses, useCreateExpense, useDeleteExpense, useUploadReceipt, useMileage, useCreateMileage } from '../hooks/useExpenses'
+import { useExpenses, useCreateExpense, useUpdateExpense, useDeleteExpense, useUploadReceipt, useMileage, useCreateMileage, useDeleteMileage } from '../hooks/useExpenses'
 import { useEvents } from '../hooks/useEvents'
 import { Card, StatCard } from '../components/ui/Card'
 import Button from '../components/ui/Button'
@@ -7,22 +7,27 @@ import Modal from '../components/ui/Modal'
 import { formatCurrency, formatDate, getCurrentYear } from '../utils/formatters'
 import { EXPENSE_CATEGORIES, MILEAGE_RATES } from '../lib/constants'
 import { getScheduleCLine } from '../utils/taxCalc'
-import { Plus, Receipt, Car, Trash2, Paperclip, ExternalLink } from 'lucide-react'
+import { Plus, Receipt, Car, Trash2, Paperclip, ExternalLink, Edit2 } from 'lucide-react'
+import type { Expense } from '../lib/types'
+import toast from 'react-hot-toast'
 
 export default function ExpensesPage() {
   const [year] = useState(getCurrentYear())
   const [tab, setTab] = useState<'expenses' | 'mileage'>('expenses')
   const [expenseFilter, setExpenseFilter] = useState<'all' | 'event' | 'general'>('all')
   const [showExpenseForm, setShowExpenseForm] = useState(false)
+  const [editExpense, setEditExpense] = useState<Expense | null>(null)
   const [showMileageForm, setShowMileageForm] = useState(false)
   const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({})
   const { data: expenses, isLoading: loadingExpenses } = useExpenses(year)
   const { data: mileage, isLoading: loadingMileage } = useMileage(year)
   const { data: events } = useEvents()
   const createExpense = useCreateExpense()
+  const updateExpense = useUpdateExpense()
   const deleteExpense = useDeleteExpense()
   const uploadReceipt = useUploadReceipt()
   const createMileage = useCreateMileage()
+  const deleteMileage = useDeleteMileage()
 
   const totalExpenses = (expenses || []).reduce((s, e) => s + Number(e.amount), 0)
   const totalMiles = (mileage || []).reduce((s, m) => s + Number(m.miles), 0)
@@ -47,18 +52,30 @@ export default function ExpensesPage() {
     e.preventDefault()
     const fd = new FormData(e.currentTarget)
     const category = fd.get('category') as string
-    await createExpense.mutateAsync({
-      event_id: fd.get('event_id') as string || undefined,
+    const payload = {
+      event_id: (fd.get('event_id') as string) || undefined,
       description: fd.get('description') as string,
       category,
       amount: parseFloat(fd.get('amount') as string),
       expense_date: fd.get('expense_date') as string,
-      vendor: fd.get('vendor') as string,
+      vendor: (fd.get('vendor') as string) || undefined,
       is_tax_deductible: true,
       schedule_c_line: getScheduleCLine(category),
-      notes: fd.get('notes') as string,
-    })
-    setShowExpenseForm(false)
+      notes: (fd.get('notes') as string) || undefined,
+    }
+    try {
+      if (editExpense) {
+        await updateExpense.mutateAsync({ id: editExpense.id, ...payload })
+        toast.success('Expense updated')
+        setEditExpense(null)
+      } else {
+        await createExpense.mutateAsync(payload)
+        toast.success('Expense logged')
+        setShowExpenseForm(false)
+      }
+    } catch {
+      toast.error('Something went wrong')
+    }
   }
 
   const handleCreateMileage = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -192,9 +209,20 @@ export default function ExpensesPage() {
                         </button>
                       </>
                     )}
-                    <Button size="sm" variant="ghost" onClick={() => deleteExpense.mutate(exp.id)}>
+                    <button
+                      onClick={() => setEditExpense(exp)}
+                      className="text-cream/30 hover:text-gold transition-colors p-1.5 rounded"
+                      title="Edit expense"
+                    >
+                      <Edit2 size={14} />
+                    </button>
+                    <button
+                      onClick={() => { if (confirm('Delete this expense?')) deleteExpense.mutate(exp.id) }}
+                      className="text-cream/30 hover:text-red-400 transition-colors p-1.5 rounded"
+                      title="Delete expense"
+                    >
                       <Trash2 size={14} />
-                    </Button>
+                    </button>
                   </div>
                 </div>
               </Card>
@@ -223,7 +251,16 @@ export default function ExpensesPage() {
                       {m.purpose && <span> • {m.purpose}</span>}
                     </div>
                   </div>
-                  <span className="text-lg font-bold text-success">{formatCurrency(m.deduction_amount)}</span>
+                  <div className="flex items-center gap-3">
+                    <span className="text-lg font-bold text-success">{formatCurrency(m.deduction_amount)}</span>
+                    <button
+                      onClick={() => { if (confirm('Delete this mileage entry?')) deleteMileage.mutate(m.id) }}
+                      className="text-cream/30 hover:text-red-400 transition-colors p-1.5 rounded"
+                      title="Delete entry"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
                 </div>
               </Card>
             ))}
@@ -231,57 +268,64 @@ export default function ExpensesPage() {
         )
       )}
 
-      {/* New Expense Modal */}
-      <Modal open={showExpenseForm} onClose={() => setShowExpenseForm(false)} title="New Expense" wide>
-        <form onSubmit={handleCreateExpense} className="space-y-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      {/* New / Edit Expense Modal — shares the same form */}
+      {(showExpenseForm || !!editExpense) && (
+        <Modal
+          open={showExpenseForm || !!editExpense}
+          onClose={() => { setShowExpenseForm(false); setEditExpense(null) }}
+          title={editExpense ? 'Edit Expense' : 'New Expense'}
+          wide
+        >
+          <form onSubmit={handleCreateExpense} className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs text-cream/50 mb-1">Description *</label>
+                <input name="description" required defaultValue={editExpense?.description || ''}
+                  className="w-full bg-navy-lighter border border-gold-dim rounded-lg px-3 py-2 text-cream text-sm" />
+              </div>
+              <div>
+                <label className="block text-xs text-cream/50 mb-1">Amount ($) *</label>
+                <input name="amount" type="number" step="0.01" required defaultValue={editExpense ? String(editExpense.amount) : ''}
+                  className="w-full bg-navy-lighter border border-gold-dim rounded-lg px-3 py-2 text-cream text-sm" />
+              </div>
+              <div>
+                <label className="block text-xs text-cream/50 mb-1">Date *</label>
+                <input name="expense_date" type="date" required defaultValue={editExpense?.expense_date || new Date().toISOString().split('T')[0]}
+                  className="w-full bg-navy-lighter border border-gold-dim rounded-lg px-3 py-2 text-cream text-sm" />
+              </div>
+              <div>
+                <label className="block text-xs text-cream/50 mb-1">Category *</label>
+                <select name="category" required defaultValue={editExpense?.category || ''}
+                  className="w-full bg-navy-lighter border border-gold-dim rounded-lg px-3 py-2 text-cream text-sm">
+                  {EXPENSE_CATEGORIES.map(c => <option key={c.value} value={c.value}>{c.label} (Line {c.scheduleCLine})</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs text-cream/50 mb-1">Vendor / Store</label>
+                <input name="vendor" defaultValue={editExpense?.vendor || ''}
+                  className="w-full bg-navy-lighter border border-gold-dim rounded-lg px-3 py-2 text-cream text-sm" />
+              </div>
+              <div>
+                <label className="block text-xs text-cream/50 mb-1">Link to Event</label>
+                <select name="event_id" defaultValue={editExpense?.event_id || ''}
+                  className="w-full bg-navy-lighter border border-gold-dim rounded-lg px-3 py-2 text-cream text-sm">
+                  <option value="">None</option>
+                  {events?.map(ev => <option key={ev.id} value={ev.id}>{ev.client_name} - {formatDate(ev.event_date)}</option>)}
+                </select>
+              </div>
+            </div>
             <div>
-              <label className="block text-xs text-cream/50 mb-1">Description *</label>
-              <input name="description" required
+              <label className="block text-xs text-cream/50 mb-1">Notes</label>
+              <textarea name="notes" rows={2} defaultValue={editExpense?.notes || ''}
                 className="w-full bg-navy-lighter border border-gold-dim rounded-lg px-3 py-2 text-cream text-sm" />
             </div>
-            <div>
-              <label className="block text-xs text-cream/50 mb-1">Amount ($) *</label>
-              <input name="amount" type="number" step="0.01" required
-                className="w-full bg-navy-lighter border border-gold-dim rounded-lg px-3 py-2 text-cream text-sm" />
+            <div className="flex gap-3 pt-2">
+              <Button type="submit" className="flex-1">{editExpense ? 'Save Changes' : 'Add Expense'}</Button>
+              <Button type="button" variant="secondary" onClick={() => { setShowExpenseForm(false); setEditExpense(null) }}>Cancel</Button>
             </div>
-            <div>
-              <label className="block text-xs text-cream/50 mb-1">Date *</label>
-              <input name="expense_date" type="date" required defaultValue={new Date().toISOString().split('T')[0]}
-                className="w-full bg-navy-lighter border border-gold-dim rounded-lg px-3 py-2 text-cream text-sm" />
-            </div>
-            <div>
-              <label className="block text-xs text-cream/50 mb-1">Category *</label>
-              <select name="category" required
-                className="w-full bg-navy-lighter border border-gold-dim rounded-lg px-3 py-2 text-cream text-sm">
-                {EXPENSE_CATEGORIES.map(c => <option key={c.value} value={c.value}>{c.label} (Line {c.scheduleCLine})</option>)}
-              </select>
-            </div>
-            <div>
-              <label className="block text-xs text-cream/50 mb-1">Vendor / Store</label>
-              <input name="vendor"
-                className="w-full bg-navy-lighter border border-gold-dim rounded-lg px-3 py-2 text-cream text-sm" />
-            </div>
-            <div>
-              <label className="block text-xs text-cream/50 mb-1">Link to Event</label>
-              <select name="event_id"
-                className="w-full bg-navy-lighter border border-gold-dim rounded-lg px-3 py-2 text-cream text-sm">
-                <option value="">None</option>
-                {events?.map(ev => <option key={ev.id} value={ev.id}>{ev.client_name} - {formatDate(ev.event_date)}</option>)}
-              </select>
-            </div>
-          </div>
-          <div>
-            <label className="block text-xs text-cream/50 mb-1">Notes</label>
-            <textarea name="notes" rows={2}
-              className="w-full bg-navy-lighter border border-gold-dim rounded-lg px-3 py-2 text-cream text-sm" />
-          </div>
-          <div className="flex gap-3 pt-2">
-            <Button type="submit" className="flex-1">Add Expense</Button>
-            <Button type="button" variant="secondary" onClick={() => setShowExpenseForm(false)}>Cancel</Button>
-          </div>
-        </form>
-      </Modal>
+          </form>
+        </Modal>
+      )}
 
       {/* Mileage Modal */}
       <Modal open={showMileageForm} onClose={() => setShowMileageForm(false)} title="Log Mileage">

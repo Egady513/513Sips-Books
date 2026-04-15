@@ -132,3 +132,17 @@ export function useCreateMileage() {
     },
   })
 }
+
+export function useDeleteMileage() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from('mileage_log').delete().eq('id', id)
+      if (error) throw error
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['mileage'] })
+      qc.invalidateQueries({ queryKey: ['dashboard'] })
+    },
+  })
+}
