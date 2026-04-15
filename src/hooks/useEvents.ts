@@ -71,6 +71,20 @@ export function useUpdateEvent() {
   })
 }
 
+export function useDeleteEvent() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from('events').delete().eq('id', id)
+      if (error) throw error
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['events'] })
+      qc.invalidateQueries({ queryKey: ['dashboard'] })
+    },
+  })
+}
+
 export function useUploadContract() {
   return useMutation({
     mutationFn: async ({ eventId, file, clientName }: { eventId: string; file: File; clientName: string }) => {

@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react'
-import { useEvents, useCreateEvent, useUpdateEvent, useUploadContract } from '../hooks/useEvents'
+import { useEvents, useCreateEvent, useUpdateEvent, useDeleteEvent, useUploadContract } from '../hooks/useEvents'
 import { useCreateAREntry } from '../hooks/useInvoices'
 import { useExpenses } from '../hooks/useExpenses'
 import { Card } from '../components/ui/Card'
@@ -8,8 +8,9 @@ import StatusBadge from '../components/ui/StatusBadge'
 import Modal from '../components/ui/Modal'
 import { formatCurrency, formatDate } from '../utils/formatters'
 import { EVENT_STATUSES, EVENT_TYPES } from '../lib/constants'
-import { Plus, Upload, FileText, TrendingUp } from 'lucide-react'
+import { Plus, Upload, FileText, TrendingUp, Trash2 } from 'lucide-react'
 import type { Event } from '../lib/types'
+import toast from 'react-hot-toast'
 
 export default function EventsPage() {
   const [filter, setFilter] = useState('all')
@@ -19,6 +20,7 @@ export default function EventsPage() {
   const { data: allExpenses } = useExpenses()
   const createEvent = useCreateEvent()
   const updateEvent = useUpdateEvent()
+  const deleteEvent = useDeleteEvent()
   const uploadContract = useUploadContract()
   const createAREntry = useCreateAREntry()
 
@@ -169,8 +171,21 @@ export default function EventsPage() {
                       )}
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap justify-end">
                     <span className="text-lg font-bold text-gold">{formatCurrency(event.total_amount)}</span>
+                    {/* Quick status change */}
+                    <select
+                      value={event.status}
+                      onChange={async e => {
+                        await updateEvent.mutateAsync({ id: event.id, status: e.target.value })
+                        toast.success(`Status → ${e.target.value}`)
+                      }}
+                      className="text-xs bg-white/5 border border-white/10 rounded px-2 py-1 text-cream/70 focus:outline-none focus:border-gold/50"
+                    >
+                      {EVENT_STATUSES.map(s => (
+                        <option key={s.value} value={s.value}>{s.label}</option>
+                      ))}
+                    </select>
                     {event.signed_contract_url && (
                       <a href={event.signed_contract_url} target="_blank" rel="noreferrer"
                         className="text-cream/40 hover:text-gold">
@@ -187,6 +202,13 @@ export default function EventsPage() {
                       onClick={() => { setEditEvent(event); setShowForm(true) }}>
                       Edit
                     </Button>
+                    <button
+                      onClick={() => { if (confirm(`Delete event for ${event.client_name}? This cannot be undone.`)) deleteEvent.mutate(event.id) }}
+                      className="text-cream/30 hover:text-red-400 transition-colors p-1.5 rounded"
+                      title="Delete event"
+                    >
+                      <Trash2 size={14} />
+                    </button>
                   </div>
                 </div>
               </Card>
