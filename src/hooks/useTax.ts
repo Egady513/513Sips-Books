@@ -21,11 +21,12 @@ export function useScheduleC(year: number) {
         .gte('trip_date', `${year}-01-01`)
         .lte('trip_date', `${year}-12-31`)
 
-      // Get paid AP entries
+      // Get paid AP entries — exclude owner draws (not tax-deductible business expenses)
       const { data: paidBills } = await supabase
         .from('ap_entries')
         .select('amount, schedule_c_line, category, paid_at')
         .eq('status', 'paid')
+        .eq('is_owner_draw', false)
 
       // Aggregate by Schedule C line
       const lineItems: Record<string, number> = {}
@@ -41,7 +42,7 @@ export function useScheduleC(year: number) {
         lineItems['10'] = (lineItems['10'] || 0) + Number(m.deduction_amount)
       })
 
-      // Add paid bills
+      // Add paid bills (excluding owner draws)
       ;(paidBills || []).forEach(b => {
         if (!b.paid_at || new Date(b.paid_at).getFullYear() !== year) return
         const line = b.schedule_c_line || '27a'
@@ -84,10 +85,12 @@ export function useTaxEstimate(year: number) {
         .gte('trip_date', `${year}-01-01`)
         .lte('trip_date', `${year}-12-31`)
 
+      // Exclude owner draws — they're profit distributions, not Schedule C deductions
       const { data: paidBills } = await supabase
         .from('ap_entries')
         .select('amount, paid_at')
         .eq('status', 'paid')
+        .eq('is_owner_draw', false)
 
       const totalExpenses =
         (expenses || []).reduce((s, e) => s + Number(e.amount), 0) +

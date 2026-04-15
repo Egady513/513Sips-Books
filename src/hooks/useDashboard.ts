@@ -43,11 +43,12 @@ export function useDashboardKPIs(year?: number) {
 
       const totalExpenses = (expenseData || []).reduce((sum, e) => sum + Number(e.amount), 0)
 
-      // Also add paid AP entries as expenses
+      // Also add paid AP entries as expenses — exclude owner draws (not tax-deductible)
       const { data: paidAP } = await supabase
         .from('ap_entries')
-        .select('amount, paid_at')
+        .select('amount, paid_at, is_owner_draw')
         .eq('status', 'paid')
+        .eq('is_owner_draw', false)
 
       const paidAPTotal = (paidAP || [])
         .filter(e => e.paid_at && new Date(e.paid_at).getFullYear() === y)
