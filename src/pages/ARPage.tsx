@@ -12,6 +12,7 @@ export default function ARPage() {
   const [filter, setFilter] = useState('all')
   const [payEntry, setPayEntry] = useState<any>(null)
   const [payMethod, setPayMethod] = useState('')
+  const [payNotes, setPayNotes] = useState('')
   const { data: entries, isLoading } = useAREntries(filter)
   const recordPayment = useRecordPayment()
 
@@ -25,11 +26,13 @@ export default function ARPage() {
     await recordPayment.mutateAsync({
       entryId: payEntry.id,
       paymentMethod: payMethod,
+      notes: payNotes || undefined,
       eventId: payEntry.event_id,
       entryType: payEntry.entry_type,
     })
     setPayEntry(null)
     setPayMethod('')
+    setPayNotes('')
   }
 
   return (
@@ -123,11 +126,21 @@ export default function ARPage() {
                 {PAYMENT_METHODS.map(m => <option key={m.value} value={m.value}>{m.label}</option>)}
               </select>
             </div>
+            <div>
+              <label className="block text-xs text-cream/50 mb-1">Notes (optional)</label>
+              <input
+                type="text"
+                placeholder="e.g., Venmo @client, Check #1234..."
+                value={payNotes}
+                onChange={e => setPayNotes(e.target.value)}
+                className="w-full bg-navy-lighter border border-gold-dim rounded-lg px-3 py-2 text-cream text-sm"
+              />
+            </div>
             <div className="flex gap-3">
               <Button onClick={handlePayment} disabled={!payMethod} className="flex-1">
                 Confirm Payment
               </Button>
-              <Button variant="secondary" onClick={() => setPayEntry(null)}>Cancel</Button>
+              <Button variant="secondary" onClick={() => { setPayEntry(null); setPayNotes('') }}>Cancel</Button>
             </div>
           </div>
         )}

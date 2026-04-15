@@ -44,11 +44,13 @@ export function useRecordPayment() {
     mutationFn: async ({
       entryId,
       paymentMethod,
+      notes,
       eventId,
       entryType,
     }: {
       entryId: string
       paymentMethod: string
+      notes?: string
       eventId: string
       entryType: string
     }) => {
@@ -59,6 +61,7 @@ export function useRecordPayment() {
           status: 'received',
           payment_method: paymentMethod,
           received_at: new Date().toISOString(),
+          ...(notes ? { notes } : {}),
         })
         .eq('id', entryId)
       if (arError) throw arError
