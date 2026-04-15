@@ -52,6 +52,7 @@ export default function ExpensesPage() {
     e.preventDefault()
     const fd = new FormData(e.currentTarget)
     const category = fd.get('category') as string
+    const isTaxDeductible = fd.get('is_tax_deductible') === 'on'
     const payload = {
       event_id: (fd.get('event_id') as string) || undefined,
       description: fd.get('description') as string,
@@ -59,8 +60,8 @@ export default function ExpensesPage() {
       amount: parseFloat(fd.get('amount') as string),
       expense_date: fd.get('expense_date') as string,
       vendor: (fd.get('vendor') as string) || undefined,
-      is_tax_deductible: true,
-      schedule_c_line: getScheduleCLine(category),
+      is_tax_deductible: isTaxDeductible,
+      schedule_c_line: isTaxDeductible ? getScheduleCLine(category) : undefined,
       notes: (fd.get('notes') as string) || undefined,
     }
     try {
@@ -159,10 +160,12 @@ export default function ExpensesPage() {
               <Card key={exp.id} className="hover:border-gold/40 transition-colors">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
+                    <div className="flex items-center gap-2 mb-1 flex-wrap">
                       <span className="font-semibold text-cream">{exp.description}</span>
-                      {exp.is_tax_deductible && (
-                        <span className="text-xs px-2 py-0.5 bg-success/20 text-success rounded">Tax Deductible</span>
+                      {exp.is_tax_deductible ? (
+                        <span className="text-xs px-2 py-0.5 bg-success/20 text-success rounded">✓ Write-off</span>
+                      ) : (
+                        <span className="text-xs px-2 py-0.5 bg-cream/10 text-cream/40 rounded">Not deductible</span>
                       )}
                       {exp.event_id && (
                         <span className="text-xs px-2 py-0.5 bg-blue-500/20 text-blue-300 rounded">Event</span>
@@ -319,6 +322,18 @@ export default function ExpensesPage() {
               <textarea name="notes" rows={2} defaultValue={editExpense?.notes || ''}
                 className="w-full bg-navy-lighter border border-gold-dim rounded-lg px-3 py-2 text-cream text-sm" />
             </div>
+            <label className="flex items-center gap-3 text-sm text-cream/70 cursor-pointer p-3 bg-navy-lighter rounded-lg border border-gold-dim hover:border-gold/40 transition-colors">
+              <input
+                type="checkbox"
+                name="is_tax_deductible"
+                defaultChecked={editExpense ? editExpense.is_tax_deductible : true}
+                className="w-4 h-4 rounded accent-gold"
+              />
+              <div>
+                <span className="font-medium text-cream">Tax write-off</span>
+                <p className="text-xs text-cream/40 mt-0.5">Check if this is a deductible business expense (appears on Schedule C)</p>
+              </div>
+            </label>
             <div className="flex gap-3 pt-2">
               <Button type="submit" className="flex-1">{editExpense ? 'Save Changes' : 'Add Expense'}</Button>
               <Button type="button" variant="secondary" onClick={() => { setShowExpenseForm(false); setEditExpense(null) }}>Cancel</Button>

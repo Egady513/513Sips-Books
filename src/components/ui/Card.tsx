@@ -3,11 +3,15 @@ import clsx from 'clsx'
 interface CardProps {
   children: React.ReactNode
   className?: string
+  onClick?: () => void
 }
 
-export function Card({ children, className }: CardProps) {
+export function Card({ children, className, onClick }: CardProps) {
   return (
-    <div className={clsx('bg-navy-light rounded-xl border border-gold-dim p-5', className)}>
+    <div
+      className={clsx('bg-navy-light rounded-xl border border-gold-dim p-5', className)}
+      onClick={onClick}
+    >
       {children}
     </div>
   )

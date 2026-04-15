@@ -11,7 +11,7 @@ import Modal from '../components/ui/Modal'
 import { formatCurrency, formatDate } from '../utils/formatters'
 import {
   Plus, Instagram, Users, Phone, Mail, Calendar, DollarSign,
-  Trash2, Edit2, Download, ExternalLink, FileSignature, CheckCircle2, FileText, Pencil,
+  Trash2, Edit2, Download, ExternalLink, FileSignature, CheckCircle2, FileText, Pencil, FileDown,
 } from 'lucide-react'
 import type { Lead } from '../lib/types'
 import toast from 'react-hot-toast'
@@ -267,7 +267,7 @@ export default function LeadsPage() {
       setShowBookConfirm(false)
       setBookingLead(null)
       setBookingQuote(null)
-      navigate('/events')
+      navigate(`/events/${newEvent.id}`)
     } catch (err) {
       console.error(err)
       toast.error('Failed to create event')
@@ -417,6 +417,118 @@ export default function LeadsPage() {
     }
   }
 
+  // Download a clean quote PDF (opens print dialog in new window)
+  function handleDownloadQuotePDF(lead: Lead, quote: Quote) {
+    const today = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
+    const eventDate = lead.event_date
+      ? new Date(lead.event_date + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
+      : 'TBD'
+    const fmt = (n: number) => n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+
+    const html = `<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><title>513 Sips Quote — ${lead.name}</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:Georgia,'Times New Roman',serif;color:#111;background:#fff;padding:48px;max-width:720px;margin:0 auto}
+  .header{text-align:center;border-bottom:3px solid #D4AF37;padding-bottom:24px;margin-bottom:32px}
+  .brand{font-size:36px;color:#D4AF37;font-weight:bold;letter-spacing:3px;font-family:Georgia,serif}
+  .tagline{font-size:12px;color:#777;margin-top:6px;letter-spacing:2px;text-transform:uppercase}
+  .doc-title{font-size:20px;color:#0A1628;margin-top:28px;text-align:center;font-weight:normal;letter-spacing:1px}
+  .doc-date{text-align:center;color:#999;font-size:12px;margin-top:6px}
+  .section{margin:28px 0}
+  .section-title{font-size:10px;text-transform:uppercase;letter-spacing:2px;color:#D4AF37;border-bottom:1px solid #D4AF37;padding-bottom:5px;margin-bottom:14px}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px 32px}
+  .field{display:flex;flex-direction:column}
+  .label{font-size:10px;color:#999;text-transform:uppercase;letter-spacing:1px;margin-bottom:2px}
+  .value{font-size:14px;color:#111}
+  .amounts{border:1px solid #e8e0c0;border-radius:8px;overflow:hidden;margin-top:8px}
+  .amount-row{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:1px solid #f0e8d0}
+  .amount-row:last-child{border-bottom:none}
+  .amount-row.highlight{background:#faf8f0}
+  .amount-row.total-row{background:#0A1628;color:#FAF8F3}
+  .amount-label{font-size:14px}
+  .amount-value{font-size:16px;font-weight:600}
+  .total-row .amount-label{color:#D4AF37;font-weight:600}
+  .total-row .amount-value{color:#D4AF37;font-size:20px}
+  .terms{background:#faf8f0;border-left:4px solid #D4AF37;padding:16px 20px;margin-top:24px;font-size:12px;line-height:1.8;color:#555}
+  .footer{text-align:center;margin-top:40px;padding-top:20px;border-top:1px solid #eee;font-size:11px;color:#aaa}
+  .sig-block{display:grid;grid-template-columns:1fr 1fr;gap:32px;margin-top:32px}
+  .sig-line{border-top:1px solid #ccc;padding-top:6px;font-size:11px;color:#aaa;text-align:center}
+  @media print{body{padding:28px}}
+</style></head>
+<body>
+<div class="header">
+  <div class="brand">513 SIPS</div>
+  <div class="tagline">Mobile Craft Bartending · Cincinnati, OH</div>
+</div>
+<div class="doc-title">Service Quote</div>
+<div class="doc-date">Prepared ${today} · Valid for 30 days</div>
+
+<div class="section">
+  <div class="section-title">Client Information</div>
+  <div class="grid">
+    <div class="field"><span class="label">Client Name</span><span class="value">${lead.name}</span></div>
+    <div class="field"><span class="label">Event Type</span><span class="value">${lead.event_type || '—'}</span></div>
+    <div class="field"><span class="label">Email</span><span class="value">${lead.email || '—'}</span></div>
+    <div class="field"><span class="label">Phone</span><span class="value">${lead.phone || '—'}</span></div>
+  </div>
+</div>
+
+<div class="section">
+  <div class="section-title">Event Details</div>
+  <div class="grid">
+    <div class="field"><span class="label">Event Date</span><span class="value">${eventDate}</span></div>
+    <div class="field"><span class="label">Venue</span><span class="value">${lead.venue_name || lead.venue_address || '—'}</span></div>
+    <div class="field"><span class="label">Guest Count</span><span class="value">${lead.guest_count ?? quote.guest_count ?? '—'}</span></div>
+    <div class="field"><span class="label">Service Hours</span><span class="value">${quote.hours ?? 4} hours</span></div>
+    ${lead.service_start_time ? `<div class="field"><span class="label">Service Time</span><span class="value">${lead.service_start_time}${lead.service_end_time ? ' – ' + lead.service_end_time : ''}</span></div>` : ''}
+    ${quote.bartenders ? `<div class="field"><span class="label">Bar Staff</span><span class="value">${quote.bartenders} bartender${quote.bartenders > 1 ? 's' : ''}</span></div>` : ''}
+  </div>
+</div>
+
+<div class="section">
+  <div class="section-title">Pricing</div>
+  <div class="amounts">
+    <div class="amount-row total-row">
+      <span class="amount-label">Total Investment</span>
+      <span class="amount-value">$${fmt(quote.total)}</span>
+    </div>
+    <div class="amount-row highlight">
+      <span class="amount-label">Deposit (50% — due to secure date)</span>
+      <span class="amount-value">$${fmt(quote.deposit)}</span>
+    </div>
+    <div class="amount-row">
+      <span class="amount-label">Balance (due on event date)</span>
+      <span class="amount-value">$${fmt(quote.balance)}</span>
+    </div>
+  </div>
+</div>
+
+<div class="terms">
+  <strong>Terms & Conditions</strong><br>
+  • A 50% non-refundable deposit is required to secure your event date.<br>
+  • The remaining balance is due on or before the event date.<br>
+  • 513 Sips provides fully insured, dry-hire mobile bartending services.<br>
+  • Client is responsible for purchasing all alcohol and mixers per the agreed shopping list.<br>
+  • Cancellations within 14 days of the event date may forfeit the full deposit.<br>
+  • This quote is valid for 30 days from the date above.
+</div>
+
+<div class="sig-block">
+  <div class="sig-line">Client Signature &amp; Date</div>
+  <div class="sig-line">513 Sips Representative</div>
+</div>
+
+<div class="footer">
+  513 Sips LLC · Cincinnati, OH · 513sips.com · instagram.com/513sips
+</div>
+<script>window.onload=()=>{window.print()}</script>
+</body></html>`
+
+    const win = window.open('', '_blank')
+    if (win) { win.document.write(html); win.document.close() }
+  }
+
   // Sprint 3: export quote to PDF via contract.html
   function handleExportQuotePDF(quote: Quote) {
     const quoteForContract = {
@@ -523,9 +635,13 @@ export default function LeadsPage() {
                       {STATUS_CONFIG[lead.status]?.label}
                     </span>
                     {lead.converted_event_id && (
-                      <span className="text-xs text-success/70 flex items-center gap-1">
-                        <CheckCircle2 size={11} /> Event created
-                      </span>
+                      <button
+                        onClick={() => navigate(`/events/${lead.converted_event_id}`)}
+                        className="text-xs text-success/70 flex items-center gap-1 hover:text-success transition-colors"
+                        title="View event"
+                      >
+                        <CheckCircle2 size={11} /> View Event →
+                      </button>
                     )}
                   </div>
                 </div>
@@ -650,6 +766,13 @@ export default function LeadsPage() {
                           }`}>
                             {linkedQuote.status}
                           </span>
+                          <button
+                            onClick={() => handleDownloadQuotePDF(lead, linkedQuote)}
+                            className="text-cream/25 hover:text-gold transition-colors"
+                            title="Download quote as PDF"
+                          >
+                            <FileDown size={11} />
+                          </button>
                           <button
                             onClick={() => openQuoteEdit(linkedQuote)}
                             className="text-cream/25 hover:text-gold transition-colors"

@@ -17,7 +17,9 @@ export default function TaxPage() {
         <h1 className="text-2xl font-bold text-gold">Tax Helper</h1>
         <select value={year} onChange={e => setYear(Number(e.target.value))}
           className="bg-navy-lighter border border-gold-dim rounded-lg px-3 py-2 text-cream text-sm">
-          {[2024, 2025, 2026].map(y => <option key={y} value={y}>{y}</option>)}
+          {Array.from({ length: 5 }, (_, i) => getCurrentYear() - 3 + i).map(y => (
+            <option key={y} value={y}>{y}</option>
+          ))}
         </select>
       </div>
 

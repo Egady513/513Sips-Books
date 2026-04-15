@@ -76,6 +76,36 @@ export function useDashboardKPIs(year?: number) {
   })
 }
 
+export function useOverdueAlerts() {
+  return useQuery({
+    queryKey: ['dashboard', 'overdue'],
+    queryFn: async () => {
+      const today = new Date().toISOString().split('T')[0]
+
+      const { data: overdueAR } = await supabase
+        .from('ar_entries')
+        .select('id, amount, events(client_name)')
+        .eq('status', 'pending')
+        .lt('due_date', today)
+
+      const { data: overdueAP } = await supabase
+        .from('ap_entries')
+        .select('id, amount, description')
+        .eq('status', 'pending')
+        .eq('is_owner_draw', false)
+        .lt('due_date', today)
+
+      return {
+        arCount: overdueAR?.length || 0,
+        apCount: overdueAP?.length || 0,
+        arTotal: (overdueAR || []).reduce((s, e) => s + Number(e.amount), 0),
+        apTotal: (overdueAP || []).reduce((s, e) => s + Number(e.amount), 0),
+      }
+    },
+    staleTime: 60_000,
+  })
+}
+
 export function useRevenueByMonth(year?: number) {
   return useQuery({
     queryKey: ['dashboard', 'revenue_by_month', year],

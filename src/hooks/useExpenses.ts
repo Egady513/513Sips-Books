@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '../lib/supabase'
 import type { Expense, MileageEntry } from '../lib/types'
+import toast from 'react-hot-toast'
 
 export function useExpenses(year?: number) {
   return useQuery({
@@ -73,7 +74,42 @@ export function useUpdateExpense() {
   })
 }
 
+export function useEventExpenses(eventId: string | undefined) {
+  return useQuery({
+    queryKey: ['expenses', 'event', eventId],
+    queryFn: async () => {
+      if (!eventId) return []
+      const { data, error } = await supabase
+        .from('expenses')
+        .select('*')
+        .eq('event_id', eventId)
+        .order('expense_date', { ascending: false })
+      if (error) throw error
+      return data as Expense[]
+    },
+    enabled: !!eventId,
+  })
+}
+
+export function useEventMileage(eventId: string | undefined) {
+  return useQuery({
+    queryKey: ['mileage', 'event', eventId],
+    queryFn: async () => {
+      if (!eventId) return []
+      const { data, error } = await supabase
+        .from('mileage_log')
+        .select('*')
+        .eq('event_id', eventId)
+        .order('trip_date', { ascending: false })
+      if (error) throw error
+      return data as MileageEntry[]
+    },
+    enabled: !!eventId,
+  })
+}
+
 export function useUploadReceipt() {
+  const qc = useQueryClient()
   return useMutation({
     mutationFn: async ({ file, expenseId }: { file: File; expenseId: string }) => {
       const fileName = `receipts/${Date.now()}_${file.name}`
@@ -91,6 +127,13 @@ export function useUploadReceipt() {
       if (error) throw error
 
       return publicUrl
+    },
+    onSuccess: () => {
+      toast.success('Receipt uploaded!')
+      qc.invalidateQueries({ queryKey: ['expenses'] })
+    },
+    onError: () => {
+      toast.error('Receipt upload failed — check the receipts bucket exists in Supabase Storage')
     },
   })
 }

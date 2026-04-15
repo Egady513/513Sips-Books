@@ -1,7 +1,7 @@
 import { NavLink } from 'react-router-dom'
 import {
   LayoutDashboard, CalendarDays, ArrowDownToLine, ArrowUpFromLine,
-  Receipt, Calculator, Landmark, Settings, X, UserSearch,
+  Receipt, Calculator, Landmark, Settings, X, UserSearch, Calendar,
 } from 'lucide-react'
 import clsx from 'clsx'
 
@@ -9,6 +9,7 @@ const navItems = [
   { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
   { to: '/leads', icon: UserSearch, label: 'Leads' },
   { to: '/events', icon: CalendarDays, label: 'Events' },
+  { to: '/calendar', icon: Calendar, label: 'Calendar' },
   { to: '/ar', icon: ArrowDownToLine, label: 'Receivables' },
   { to: '/ap', icon: ArrowUpFromLine, label: 'Payables' },
   { to: '/expenses', icon: Receipt, label: 'Expenses' },

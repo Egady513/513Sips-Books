@@ -4,6 +4,8 @@ import { Toaster } from 'react-hot-toast'
 import AppShell from './components/layout/AppShell'
 import DashboardPage from './pages/DashboardPage'
 import EventsPage from './pages/EventsPage'
+import EventDetailPage from './pages/EventDetailPage'
+import CalendarPage from './pages/CalendarPage'
 import ARPage from './pages/ARPage'
 import APPage from './pages/APPage'
 import ExpensesPage from './pages/ExpensesPage'
@@ -30,6 +32,8 @@ export default function App() {
             <Route path="/" element={<DashboardPage />} />
             <Route path="/leads" element={<LeadsPage />} />
             <Route path="/events" element={<EventsPage />} />
+            <Route path="/events/:id" element={<EventDetailPage />} />
+            <Route path="/calendar" element={<CalendarPage />} />
             <Route path="/ar" element={<ARPage />} />
             <Route path="/ap" element={<APPage />} />
             <Route path="/expenses" element={<ExpensesPage />} />

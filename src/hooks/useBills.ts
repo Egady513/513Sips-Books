@@ -22,6 +22,23 @@ export function useBills(statusFilter?: string) {
   })
 }
 
+export function useEventBills(eventId: string | undefined) {
+  return useQuery({
+    queryKey: ['ap_entries', 'event', eventId],
+    queryFn: async () => {
+      if (!eventId) return []
+      const { data, error } = await supabase
+        .from('ap_entries')
+        .select('*, vendors(*)')
+        .eq('event_id', eventId)
+        .order('due_date', { ascending: true })
+      if (error) throw error
+      return data as APEntry[]
+    },
+    enabled: !!eventId,
+  })
+}
+
 export function useCreateBill() {
   const qc = useQueryClient()
   return useMutation({
