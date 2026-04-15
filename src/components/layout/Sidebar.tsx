@@ -71,6 +71,29 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
           ))}
         </nav>
 
+        {/* External Tools */}
+        <div className="p-4 border-t border-gold-dim">
+          <p className="text-xs text-cream/30 uppercase tracking-wider mb-2 px-1">Tools</p>
+          <a
+            href="https://www.513sips.com/tools/calculator.html"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium text-cream/60 hover:text-gold hover:bg-white/5 transition-colors"
+          >
+            <Calculator size={18} />
+            Quote Calculator ↗
+          </a>
+          <a
+            href="https://www.513sips.com/tools/contract.html"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium text-cream/60 hover:text-gold hover:bg-white/5 transition-colors"
+          >
+            <Receipt size={18} />
+            Contract Tool ↗
+          </a>
+        </div>
+
         {/* Footer */}
         <div className="p-4 border-t border-gold-dim text-xs text-cream/30 text-center">
           513 Sips LLC

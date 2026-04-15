@@ -1,10 +1,12 @@
 import { useState } from 'react'
 import { useLeads, useCreateLead, useUpdateLead, useDeleteLead } from '../hooks/useLeads'
+import { useRecentQuotes, useLinkQuoteToLead } from '../hooks/useQuotes'
+import type { Quote } from '../hooks/useQuotes'
 import { Card, StatCard } from '../components/ui/Card'
 import Button from '../components/ui/Button'
 import Modal from '../components/ui/Modal'
 import { formatCurrency, formatDate } from '../utils/formatters'
-import { Plus, Instagram, Users, Phone, Mail, Calendar, DollarSign, Trash2, Edit2 } from 'lucide-react'
+import { Plus, Instagram, Users, Phone, Mail, Calendar, DollarSign, Trash2, Edit2, Download, ExternalLink } from 'lucide-react'
 import type { Lead } from '../lib/types'
 import toast from 'react-hot-toast'
 
@@ -46,10 +48,15 @@ export default function LeadsPage() {
   const [editLead, setEditLead] = useState<Lead | null>(null)
   const [form, setForm] = useState(emptyForm)
 
+  const [showQuoteImport, setShowQuoteImport] = useState(false)
+  const [importTargetLead, setImportTargetLead] = useState<Lead | null>(null)
+
   const { data: leads = [], isLoading } = useLeads(filter === 'all' ? undefined : filter)
   const createLead = useCreateLead()
   const updateLead = useUpdateLead()
   const deleteLead = useDeleteLead()
+  const { data: recentQuotes = [] } = useRecentQuotes()
+  const linkQuote = useLinkQuoteToLead()
 
   const allLeads = useLeads().data || []
   const stats = {
@@ -114,6 +121,20 @@ export default function LeadsPage() {
   async function handleStatusChange(lead: Lead, status: Lead['status']) {
     await updateLead.mutateAsync({ id: lead.id, status })
     toast.success(`Status → ${STATUS_CONFIG[status].label}`)
+  }
+
+  async function handleImportQuote(quote: Quote) {
+    if (!importTargetLead) return
+    try {
+      await linkQuote.mutateAsync({ quoteId: quote.id, leadId: importTargetLead.id })
+      // Pre-fill lead budget from quote total
+      await updateLead.mutateAsync({ id: importTargetLead.id, budget: quote.total })
+      toast.success(`Quote $${quote.total.toLocaleString()} linked to ${importTargetLead.name}`)
+      setShowQuoteImport(false)
+      setImportTargetLead(null)
+    } catch {
+      toast.error('Failed to link quote')
+    }
   }
 
   async function handleDelete(id: string) {
@@ -227,6 +248,13 @@ export default function LeadsPage() {
                   ))}
                 </select>
                 <div className="flex gap-2">
+                  <button
+                    onClick={() => { setImportTargetLead(lead); setShowQuoteImport(true) }}
+                    className="text-cream/40 hover:text-gold transition-colors p-1"
+                    title="Link a quote from Calculator"
+                  >
+                    <Download size={15} />
+                  </button>
                   <button onClick={() => openEdit(lead)} className="text-cream/40 hover:text-gold transition-colors p-1">
                     <Edit2 size={15} />
                   </button>
@@ -239,6 +267,66 @@ export default function LeadsPage() {
           ))}
         </div>
       )}
+
+      {/* Quote Import Modal */}
+      <Modal
+        isOpen={showQuoteImport}
+        onClose={() => { setShowQuoteImport(false); setImportTargetLead(null) }}
+        title={`Link Quote → ${importTargetLead?.name || ''}`}
+      >
+        <div className="space-y-3">
+          <p className="text-sm text-cream/60 mb-4">
+            Select a quote saved from the Calculator tool. It will be linked to this lead and update the budget.
+          </p>
+          {recentQuotes.length === 0 ? (
+            <div className="text-center py-8">
+              <p className="text-cream/50 mb-4">No quotes saved yet.</p>
+              <a
+                href="https://www.513sips.com/tools/calculator.html"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <Button icon={<ExternalLink size={14} />}>Open Calculator</Button>
+              </a>
+              <p className="text-xs text-cream/40 mt-3">Hit "Save to Books" after calculating</p>
+            </div>
+          ) : (
+            recentQuotes.map(quote => (
+              <button
+                key={quote.id}
+                onClick={() => handleImportQuote(quote)}
+                className="w-full text-left p-4 rounded-lg bg-white/5 hover:bg-gold/10 border border-white/10 hover:border-gold/30 transition-all"
+              >
+                <div className="flex justify-between items-center">
+                  <div>
+                    <span className="text-gold font-bold text-lg">{formatCurrency(quote.total)}</span>
+                    <span className="text-cream/50 text-xs ml-2">
+                      {quote.guest_count} guests · {quote.hours}h · {quote.bartenders} bartender{quote.bartenders !== 1 ? 's' : ''}
+                    </span>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-xs text-cream/40">{formatDate(quote.created_at)}</div>
+                    {quote.event_date && <div className="text-xs text-gold/60">Event: {formatDate(quote.event_date)}</div>}
+                  </div>
+                </div>
+                <div className="text-xs text-cream/40 mt-1">
+                  Deposit: {formatCurrency(quote.deposit)} · Balance: {formatCurrency(quote.balance)}
+                </div>
+              </button>
+            ))
+          )}
+          <div className="pt-2 border-t border-white/5 text-center">
+            <a
+              href="https://www.513sips.com/tools/calculator.html"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xs text-gold/60 hover:text-gold flex items-center justify-center gap-1"
+            >
+              <ExternalLink size={11} /> Open Calculator to create a new quote
+            </a>
+          </div>
+        </div>
+      </Modal>
 
       {/* Add / Edit Modal */}
       <Modal
