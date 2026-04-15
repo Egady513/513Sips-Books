@@ -150,6 +150,16 @@ export default function LeadsPage() {
         await updateLead.mutateAsync({ id: editLead.id, ...payload })
         toast.success('Lead updated')
       } else {
+        // Duplicate detection
+        const dup = allLeads.find(l =>
+          l.id !== editLead &&
+          ((form.email && l.email && l.email.toLowerCase() === form.email.toLowerCase()) ||
+           (form.phone && l.phone && l.phone.replace(/\D/g, '') === form.phone.replace(/\D/g, '')))
+        )
+        if (dup) {
+          const ok = confirm(`⚠️ Similar lead already exists: "${dup.name}" (${dup.status})\n\nAdd anyway?`)
+          if (!ok) return
+        }
         await createLead.mutateAsync(payload)
         toast.success('Lead added!')
       }
