@@ -375,6 +375,17 @@ export default function LeadsPage() {
     window.open(url, '_blank')
   }
 
+  async function handleDeleteQuote(quoteId: string, leadId: string) {
+    if (!confirm('Delete this quote?')) return
+    try {
+      await deleteQuote.mutateAsync(quoteId)
+      await updateLead.mutateAsync({ id: leadId, budget: undefined })
+      toast.success('Quote deleted')
+    } catch {
+      toast.error('Failed to delete quote')
+    }
+  }
+
   // Create a quote manually (without going through the calculator)
   async function handleCreateQuoteManual() {
     if (!createQuoteForLead) return
@@ -755,7 +766,7 @@ export default function LeadsPage() {
                               <Pencil size={11} />
                             </button>
                             <button
-                              onClick={() => { if (confirm('Delete this quote?')) deleteQuote.mutate(linkedQuote.id) }}
+                              onClick={() => handleDeleteQuote(linkedQuote.id, lead.id)}
                               className="text-cream/25 hover:text-red-400 transition-colors"
                               title="Delete quote"
                             >
