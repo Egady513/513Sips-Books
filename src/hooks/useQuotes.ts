@@ -73,6 +73,20 @@ export function useLinkQuoteToLead() {
   })
 }
 
+export function useDeleteQuote() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from('quotes').delete().eq('id', id)
+      if (error) throw error
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['quotes'] })
+      qc.invalidateQueries({ queryKey: ['leads'] })
+    },
+  })
+}
+
 export function useUpdateQuote() {
   const qc = useQueryClient()
   return useMutation({
