@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useLeads, useCreateLead, useUpdateLead, useDeleteLead } from '../hooks/useLeads'
-import { useRecentQuotes, useLinkQuoteToLead, useUpdateQuote } from '../hooks/useQuotes'
+import { useRecentQuotes, useLinkQuoteToLead, useUpdateQuote, useCreateQuote } from '../hooks/useQuotes'
 import { useCreateEvent } from '../hooks/useEvents'
 import { useCreateAREntry } from '../hooks/useInvoices'
 import type { Quote } from '../hooks/useQuotes'
@@ -12,6 +12,7 @@ import { formatCurrency, formatDate } from '../utils/formatters'
 import {
   Plus, Instagram, Users, Phone, Mail, Calendar, DollarSign,
   Trash2, Edit2, Download, ExternalLink, FileSignature, CheckCircle2, FileText, Pencil, FileDown,
+  AlertCircle, Clock,
 } from 'lucide-react'
 import type { Lead } from '../lib/types'
 import toast from 'react-hot-toast'
@@ -76,7 +77,12 @@ export default function LeadsPage() {
 
   // Quote quick-edit
   const [editingQuoteId, setEditingQuoteId] = useState<string | null>(null)
-  const [quoteEditForm, setQuoteEditForm] = useState({ total: '', deposit: '', balance: '', guest_count: '', hours: '' })
+  const [quoteEditForm, setQuoteEditForm] = useState({ total: '', deposit: '', balance: '', guest_count: '', hours: '', valid_until: '' })
+
+  // Manual quote creation
+  const [showCreateQuote, setShowCreateQuote] = useState(false)
+  const [createQuoteForLead, setCreateQuoteForLead] = useState<Lead | null>(null)
+  const [createQuoteForm, setCreateQuoteForm] = useState({ total: '', deposit: '', balance: '', guest_count: '', hours: '', valid_until: '' })
 
   const { data: leads = [], isLoading } = useLeads(filter === 'all' ? undefined : filter)
   const createLead = useCreateLead()
@@ -87,6 +93,7 @@ export default function LeadsPage() {
   const { data: recentQuotes = [] } = useRecentQuotes()
   const linkQuote = useLinkQuoteToLead()
   const updateQuote = useUpdateQuote()
+  const createQuote = useCreateQuote()
 
   const allLeads = useLeads().data || []
   const stats = {
@@ -380,6 +387,7 @@ export default function LeadsPage() {
       balance: String(quote.balance),
       guest_count: String(quote.guest_count ?? ''),
       hours: String(quote.hours ?? ''),
+      valid_until: quote.valid_until ?? '',
     })
   }
 
@@ -395,6 +403,7 @@ export default function LeadsPage() {
         balance,
         guest_count: parseInt(quoteEditForm.guest_count) || undefined,
         hours: parseFloat(quoteEditForm.hours) || undefined,
+        valid_until: quoteEditForm.valid_until || undefined,
       })
       // Update lead budget to match new quote total
       const lead = leads.find(l => recentQuotes.find(q => q.id === quoteId && q.lead_id === l.id))
@@ -403,6 +412,38 @@ export default function LeadsPage() {
       setEditingQuoteId(null)
     } catch {
       toast.error('Failed to update quote')
+    }
+  }
+
+  // Create a quote manually (without going through the calculator)
+  async function handleCreateQuoteManual() {
+    if (!createQuoteForLead) return
+    const total = parseFloat(createQuoteForm.total) || 0
+    const deposit = parseFloat(createQuoteForm.deposit) || Math.round(total * 0.5)
+    const balance = parseFloat(createQuoteForm.balance) || (total - deposit)
+    try {
+      const newQuote = await createQuote.mutateAsync({
+        lead_id: createQuoteForLead.id,
+        total,
+        deposit,
+        balance,
+        guest_count: parseInt(createQuoteForm.guest_count) || undefined,
+        hours: parseFloat(createQuoteForm.hours) || undefined,
+        valid_until: createQuoteForm.valid_until || undefined,
+        status: 'sent',
+      })
+      // Sync lead budget and advance status to quoted
+      await updateLead.mutateAsync({
+        id: createQuoteForLead.id,
+        budget: total,
+        ...(createQuoteForLead.status === 'new' ? { status: 'quoted' } : {}),
+      })
+      toast.success(`Quote created — ${newQuote.id.slice(0, 8)}`)
+      setShowCreateQuote(false)
+      setCreateQuoteForLead(null)
+      setCreateQuoteForm({ total: '', deposit: '', balance: '', guest_count: '', hours: '', valid_until: '' })
+    } catch {
+      toast.error('Failed to create quote')
     }
   }
 
@@ -462,7 +503,7 @@ export default function LeadsPage() {
   <div class="tagline">Mobile Craft Bartending · Cincinnati, OH</div>
 </div>
 <div class="doc-title">Service Quote</div>
-<div class="doc-date">Prepared ${today} · Valid for 30 days</div>
+<div class="doc-date">Prepared ${today}${quote.valid_until ? ` · <strong style="color:#c0392b">Valid until ${new Date(quote.valid_until + 'T12:00:00').toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</strong>` : ' · Valid for 30 days'}</div>
 
 <div class="section">
   <div class="section-title">Client Information</div>
@@ -511,7 +552,10 @@ export default function LeadsPage() {
   • 513 Sips provides fully insured, dry-hire mobile bartending services.<br>
   • Client is responsible for purchasing all alcohol and mixers per the agreed shopping list.<br>
   • Cancellations within 14 days of the event date may forfeit the full deposit.<br>
-  • This quote is valid for 30 days from the date above.
+  ${quote.valid_until
+    ? `• This quote expires on <strong>${new Date(quote.valid_until + 'T12:00:00').toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</strong>. Pricing is not guaranteed after this date.`
+    : '• This quote is valid for 30 days from the date above.'
+  }
 </div>
 
 <div class="sig-block">
@@ -710,15 +754,16 @@ export default function LeadsPage() {
                             </div>
                           ))}
                         </div>
-                        <div className="grid grid-cols-2 gap-2">
+                        <div className="grid grid-cols-3 gap-2">
                           {[
-                            { key: 'guest_count', label: 'Guests' },
-                            { key: 'hours', label: 'Hours' },
-                          ].map(({ key, label }) => (
+                            { key: 'guest_count', label: 'Guests', type: 'number' },
+                            { key: 'hours', label: 'Hours', type: 'number' },
+                            { key: 'valid_until', label: 'Valid Until', type: 'date' },
+                          ].map(({ key, label, type }) => (
                             <div key={key}>
                               <label className="text-xs text-cream/40 block mb-0.5">{label}</label>
                               <input
-                                type="number"
+                                type={type}
                                 className="w-full text-xs bg-navy-dark border border-white/10 rounded px-2 py-1 text-cream focus:outline-none focus:border-gold/50"
                                 value={quoteEditForm[key as keyof typeof quoteEditForm]}
                                 onChange={e => setQuoteEditForm(f => ({ ...f, [key]: e.target.value }))}
@@ -738,50 +783,71 @@ export default function LeadsPage() {
                         </div>
                       </div>
                     ) : (
-                      <div className="flex items-center justify-between gap-2">
-                        <div className="min-w-0">
-                          <div className="flex items-center gap-3 text-xs">
-                            <span className="text-gold font-semibold">{formatCurrency(linkedQuote.total)}</span>
-                            <span className="text-cream/40">·</span>
-                            <span className="text-cream/50">Dep: {formatCurrency(linkedQuote.deposit)}</span>
-                            <span className="text-cream/40">·</span>
-                            <span className="text-cream/50">Bal: {formatCurrency(linkedQuote.balance)}</span>
-                          </div>
-                          {(linkedQuote.guest_count || linkedQuote.hours || linkedQuote.bartenders) && (
-                            <div className="text-xs text-cream/35 mt-0.5">
-                              {[
-                                linkedQuote.guest_count && `${linkedQuote.guest_count} guests`,
-                                linkedQuote.hours && `${linkedQuote.hours}h`,
-                                linkedQuote.bartenders && `${linkedQuote.bartenders} bar staff`,
-                              ].filter(Boolean).join(' · ')}
+                      (() => {
+                        const today = new Date().toISOString().split('T')[0]
+                        const isExpired = linkedQuote.valid_until && linkedQuote.valid_until < today
+                        const expiresSoon = linkedQuote.valid_until && !isExpired &&
+                          (new Date(linkedQuote.valid_until).getTime() - Date.now()) < 7 * 24 * 60 * 60 * 1000
+                        return (
+                          <div className="flex items-center justify-between gap-2">
+                            <div className="min-w-0">
+                              <div className="flex items-center gap-3 text-xs">
+                                <span className="text-gold font-semibold">{formatCurrency(linkedQuote.total)}</span>
+                                <span className="text-cream/40">·</span>
+                                <span className="text-cream/50">Dep: {formatCurrency(linkedQuote.deposit)}</span>
+                                <span className="text-cream/40">·</span>
+                                <span className="text-cream/50">Bal: {formatCurrency(linkedQuote.balance)}</span>
+                              </div>
+                              {(linkedQuote.guest_count || linkedQuote.hours || linkedQuote.bartenders) && (
+                                <div className="text-xs text-cream/35 mt-0.5">
+                                  {[
+                                    linkedQuote.guest_count && `${linkedQuote.guest_count} guests`,
+                                    linkedQuote.hours && `${linkedQuote.hours}h`,
+                                    linkedQuote.bartenders && `${linkedQuote.bartenders} bar staff`,
+                                  ].filter(Boolean).join(' · ')}
+                                </div>
+                              )}
+                              {/* Expiration status */}
+                              {linkedQuote.valid_until && (
+                                <div className={`flex items-center gap-1 text-xs mt-1 ${
+                                  isExpired ? 'text-danger' : expiresSoon ? 'text-warning' : 'text-cream/40'
+                                }`}>
+                                  {isExpired
+                                    ? <><AlertCircle size={10} /> Expired {formatDate(linkedQuote.valid_until)}</>
+                                    : expiresSoon
+                                    ? <><Clock size={10} /> Expires {formatDate(linkedQuote.valid_until)} — soon!</>
+                                    : <><Clock size={10} /> Valid until {formatDate(linkedQuote.valid_until)}</>
+                                  }
+                                </div>
+                              )}
                             </div>
-                          )}
-                        </div>
-                        <div className="flex items-center gap-1.5 shrink-0">
-                          <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${
-                            linkedQuote.status === 'accepted' ? 'bg-green-500/20 text-green-300' :
-                            linkedQuote.status === 'sent'     ? 'bg-blue-500/20 text-blue-300' :
-                            linkedQuote.status === 'declined' ? 'bg-red-500/20 text-red-400' :
-                                                                'bg-white/5 text-cream/40'
-                          }`}>
-                            {linkedQuote.status}
-                          </span>
-                          <button
-                            onClick={() => handleDownloadQuotePDF(lead, linkedQuote)}
-                            className="text-cream/25 hover:text-gold transition-colors"
-                            title="Download quote as PDF"
-                          >
-                            <FileDown size={11} />
-                          </button>
-                          <button
-                            onClick={() => openQuoteEdit(linkedQuote)}
-                            className="text-cream/25 hover:text-gold transition-colors"
-                            title="Edit quote numbers"
-                          >
-                            <Pencil size={11} />
-                          </button>
-                        </div>
-                      </div>
+                            <div className="flex items-center gap-1.5 shrink-0">
+                              <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${
+                                linkedQuote.status === 'accepted' ? 'bg-green-500/20 text-green-300' :
+                                linkedQuote.status === 'sent'     ? 'bg-blue-500/20 text-blue-300' :
+                                linkedQuote.status === 'declined' ? 'bg-red-500/20 text-red-400' :
+                                                                    'bg-white/5 text-cream/40'
+                              }`}>
+                                {linkedQuote.status}
+                              </span>
+                              <button
+                                onClick={() => handleDownloadQuotePDF(lead, linkedQuote)}
+                                className="text-cream/25 hover:text-gold transition-colors"
+                                title="Download quote as PDF"
+                              >
+                                <FileDown size={11} />
+                              </button>
+                              <button
+                                onClick={() => openQuoteEdit(linkedQuote)}
+                                className="text-cream/25 hover:text-gold transition-colors"
+                                title="Edit quote numbers"
+                              >
+                                <Pencil size={11} />
+                              </button>
+                            </div>
+                          </div>
+                        )
+                      })()
                     )}
                   </div>
                 )}
@@ -798,6 +864,27 @@ export default function LeadsPage() {
                     ))}
                   </select>
                   <div className="flex gap-1">
+                    {/* Create Quote manually (no calculator needed) — shown when no quote linked */}
+                    {!linkedQuote && (
+                      <button
+                        onClick={() => {
+                          setCreateQuoteForLead(lead)
+                          setCreateQuoteForm({
+                            total: String(lead.budget || ''),
+                            deposit: lead.budget ? String(Math.round(lead.budget * 0.5)) : '',
+                            balance: lead.budget ? String(lead.budget - Math.round(lead.budget * 0.5)) : '',
+                            guest_count: String(lead.guest_count || ''),
+                            hours: '',
+                            valid_until: '',
+                          })
+                          setShowCreateQuote(true)
+                        }}
+                        className="text-cream/40 hover:text-gold transition-colors p-1.5 rounded"
+                        title="Create quote (manual entry)"
+                      >
+                        <Plus size={15} />
+                      </button>
+                    )}
                     {/* Link Quote from Calculator */}
                     <button
                       onClick={() => { setImportTargetLead(lead); setShowQuoteImport(true) }}
@@ -1029,6 +1116,102 @@ export default function LeadsPage() {
             >
               <ExternalLink size={11} /> Open Calculator to create a new quote
             </a>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Create Quote Modal — manual entry without calculator */}
+      <Modal
+        open={showCreateQuote}
+        onClose={() => { setShowCreateQuote(false); setCreateQuoteForLead(null) }}
+        title={`Create Quote — ${createQuoteForLead?.name || ''}`}
+      >
+        <div className="space-y-4">
+          <p className="text-xs text-cream/50 bg-gold/5 border border-gold/15 rounded-lg px-3 py-2">
+            Enter the numbers you've already quoted. You can edit these anytime from the lead card.
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div>
+              <label className="block text-xs text-cream/50 mb-1">Total ($) *</label>
+              <input
+                type="number" step="0.01" placeholder="0.00"
+                value={createQuoteForm.total}
+                onChange={e => {
+                  const total = parseFloat(e.target.value) || 0
+                  const dep = Math.round(total * 0.5)
+                  setCreateQuoteForm(f => ({ ...f, total: e.target.value, deposit: String(dep), balance: String(total - dep) }))
+                }}
+                className="w-full bg-navy-lighter border border-gold-dim rounded-lg px-3 py-2 text-cream text-sm"
+              />
+            </div>
+            <div>
+              <label className="block text-xs text-cream/50 mb-1">Deposit ($)</label>
+              <input
+                type="number" step="0.01" placeholder="auto 50%"
+                value={createQuoteForm.deposit}
+                onChange={e => setCreateQuoteForm(f => ({ ...f, deposit: e.target.value, balance: String((parseFloat(f.total) || 0) - (parseFloat(e.target.value) || 0)) }))}
+                className="w-full bg-navy-lighter border border-gold-dim rounded-lg px-3 py-2 text-cream text-sm"
+              />
+            </div>
+            <div>
+              <label className="block text-xs text-cream/50 mb-1">Balance ($)</label>
+              <input
+                type="number" step="0.01" placeholder="auto"
+                value={createQuoteForm.balance}
+                onChange={e => setCreateQuoteForm(f => ({ ...f, balance: e.target.value }))}
+                className="w-full bg-navy-lighter border border-gold-dim rounded-lg px-3 py-2 text-cream text-sm"
+              />
+            </div>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div>
+              <label className="block text-xs text-cream/50 mb-1">Guest Count</label>
+              <input
+                type="number" placeholder={String(createQuoteForLead?.guest_count || '')}
+                value={createQuoteForm.guest_count}
+                onChange={e => setCreateQuoteForm(f => ({ ...f, guest_count: e.target.value }))}
+                className="w-full bg-navy-lighter border border-gold-dim rounded-lg px-3 py-2 text-cream text-sm"
+              />
+            </div>
+            <div>
+              <label className="block text-xs text-cream/50 mb-1">Service Hours</label>
+              <input
+                type="number" step="0.5" placeholder="4"
+                value={createQuoteForm.hours}
+                onChange={e => setCreateQuoteForm(f => ({ ...f, hours: e.target.value }))}
+                className="w-full bg-navy-lighter border border-gold-dim rounded-lg px-3 py-2 text-cream text-sm"
+              />
+            </div>
+            <div>
+              <label className="block text-xs text-cream/50 mb-1">
+                Valid Until
+                <span className="ml-1 text-warning/70">(expiration)</span>
+              </label>
+              <input
+                type="date"
+                value={createQuoteForm.valid_until}
+                onChange={e => setCreateQuoteForm(f => ({ ...f, valid_until: e.target.value }))}
+                className="w-full bg-navy-lighter border border-gold-dim rounded-lg px-3 py-2 text-cream text-sm"
+              />
+            </div>
+          </div>
+          {createQuoteForm.valid_until && (
+            <p className="text-xs text-warning/70 flex items-center gap-1.5">
+              <Clock size={12} />
+              Quote will show as expired after {formatDate(createQuoteForm.valid_until)}
+            </p>
+          )}
+          <div className="flex gap-3 pt-2">
+            <Button
+              className="flex-1"
+              onClick={handleCreateQuoteManual}
+              disabled={!createQuoteForm.total || parseFloat(createQuoteForm.total) <= 0}
+            >
+              Save Quote
+            </Button>
+            <Button variant="secondary" onClick={() => { setShowCreateQuote(false); setCreateQuoteForLead(null) }}>
+              Cancel
+            </Button>
           </div>
         </div>
       </Modal>

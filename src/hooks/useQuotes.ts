@@ -14,6 +14,7 @@ export interface Quote {
   breakdown?: any
   promo_code?: string
   addon_notes?: string
+  valid_until?: string   // YYYY-MM-DD — quote expiration date
   status: 'draft' | 'sent' | 'accepted' | 'declined'
   created_at: string
 }
@@ -24,11 +25,30 @@ export function useRecentQuotes() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('quotes')
-        .select('id, lead_id, total, deposit, balance, guest_count, hours, bartenders, event_date, breakdown, promo_code, addon_notes, status, created_at')
+        .select('id, lead_id, total, deposit, balance, guest_count, hours, bartenders, event_date, breakdown, promo_code, addon_notes, valid_until, status, created_at')
         .order('created_at', { ascending: false })
         .limit(50)
       if (error) throw error
       return data as Quote[]
+    },
+  })
+}
+
+export function useCreateQuote() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (quote: Omit<Quote, 'id' | 'created_at'>) => {
+      const { data, error } = await supabase
+        .from('quotes')
+        .insert([quote])
+        .select()
+        .single()
+      if (error) throw error
+      return data as Quote
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['quotes'] })
+      qc.invalidateQueries({ queryKey: ['leads'] })
     },
   })
 }
