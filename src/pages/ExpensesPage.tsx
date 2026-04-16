@@ -7,7 +7,7 @@ import Modal from '../components/ui/Modal'
 import { formatCurrency, formatDate, getCurrentYear } from '../utils/formatters'
 import { EXPENSE_CATEGORIES, MILEAGE_RATES } from '../lib/constants'
 import { getScheduleCLine } from '../utils/taxCalc'
-import { Plus, Receipt, Car, Trash2, Paperclip, ExternalLink, Edit2 } from 'lucide-react'
+import { Plus, Receipt, Car, Trash2, Paperclip, Edit2 } from 'lucide-react'
 import type { Expense } from '../lib/types'
 import toast from 'react-hot-toast'
 
@@ -180,16 +180,17 @@ export default function ExpensesPage() {
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="text-lg font-bold text-danger">{formatCurrency(exp.amount)}</span>
-                    {/* Sprint 5: Receipt upload */}
+                    {/* Receipt: show green badge if attached, dim paperclip if not */}
                     {exp.receipt_url ? (
                       <a
                         href={exp.receipt_url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-gold/60 hover:text-gold transition-colors p-1"
+                        className="flex items-center gap-1 text-xs px-2 py-0.5 bg-success/15 text-success rounded hover:bg-success/25 transition-colors"
                         title="View receipt"
                       >
-                        <ExternalLink size={14} />
+                        <Paperclip size={11} />
+                        Receipt
                       </a>
                     ) : (
                       <>
@@ -205,10 +206,11 @@ export default function ExpensesPage() {
                         />
                         <button
                           onClick={() => fileInputRefs.current[exp.id]?.click()}
-                          className="text-cream/30 hover:text-gold transition-colors p-1"
-                          title="Upload receipt"
+                          className="flex items-center gap-1 text-xs px-2 py-0.5 bg-white/5 text-cream/30 rounded hover:bg-gold/10 hover:text-gold/70 transition-colors"
+                          title="Attach receipt"
                         >
-                          <Paperclip size={14} />
+                          <Paperclip size={11} />
+                          Receipt
                         </button>
                       </>
                     )}
@@ -276,6 +278,7 @@ export default function ExpensesPage() {
         <Modal
           open={showExpenseForm || !!editExpense}
           onClose={() => { setShowExpenseForm(false); setEditExpense(null) }}
+          preventBackdropClose
           title={editExpense ? 'Edit Expense' : 'New Expense'}
           wide
         >
@@ -343,7 +346,7 @@ export default function ExpensesPage() {
       )}
 
       {/* Mileage Modal */}
-      <Modal open={showMileageForm} onClose={() => setShowMileageForm(false)} title="Log Mileage">
+      <Modal open={showMileageForm} onClose={() => setShowMileageForm(false)} title="Log Mileage" preventBackdropClose>
         <form onSubmit={handleCreateMileage} className="space-y-4">
           <div>
             <label className="block text-xs text-cream/50 mb-1">Trip Date *</label>
