@@ -54,6 +54,26 @@ export function useCreateBill() {
   })
 }
 
+export function useUpdateBill() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ id, ...updates }: Partial<APEntry> & { id: string }) => {
+      const { data, error } = await supabase
+        .from('ap_entries')
+        .update(updates)
+        .eq('id', id)
+        .select()
+        .single()
+      if (error) throw error
+      return data
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['ap_entries'] })
+      qc.invalidateQueries({ queryKey: ['dashboard'] })
+    },
+  })
+}
+
 export function useMarkBillPaid() {
   const qc = useQueryClient()
   return useMutation({

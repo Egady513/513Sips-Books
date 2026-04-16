@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useBills, useCreateBill, useMarkBillPaid, useDeleteBill, useVendors, useCreateVendor } from '../hooks/useBills'
+import { useBills, useCreateBill, useUpdateBill, useMarkBillPaid, useDeleteBill, useVendors, useCreateVendor } from '../hooks/useBills'
 import { useEvents } from '../hooks/useEvents'
 import { Card, StatCard } from '../components/ui/Card'
 import Button from '../components/ui/Button'
@@ -8,20 +8,44 @@ import Modal from '../components/ui/Modal'
 import { formatCurrency, formatDate, daysUntil } from '../utils/formatters'
 import { EXPENSE_CATEGORIES } from '../lib/constants'
 import { getScheduleCLine } from '../utils/taxCalc'
-import { Plus, DollarSign, UserPlus, Trash2 } from 'lucide-react'
+import { Plus, DollarSign, UserPlus, Trash2, Pencil } from 'lucide-react'
+import type { APEntry } from '../lib/types'
+import toast from 'react-hot-toast'
 
 export default function APPage() {
   const [filter, setFilter] = useState('all')
   const [showForm, setShowForm] = useState(false)
   const [reimbMode, setReimbMode] = useState(false)
   const [showVendorForm, setShowVendorForm] = useState(false)
+  const [editingBill, setEditingBill] = useState<APEntry | null>(null)
   const { data: bills, isLoading } = useBills(filter === 'owner_draw' ? undefined : filter)
   const { data: vendors } = useVendors()
   const { data: events } = useEvents()
   const createBill = useCreateBill()
+  const updateBill = useUpdateBill()
   const markPaid = useMarkBillPaid()
   const deleteBill = useDeleteBill()
   const createVendor = useCreateVendor()
+
+  async function handleUpdateBill(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault()
+    if (!editingBill) return
+    const fd = new FormData(e.currentTarget)
+    try {
+      await updateBill.mutateAsync({
+        id: editingBill.id,
+        vendor_id: (fd.get('vendor_id') as string) || undefined,
+        event_id: (fd.get('event_id') as string) || undefined,
+        description: fd.get('description') as string,
+        amount: parseFloat(fd.get('amount') as string),
+        due_date: fd.get('due_date') as string,
+        category: (fd.get('category') as string) || undefined,
+        is_owner_draw: fd.get('is_owner_draw') === 'on',
+      })
+      toast.success('Bill updated')
+      setEditingBill(null)
+    } catch { toast.error('Failed to update bill') }
+  }
 
   const pending = bills?.filter(b => b.status === 'pending') || []
   const totalOutstanding = pending.reduce((s, b) => s + Number(b.amount), 0)
@@ -146,6 +170,13 @@ export default function APPage() {
                       </Button>
                     )}
                     <button
+                      onClick={() => setEditingBill(bill)}
+                      className="text-cream/30 hover:text-gold transition-colors p-1.5 rounded"
+                      title="Edit bill"
+                    >
+                      <Pencil size={14} />
+                    </button>
+                    <button
                       onClick={() => { if (confirm('Delete this bill?')) deleteBill.mutate(bill.id) }}
                       className="text-cream/30 hover:text-red-400 transition-colors p-1.5 rounded"
                       title="Delete bill"
@@ -219,6 +250,63 @@ export default function APPage() {
             <Button type="button" variant="secondary" onClick={() => setShowForm(false)}>Cancel</Button>
           </div>
         </form>
+      </Modal>
+
+      {/* Edit Bill Modal */}
+      <Modal open={!!editingBill} onClose={() => setEditingBill(null)} title="Edit Bill" wide preventBackdropClose>
+        {editingBill && (
+          <form onSubmit={handleUpdateBill} className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs text-cream/50 mb-1">Vendor</label>
+                <select name="vendor_id" defaultValue={editingBill.vendor_id || ''}
+                  className="w-full bg-navy-lighter border border-gold-dim rounded-lg px-3 py-2 text-cream text-sm">
+                  <option value="">Select vendor...</option>
+                  {vendors?.map(v => <option key={v.id} value={v.id}>{v.name}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs text-cream/50 mb-1">Link to Event</label>
+                <select name="event_id" defaultValue={editingBill.event_id || ''}
+                  className="w-full bg-navy-lighter border border-gold-dim rounded-lg px-3 py-2 text-cream text-sm">
+                  <option value="">None</option>
+                  {events?.map(ev => <option key={ev.id} value={ev.id}>{ev.client_name} - {formatDate(ev.event_date)}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs text-cream/50 mb-1">Description *</label>
+                <input name="description" required defaultValue={editingBill.description}
+                  className="w-full bg-navy-lighter border border-gold-dim rounded-lg px-3 py-2 text-cream text-sm" />
+              </div>
+              <div>
+                <label className="block text-xs text-cream/50 mb-1">Amount ($) *</label>
+                <input name="amount" type="number" step="0.01" required defaultValue={editingBill.amount}
+                  className="w-full bg-navy-lighter border border-gold-dim rounded-lg px-3 py-2 text-cream text-sm" />
+              </div>
+              <div>
+                <label className="block text-xs text-cream/50 mb-1">Due Date *</label>
+                <input name="due_date" type="date" required defaultValue={editingBill.due_date}
+                  className="w-full bg-navy-lighter border border-gold-dim rounded-lg px-3 py-2 text-cream text-sm" />
+              </div>
+              <div>
+                <label className="block text-xs text-cream/50 mb-1">Category</label>
+                <select name="category" defaultValue={editingBill.category || ''}
+                  className="w-full bg-navy-lighter border border-gold-dim rounded-lg px-3 py-2 text-cream text-sm">
+                  {EXPENSE_CATEGORIES.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
+                </select>
+              </div>
+            </div>
+            <label className="flex items-center gap-2 text-sm text-cream/60 cursor-pointer">
+              <input type="checkbox" name="is_owner_draw" className="w-4 h-4 accent-gold"
+                defaultChecked={editingBill.is_owner_draw} />
+              Exclude from P&L (owner draw / reimbursement — won't affect net profit)
+            </label>
+            <div className="flex gap-3 pt-2">
+              <Button type="submit" className="flex-1">Save Changes</Button>
+              <Button type="button" variant="secondary" onClick={() => setEditingBill(null)}>Cancel</Button>
+            </div>
+          </form>
+        )}
       </Modal>
 
       {/* New Vendor Modal */}
