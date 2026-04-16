@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { useEvent, useUpdateEvent, useUploadContract } from '../hooks/useEvents'
 import { useRecordPayment } from '../hooks/useInvoices'
-import { useEventExpenses, useEventMileage } from '../hooks/useExpenses'
+import { useEventExpenses, useEventMileage, useUpdateExpense, useDeleteExpense, useCreateExpense, useDeleteMileage, useCreateMileage } from '../hooks/useExpenses'
 import { useEventBills } from '../hooks/useBills'
 import { Card, StatCard } from '../components/ui/Card'
 import Button from '../components/ui/Button'
@@ -12,8 +12,9 @@ import { formatCurrency, formatDate } from '../utils/formatters'
 import { EVENT_STATUSES, PAYMENT_METHODS, EXPENSE_CATEGORIES } from '../lib/constants'
 import {
   ArrowLeft, FileText, Upload, DollarSign, Car, Receipt,
-  CheckCircle2, Clock, Phone, Mail,
+  CheckCircle2, Clock, Phone, Mail, Pencil, Trash2, Plus,
 } from 'lucide-react'
+import type { Expense } from '../lib/types'
 import toast from 'react-hot-toast'
 
 type Tab = 'overview' | 'payments' | 'bills' | 'expenses' | 'mileage'
@@ -27,6 +28,17 @@ export default function EventDetailPage() {
   const [payMethod, setPayMethod] = useState('')
   const [payNotes, setPayNotes] = useState('')
 
+  // Expense edit state
+  const [editingExpense, setEditingExpense] = useState<Expense | null>(null)
+  const [expenseForm, setExpenseForm] = useState({
+    description: '', amount: '', category: '', expense_date: '',
+    vendor: '', is_tax_deductible: true, notes: '',
+  })
+  const [showNewExpense, setShowNewExpense] = useState(false)
+
+  // Mileage add state
+  const [showNewMileage, setShowNewMileage] = useState(false)
+
   const { data: event, isLoading } = useEvent(id)
   const { data: expenses = [] } = useEventExpenses(id)
   const { data: mileage = [] } = useEventMileage(id)
@@ -34,6 +46,81 @@ export default function EventDetailPage() {
   const updateEvent = useUpdateEvent()
   const uploadContract = useUploadContract()
   const recordPayment = useRecordPayment()
+  const updateExpense = useUpdateExpense()
+  const deleteExpense = useDeleteExpense()
+  const createExpense = useCreateExpense()
+  const deleteMileage = useDeleteMileage()
+  const createMileage = useCreateMileage()
+
+  function openExpenseEdit(exp: Expense) {
+    setEditingExpense(exp)
+    setExpenseForm({
+      description: exp.description,
+      amount: String(exp.amount),
+      category: exp.category,
+      expense_date: exp.expense_date,
+      vendor: exp.vendor || '',
+      is_tax_deductible: exp.is_tax_deductible,
+      notes: exp.notes || '',
+    })
+  }
+
+  async function handleSaveExpense() {
+    if (!editingExpense) return
+    try {
+      await updateExpense.mutateAsync({
+        id: editingExpense.id,
+        description: expenseForm.description,
+        amount: parseFloat(expenseForm.amount),
+        category: expenseForm.category,
+        expense_date: expenseForm.expense_date,
+        vendor: expenseForm.vendor || undefined,
+        is_tax_deductible: expenseForm.is_tax_deductible,
+        notes: expenseForm.notes || undefined,
+      })
+      toast.success('Expense updated')
+      setEditingExpense(null)
+    } catch { toast.error('Failed to update expense') }
+  }
+
+  async function handleCreateExpenseHere(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault()
+    const fd = new FormData(e.currentTarget)
+    try {
+      await createExpense.mutateAsync({
+        event_id: id,
+        description: fd.get('description') as string,
+        amount: parseFloat(fd.get('amount') as string),
+        category: fd.get('category') as string,
+        expense_date: fd.get('expense_date') as string,
+        vendor: (fd.get('vendor') as string) || undefined,
+        is_tax_deductible: fd.get('is_tax_deductible') === 'on',
+        notes: (fd.get('notes') as string) || undefined,
+      })
+      toast.success('Expense added')
+      setShowNewExpense(false)
+    } catch { toast.error('Failed to add expense') }
+  }
+
+  async function handleCreateMileageHere(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault()
+    const fd = new FormData(e.currentTarget)
+    const miles = parseFloat(fd.get('miles') as string)
+    const rate = 0.70
+    try {
+      await createMileage.mutateAsync({
+        event_id: id,
+        trip_date: fd.get('trip_date') as string,
+        from_location: (fd.get('from_location') as string) || undefined,
+        to_location: (fd.get('to_location') as string) || undefined,
+        miles,
+        purpose: (fd.get('purpose') as string) || undefined,
+        rate_per_mile: rate,
+      })
+      toast.success('Mileage logged')
+      setShowNewMileage(false)
+    } catch { toast.error('Failed to log mileage') }
+  }
 
   if (isLoading) return <div className="text-cream/50 text-center py-20">Loading event...</div>
   if (!event) return (
@@ -383,12 +470,14 @@ export default function EventDetailPage() {
       {/* ── EXPENSES TAB ── */}
       {tab === 'expenses' && (
         <div className="space-y-3">
+          <div className="flex justify-end">
+            <Button size="sm" onClick={() => setShowNewExpense(true)}>
+              <Plus size={14} /> New Expense
+            </Button>
+          </div>
           {expenses.length === 0 ? (
             <Card className="text-center py-10 text-cream/50">
-              No expenses linked to this event.
-              <div className="mt-2">
-                <Link to="/expenses" className="text-gold/70 hover:text-gold text-sm">Log an expense and link it here →</Link>
-              </div>
+              No expenses linked to this event yet.
             </Card>
           ) : (
             <>
@@ -396,13 +485,13 @@ export default function EventDetailPage() {
                 <Card key={exp.id}>
                   <div className="flex items-center justify-between gap-3">
                     <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
+                      <div className="flex items-center gap-2 mb-1 flex-wrap">
                         <span className="font-medium text-cream">{exp.description}</span>
                         {exp.is_tax_deductible && (
                           <span className="text-xs px-1.5 py-0.5 bg-success/20 text-success rounded">✓ Write-off</span>
                         )}
                       </div>
-                      <div className="text-xs text-cream/40 flex gap-3">
+                      <div className="text-xs text-cream/40 flex flex-wrap gap-3">
                         <span>{formatDate(exp.expense_date)}</span>
                         {exp.vendor && <span>· {exp.vendor}</span>}
                         {exp.category && (
@@ -415,10 +504,19 @@ export default function EventDetailPage() {
                       <span className="text-lg font-bold text-danger">{formatCurrency(exp.amount)}</span>
                       {exp.receipt_url && (
                         <a href={exp.receipt_url} target="_blank" rel="noreferrer"
-                          className="text-gold/50 hover:text-gold p-1" title="View receipt">
-                          <Receipt size={14} />
+                          className="flex items-center gap-1 text-xs px-1.5 py-0.5 bg-success/15 text-success rounded hover:bg-success/25"
+                          title="View receipt">
+                          <Receipt size={11} /> Receipt
                         </a>
                       )}
+                      <button onClick={() => openExpenseEdit(exp)}
+                        className="text-cream/30 hover:text-gold transition-colors p-1" title="Edit">
+                        <Pencil size={13} />
+                      </button>
+                      <button onClick={() => { if (confirm('Delete this expense?')) deleteExpense.mutate(exp.id) }}
+                        className="text-cream/30 hover:text-red-400 transition-colors p-1" title="Delete">
+                        <Trash2 size={13} />
+                      </button>
                     </div>
                   </div>
                 </Card>
@@ -437,12 +535,14 @@ export default function EventDetailPage() {
       {/* ── MILEAGE TAB ── */}
       {tab === 'mileage' && (
         <div className="space-y-3">
+          <div className="flex justify-end">
+            <Button size="sm" onClick={() => setShowNewMileage(true)}>
+              <Plus size={14} /> Log Mileage
+            </Button>
+          </div>
           {mileage.length === 0 ? (
             <Card className="text-center py-10 text-cream/50">
-              No mileage logged for this event.
-              <div className="mt-2">
-                <Link to="/expenses" className="text-gold/70 hover:text-gold text-sm">Log mileage and link it here →</Link>
-              </div>
+              No mileage logged for this event yet.
             </Card>
           ) : (
             <>
@@ -462,7 +562,13 @@ export default function EventDetailPage() {
                         {m.purpose && <span>· {m.purpose}</span>}
                       </div>
                     </div>
-                    <span className="text-lg font-bold text-success">{formatCurrency(m.deduction_amount)}</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-lg font-bold text-success">{formatCurrency(m.deduction_amount)}</span>
+                      <button onClick={() => { if (confirm('Delete this mileage entry?')) deleteMileage.mutate(m.id) }}
+                        className="text-cream/30 hover:text-red-400 transition-colors p-1" title="Delete">
+                        <Trash2 size={13} />
+                      </button>
+                    </div>
                   </div>
                 </Card>
               ))}
@@ -476,6 +582,123 @@ export default function EventDetailPage() {
           )}
         </div>
       )}
+
+      {/* ── Edit Expense Modal ── */}
+      <Modal open={!!editingExpense} onClose={() => setEditingExpense(null)} title="Edit Expense" preventBackdropClose>
+        <div className="space-y-3">
+          <div className="grid grid-cols-2 gap-3">
+            <div className="col-span-2">
+              <label className="block text-xs text-cream/50 mb-1">Description *</label>
+              <input value={expenseForm.description} onChange={e => setExpenseForm(f => ({ ...f, description: e.target.value }))}
+                className="w-full bg-navy-lighter border border-gold-dim rounded-lg px-3 py-2 text-cream text-sm" />
+            </div>
+            <div>
+              <label className="block text-xs text-cream/50 mb-1">Amount ($) *</label>
+              <input type="number" step="0.01" value={expenseForm.amount} onChange={e => setExpenseForm(f => ({ ...f, amount: e.target.value }))}
+                className="w-full bg-navy-lighter border border-gold-dim rounded-lg px-3 py-2 text-cream text-sm" />
+            </div>
+            <div>
+              <label className="block text-xs text-cream/50 mb-1">Date *</label>
+              <input type="date" value={expenseForm.expense_date} onChange={e => setExpenseForm(f => ({ ...f, expense_date: e.target.value }))}
+                className="w-full bg-navy-lighter border border-gold-dim rounded-lg px-3 py-2 text-cream text-sm" />
+            </div>
+            <div>
+              <label className="block text-xs text-cream/50 mb-1">Category</label>
+              <select value={expenseForm.category} onChange={e => setExpenseForm(f => ({ ...f, category: e.target.value }))}
+                className="w-full bg-navy-lighter border border-gold-dim rounded-lg px-3 py-2 text-cream text-sm">
+                {EXPENSE_CATEGORIES.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs text-cream/50 mb-1">Vendor / Store</label>
+              <input value={expenseForm.vendor} onChange={e => setExpenseForm(f => ({ ...f, vendor: e.target.value }))}
+                className="w-full bg-navy-lighter border border-gold-dim rounded-lg px-3 py-2 text-cream text-sm" />
+            </div>
+          </div>
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input type="checkbox" checked={expenseForm.is_tax_deductible} onChange={e => setExpenseForm(f => ({ ...f, is_tax_deductible: e.target.checked }))}
+              className="w-4 h-4 accent-gold" />
+            <span className="text-sm text-cream/70">Tax write-off (Schedule C)</span>
+          </label>
+          <div className="flex gap-3 pt-2">
+            <Button className="flex-1" onClick={handleSaveExpense}>Save Changes</Button>
+            <Button variant="secondary" onClick={() => setEditingExpense(null)}>Cancel</Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* ── New Expense Modal (from event detail) ── */}
+      <Modal open={showNewExpense} onClose={() => setShowNewExpense(false)} title="New Expense" preventBackdropClose>
+        <form onSubmit={handleCreateExpenseHere} className="space-y-3">
+          <div className="grid grid-cols-2 gap-3">
+            <div className="col-span-2">
+              <label className="block text-xs text-cream/50 mb-1">Description *</label>
+              <input name="description" required className="w-full bg-navy-lighter border border-gold-dim rounded-lg px-3 py-2 text-cream text-sm" />
+            </div>
+            <div>
+              <label className="block text-xs text-cream/50 mb-1">Amount ($) *</label>
+              <input name="amount" type="number" step="0.01" required className="w-full bg-navy-lighter border border-gold-dim rounded-lg px-3 py-2 text-cream text-sm" />
+            </div>
+            <div>
+              <label className="block text-xs text-cream/50 mb-1">Date *</label>
+              <input name="expense_date" type="date" defaultValue={new Date().toISOString().split('T')[0]} required
+                className="w-full bg-navy-lighter border border-gold-dim rounded-lg px-3 py-2 text-cream text-sm" />
+            </div>
+            <div>
+              <label className="block text-xs text-cream/50 mb-1">Category</label>
+              <select name="category" className="w-full bg-navy-lighter border border-gold-dim rounded-lg px-3 py-2 text-cream text-sm">
+                {EXPENSE_CATEGORIES.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs text-cream/50 mb-1">Vendor / Store</label>
+              <input name="vendor" className="w-full bg-navy-lighter border border-gold-dim rounded-lg px-3 py-2 text-cream text-sm" />
+            </div>
+          </div>
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input type="checkbox" name="is_tax_deductible" defaultChecked className="w-4 h-4 accent-gold" />
+            <span className="text-sm text-cream/70">Tax write-off (Schedule C)</span>
+          </label>
+          <div className="flex gap-3 pt-2">
+            <Button type="submit" className="flex-1">Add Expense</Button>
+            <Button type="button" variant="secondary" onClick={() => setShowNewExpense(false)}>Cancel</Button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* ── New Mileage Modal (from event detail) ── */}
+      <Modal open={showNewMileage} onClose={() => setShowNewMileage(false)} title="Log Mileage" preventBackdropClose>
+        <form onSubmit={handleCreateMileageHere} className="space-y-3">
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs text-cream/50 mb-1">Date *</label>
+              <input name="trip_date" type="date" defaultValue={new Date().toISOString().split('T')[0]} required
+                className="w-full bg-navy-lighter border border-gold-dim rounded-lg px-3 py-2 text-cream text-sm" />
+            </div>
+            <div>
+              <label className="block text-xs text-cream/50 mb-1">Miles *</label>
+              <input name="miles" type="number" step="0.1" required className="w-full bg-navy-lighter border border-gold-dim rounded-lg px-3 py-2 text-cream text-sm" />
+            </div>
+            <div>
+              <label className="block text-xs text-cream/50 mb-1">From</label>
+              <input name="from_location" placeholder="Home" className="w-full bg-navy-lighter border border-gold-dim rounded-lg px-3 py-2 text-cream text-sm" />
+            </div>
+            <div>
+              <label className="block text-xs text-cream/50 mb-1">To</label>
+              <input name="to_location" placeholder="Venue / Store" className="w-full bg-navy-lighter border border-gold-dim rounded-lg px-3 py-2 text-cream text-sm" />
+            </div>
+            <div className="col-span-2">
+              <label className="block text-xs text-cream/50 mb-1">Purpose</label>
+              <input name="purpose" placeholder="e.g. Drive to event, supply run" className="w-full bg-navy-lighter border border-gold-dim rounded-lg px-3 py-2 text-cream text-sm" />
+            </div>
+          </div>
+          <p className="text-xs text-cream/30">Rate: $0.70/mile (2025 IRS standard)</p>
+          <div className="flex gap-3 pt-2">
+            <Button type="submit" className="flex-1">Log Mileage</Button>
+            <Button type="button" variant="secondary" onClick={() => setShowNewMileage(false)}>Cancel</Button>
+          </div>
+        </form>
+      </Modal>
 
       {/* Payment Modal */}
       <Modal open={!!payEntry} onClose={() => setPayEntry(null)} title="Record Payment">
