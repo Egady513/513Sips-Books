@@ -364,18 +364,19 @@ export default function LeadsPage() {
       bartenders:          quote.bartenders,
     }
 
-    localStorage.setItem('513sips_contract_data', JSON.stringify(contractData))
-    localStorage.setItem('513sips_quote', JSON.stringify({
+    const quotePayload = {
       total, deposit, balance,
       guestCount: quote.guest_count,
       hours: quote.hours,
       bartenders: quote.bartenders,
       breakdown: quote.breakdown,
       promoCode: quote.promo_code,
-    }))
+    }
+    // Pass data via URL param — localStorage is domain-scoped so cross-origin writes don't work
+    const booksData = encodeURIComponent(JSON.stringify({ contractData, quoteData: quotePayload }))
     // P2: auto-advance quote status to 'sent'
     try { await updateQuote.mutateAsync({ id: quote.id, status: 'sent' }) } catch { /* non-blocking */ }
-    window.open('https://www.513sips.com/tools/contract.html', '_blank')
+    window.open(`https://www.513sips.com/tools/contract.html?booksData=${booksData}`, '_blank')
   }
 
   // Sprint 2: open calculator pre-filled for a lead
