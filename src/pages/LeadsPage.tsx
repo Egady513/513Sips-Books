@@ -12,7 +12,7 @@ import { formatCurrency, formatDate } from '../utils/formatters'
 import {
   Plus, Instagram, Users, Phone, Mail, Calendar, DollarSign,
   Trash2, Edit2, Download, ExternalLink, FileSignature, CheckCircle2, FileText, Pencil, FileDown,
-  AlertCircle, Clock,
+  AlertCircle, Clock, ChevronDown, LayoutGrid, List,
 } from 'lucide-react'
 import type { Lead } from '../lib/types'
 import toast from 'react-hot-toast'
@@ -72,6 +72,15 @@ export default function LeadsPage() {
 
   // Local probability state (tracks slider while dragging before save)
   const [localProb, setLocalProb] = useState<Record<string, number>>({})
+
+  // View mode + collapsible cards
+  const [viewMode, setViewMode] = useState<'card' | 'list'>('card')
+  const [expandedCards, setExpandedCards] = useState<Set<string>>(new Set())
+  const toggleCard = (id: string) => setExpandedCards(prev => {
+    const next = new Set(prev)
+    if (next.has(id)) next.delete(id); else next.add(id)
+    return next
+  })
 
   // Sprint 4: contract validation modal
   const [showContractValidation, setShowContractValidation] = useState(false)
@@ -583,7 +592,19 @@ export default function LeadsPage() {
           <h1 className="text-2xl font-bold text-gold">Leads</h1>
           <p className="text-cream/50 text-sm mt-0.5">Track inquiries from Instagram, referrals & more</p>
         </div>
-        <Button onClick={openNew}><Plus size={16} /> New Lead</Button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setViewMode('card')}
+            className={`p-1.5 rounded transition-colors ${viewMode === 'card' ? 'text-gold bg-gold/10' : 'text-cream/40 hover:text-cream'}`}
+            title="Card view"
+          ><LayoutGrid size={16} /></button>
+          <button
+            onClick={() => setViewMode('list')}
+            className={`p-1.5 rounded transition-colors ${viewMode === 'list' ? 'text-gold bg-gold/10' : 'text-cream/40 hover:text-cream'}`}
+            title="List view"
+          ><List size={16} /></button>
+          <Button onClick={openNew}><Plus size={16} /> New Lead</Button>
+        </div>
       </div>
 
       {/* Stats */}
@@ -620,7 +641,7 @@ export default function LeadsPage() {
         </div>
       </div>
 
-      {/* Lead Cards */}
+      {/* Lead Cards / List */}
       {isLoading ? (
         <p className="text-cream/50 text-center py-10">Loading leads...</p>
       ) : leads.length === 0 ? (
@@ -631,8 +652,9 @@ export default function LeadsPage() {
             <Button className="mt-4" onClick={openNew}><Plus size={16} /> Add Lead</Button>
           </div>
         </Card>
-      ) : (
-        <div className="grid gap-4 md:grid-cols-2">
+      ) : viewMode === 'list' ? (
+        /* ── LIST VIEW ── */
+        <div className="flex flex-col gap-1.5">
           {leads.filter(lead => {
             if (!search.trim()) return true
             const q = search.toLowerCase()
@@ -647,235 +669,235 @@ export default function LeadsPage() {
           }).map(lead => {
             const linkedQuote = recentQuotes.find(q => q.lead_id === lead.id)
             return (
-              <Card key={lead.id} className="hover:border-gold/30 transition-colors">
-                <div className="flex items-start justify-between mb-3">
-                  <div>
-                    <h3 className="font-semibold text-cream text-lg">{lead.name}</h3>
-                    <div className="flex items-center gap-2 mt-1">
-                      <span className="text-lg">{SOURCE_CONFIG[lead.source]?.icon}</span>
-                      <span className="text-xs text-cream/50">{SOURCE_CONFIG[lead.source]?.label}</span>
-                    </div>
+              <div key={lead.id} className="bg-navy-lighter/50 border border-white/5 rounded-lg px-4 py-2.5 flex items-center gap-3 hover:border-gold/20 transition-colors">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-1.5">
+                    <span className="font-medium text-cream text-sm">{lead.name}</span>
+                    <span>{SOURCE_CONFIG[lead.source]?.icon}</span>
+                    {lead.converted_event_id && <CheckCircle2 size={11} className="text-success" />}
                   </div>
-                  <div className="flex flex-col items-end gap-1">
-                    <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${STATUS_CONFIG[lead.status]?.color}`}>
+                  <div className="text-xs text-cream/40 mt-0.5">
+                    {[lead.event_type, lead.event_date && formatDate(lead.event_date), lead.guest_count && `${lead.guest_count} guests`].filter(Boolean).join(' · ') || 'No details yet'}
+                  </div>
+                </div>
+                <div className="shrink-0 text-right w-24 hidden sm:block">
+                  {linkedQuote
+                    ? <div className="text-gold font-semibold text-sm">{formatCurrency(linkedQuote.total)}</div>
+                    : lead.budget
+                    ? <div className="text-cream/40 text-sm">{formatCurrency(lead.budget)}</div>
+                    : <div className="text-cream/20 text-xs">No quote</div>
+                  }
+                  <div className="text-xs text-cream/30">{lead.probability ?? 50}% win</div>
+                </div>
+                <div className="shrink-0">
+                  <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${STATUS_CONFIG[lead.status]?.color}`}>
+                    {STATUS_CONFIG[lead.status]?.label}
+                  </span>
+                </div>
+                <div className="shrink-0 flex items-center gap-0.5">
+                  <button onClick={() => handleCreateQuote(lead)} className="text-cream/40 hover:text-gold p-1.5 rounded" title="Open Calculator"><FileText size={13}/></button>
+                  <button onClick={() => handleGenerateContract(lead)} className="text-cream/40 hover:text-gold p-1.5 rounded" title="Generate Contract"><FileSignature size={13}/></button>
+                  <button onClick={() => openEdit(lead)} className="text-cream/40 hover:text-gold p-1.5 rounded" title="Edit lead"><Edit2 size={13}/></button>
+                  <button onClick={() => handleDelete(lead.id)} className="text-cream/40 hover:text-red-400 p-1.5 rounded" title="Delete"><Trash2 size={13}/></button>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      ) : (
+        /* ── CARD VIEW (collapsible) ── */
+        <div className="grid gap-3 md:grid-cols-2">
+          {leads.filter(lead => {
+            if (!search.trim()) return true
+            const q = search.toLowerCase()
+            return (
+              lead.name.toLowerCase().includes(q) ||
+              lead.email?.toLowerCase().includes(q) ||
+              lead.phone?.includes(q) ||
+              lead.venue_name?.toLowerCase().includes(q) ||
+              lead.notes?.toLowerCase().includes(q) ||
+              lead.event_type?.toLowerCase().includes(q)
+            )
+          }).map(lead => {
+            const linkedQuote = recentQuotes.find(q => q.lead_id === lead.id)
+            const isExpanded = expandedCards.has(lead.id)
+            return (
+              <Card key={lead.id} className="hover:border-gold/30 transition-colors">
+                {/* Clickable header — always visible */}
+                <button
+                  className="w-full text-left flex items-center gap-2"
+                  onClick={() => toggleCard(lead.id)}
+                >
+                  <div className="flex-1 min-w-0 flex items-center gap-2 flex-wrap">
+                    <span className="font-semibold text-cream">{lead.name}</span>
+                    <span>{SOURCE_CONFIG[lead.source]?.icon}</span>
+                    {lead.event_date && <span className="text-xs text-cream/40 hidden sm:inline">{formatDate(lead.event_date)}</span>}
+                    {lead.event_type && <span className="text-xs text-cream/30 hidden sm:inline">{lead.event_type}</span>}
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    {linkedQuote && <span className="text-sm font-semibold text-gold">{formatCurrency(linkedQuote.total)}</span>}
+                    {lead.converted_event_id && <CheckCircle2 size={12} className="text-success" />}
+                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${STATUS_CONFIG[lead.status]?.color}`}>
                       {STATUS_CONFIG[lead.status]?.label}
                     </span>
-                    {lead.converted_event_id && (
-                      <button
-                        onClick={() => navigate(`/events/${lead.converted_event_id}`)}
-                        className="text-xs text-success/70 flex items-center gap-1 hover:text-success transition-colors"
-                        title="View event"
-                      >
-                        <CheckCircle2 size={11} /> View Event →
-                      </button>
-                    )}
+                    <ChevronDown size={14} className={`text-cream/40 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`} />
                   </div>
-                </div>
+                </button>
 
-                {/* Details */}
-                <div className="grid grid-cols-2 gap-2 text-sm text-cream/70 mb-3">
-                  {lead.email && (
-                    <div className="flex items-center gap-1.5 col-span-2 sm:col-span-1 truncate">
-                      <Mail size={13} className="text-gold/60 shrink-0" />
-                      <span className="truncate">{lead.email}</span>
-                    </div>
-                  )}
-                  {lead.phone && (
-                    <div className="flex items-center gap-1.5"><Phone size={13} className="text-gold/60" />{lead.phone}</div>
-                  )}
-                  {lead.event_date && (
-                    <div className="flex items-center gap-1.5"><Calendar size={13} className="text-gold/60" />{formatDate(lead.event_date)}</div>
-                  )}
-                  {lead.guest_count && (
-                    <div className="flex items-center gap-1.5"><Users size={13} className="text-gold/60" />{lead.guest_count} guests</div>
-                  )}
-                  {(lead.budget || linkedQuote) && (
-                    <div className="flex items-center gap-1.5">
-                      <DollarSign size={13} className="text-gold/60" />
-                      {linkedQuote ? (
-                        <span className="text-gold">{formatCurrency(linkedQuote.total)} <span className="text-cream/40 text-xs">(quoted)</span></span>
-                      ) : (
-                        <span>Budget: {formatCurrency(lead.budget!)}</span>
+                {/* Expandable body */}
+                {isExpanded && (
+                  <div className="mt-3 pt-3 border-t border-white/5 space-y-3">
+                    {/* Details */}
+                    <div className="grid grid-cols-2 gap-2 text-sm text-cream/70">
+                      {lead.email && (
+                        <div className="flex items-center gap-1.5 col-span-2 sm:col-span-1 truncate">
+                          <Mail size={13} className="text-gold/60 shrink-0" />
+                          <span className="truncate">{lead.email}</span>
+                        </div>
+                      )}
+                      {lead.phone && (
+                        <div className="flex items-center gap-1.5"><Phone size={13} className="text-gold/60" />{lead.phone}</div>
+                      )}
+                      {lead.event_date && (
+                        <div className="flex items-center gap-1.5"><Calendar size={13} className="text-gold/60" />{formatDate(lead.event_date)}</div>
+                      )}
+                      {lead.guest_count && (
+                        <div className="flex items-center gap-1.5"><Users size={13} className="text-gold/60" />{lead.guest_count} guests</div>
+                      )}
+                      {(lead.budget || linkedQuote) && (
+                        <div className="flex items-center gap-1.5">
+                          <DollarSign size={13} className="text-gold/60" />
+                          {linkedQuote ? (
+                            <span className="text-gold">{formatCurrency(linkedQuote.total)} <span className="text-cream/40 text-xs">(quoted)</span></span>
+                          ) : (
+                            <span>Budget: {formatCurrency(lead.budget!)}</span>
+                          )}
+                        </div>
+                      )}
+                      {lead.event_type && (
+                        <div className="flex items-center gap-1.5 text-cream/70">🎉 {lead.event_type}</div>
                       )}
                     </div>
-                  )}
-                  {lead.event_type && (
-                    <div className="flex items-center gap-1.5 text-cream/70">🎉 {lead.event_type}</div>
-                  )}
-                </div>
 
-                {/* Venue info if present */}
-                {lead.venue_name && (
-                  <p className="text-xs text-cream/40 mb-3">📍 {lead.venue_name}{lead.service_start_time ? ` · ${lead.service_start_time}–${lead.service_end_time || '?'}` : ''}</p>
-                )}
-
-                {lead.notes && (
-                  <p className="text-xs text-cream/50 italic mb-3 line-clamp-2">"{lead.notes}"</p>
-                )}
-
-                {/* Linked quote summary strip */}
-                {linkedQuote && (
-                  <div className="mb-3 rounded-md bg-gold/5 border border-gold/15 px-3 py-2">
-                    {(() => {
-                      const today = new Date().toISOString().split('T')[0]
-                      const isExpired = linkedQuote.valid_until && linkedQuote.valid_until < today
-                      const expiresSoon = linkedQuote.valid_until && !isExpired &&
-                        (new Date(linkedQuote.valid_until).getTime() - Date.now()) < 7 * 24 * 60 * 60 * 1000
-                      return (
-                        <div className="flex items-center justify-between gap-2">
-                          <div className="min-w-0">
-                            <div className="flex items-center gap-3 text-xs">
-                              <span className="text-gold font-semibold">{formatCurrency(linkedQuote.total)}</span>
-                              <span className="text-cream/40">·</span>
-                              <span className="text-cream/50">Dep: {formatCurrency(linkedQuote.deposit)}</span>
-                              <span className="text-cream/40">·</span>
-                              <span className="text-cream/50">Bal: {formatCurrency(linkedQuote.balance)}</span>
-                            </div>
-                            {(linkedQuote.guest_count || linkedQuote.hours || linkedQuote.bartenders) && (
-                              <div className="text-xs text-cream/35 mt-0.5">
-                                {[
-                                  linkedQuote.guest_count && `${linkedQuote.guest_count} guests`,
-                                  linkedQuote.hours && `${linkedQuote.hours}h`,
-                                  linkedQuote.bartenders && `${linkedQuote.bartenders} bar staff`,
-                                ].filter(Boolean).join(' · ')}
-                              </div>
-                            )}
-                            {linkedQuote.valid_until && (
-                              <div className={`flex items-center gap-1 text-xs mt-1 ${
-                                isExpired ? 'text-danger' : expiresSoon ? 'text-warning' : 'text-cream/40'
-                              }`}>
-                                {isExpired
-                                  ? <><AlertCircle size={10} /> Expired {formatDate(linkedQuote.valid_until)}</>
-                                  : expiresSoon
-                                  ? <><Clock size={10} /> Expires {formatDate(linkedQuote.valid_until)} — soon!</>
-                                  : <><Clock size={10} /> Valid until {formatDate(linkedQuote.valid_until)}</>
-                                }
-                              </div>
-                            )}
-                          </div>
-                          <div className="flex items-center gap-1.5 shrink-0">
-                            <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${
-                              linkedQuote.status === 'accepted' ? 'bg-green-500/20 text-green-300' :
-                              linkedQuote.status === 'sent'     ? 'bg-blue-500/20 text-blue-300' :
-                              linkedQuote.status === 'declined' ? 'bg-red-500/20 text-red-400' :
-                                                                  'bg-white/5 text-cream/40'
-                            }`}>
-                              {linkedQuote.status}
-                            </span>
-                            <button
-                              onClick={() => handleDownloadQuotePDF(lead, linkedQuote)}
-                              className="text-cream/25 hover:text-gold transition-colors"
-                              title="Download quote as PDF"
-                            >
-                              <FileDown size={11} />
-                            </button>
-                            <button
-                              onClick={() => handleCreateQuote(lead)}
-                              className="text-cream/25 hover:text-gold transition-colors"
-                              title="Revise in calculator"
-                            >
-                              <Pencil size={11} />
-                            </button>
-                            <button
-                              onClick={() => handleDeleteQuote(linkedQuote.id, lead.id)}
-                              className="text-cream/25 hover:text-red-400 transition-colors"
-                              title="Delete quote"
-                            >
-                              <Trash2 size={11} />
-                            </button>
-                          </div>
-                        </div>
-                      )
-                    })()}
-                  </div>
-                )}
-
-                {/* Win probability slider */}
-                {lead.status !== 'lost' && (
-                  <div className="flex items-center gap-2 text-xs py-2">
-                    <span className="text-cream/40 shrink-0 w-9">Win %</span>
-                    <input
-                      type="range"
-                      min="0"
-                      max="100"
-                      step="5"
-                      value={localProb[lead.id] ?? lead.probability ?? 50}
-                      onChange={e => setLocalProb(p => ({ ...p, [lead.id]: Number(e.target.value) }))}
-                      onPointerUp={e => updateLead.mutate({ id: lead.id, probability: Number((e.target as HTMLInputElement).value) })}
-                      className="flex-1 accent-gold cursor-pointer"
-                      style={{ height: '4px' }}
-                    />
-                    <span className="text-gold font-semibold w-9 text-right shrink-0">
-                      {localProb[lead.id] ?? lead.probability ?? 50}%
-                    </span>
-                  </div>
-                )}
-
-                {/* Status change + actions */}
-                <div className="flex items-center justify-between pt-3 border-t border-white/5">
-                  <select
-                    value={lead.status}
-                    onChange={e => handleStatusChange(lead, e.target.value as Lead['status'])}
-                    className="text-xs bg-white/5 border border-white/10 rounded px-2 py-1 text-cream/70 focus:outline-none focus:border-gold/50"
-                  >
-                    {Object.entries(STATUS_CONFIG).map(([v, { label }]) => (
-                      <option key={v} value={v}>{label}</option>
-                    ))}
-                  </select>
-                  <div className="flex gap-1">
-                    {/* Create Quote manually (no calculator needed) — shown when no quote linked */}
-                    {!linkedQuote && (
-                      <button
-                        onClick={() => {
-                          setCreateQuoteForLead(lead)
-                          setCreateQuoteForm({
-                            total: String(lead.budget || ''),
-                            deposit: lead.budget ? String(Math.round(lead.budget * 0.5)) : '',
-                            balance: lead.budget ? String(lead.budget - Math.round(lead.budget * 0.5)) : '',
-                            guest_count: String(lead.guest_count || ''),
-                            hours: '',
-                            valid_until: '',
-                          })
-                          setShowCreateQuote(true)
-                        }}
-                        className="text-cream/40 hover:text-gold transition-colors p-1.5 rounded"
-                        title="Create quote (manual entry)"
-                      >
-                        <Plus size={15} />
-                      </button>
+                    {lead.venue_name && (
+                      <p className="text-xs text-cream/40">📍 {lead.venue_name}{lead.service_start_time ? ` · ${lead.service_start_time}–${lead.service_end_time || '?'}` : ''}</p>
                     )}
-                    {/* Link Quote from Calculator */}
-                    <button
-                      onClick={() => { setImportTargetLead(lead); setShowQuoteImport(true) }}
-                      className="text-cream/40 hover:text-gold transition-colors p-1.5 rounded"
-                      title="Link a quote from Calculator"
-                    >
-                      <Download size={15} />
-                    </button>
-                    {/* Sprint 2: Create Quote in Calculator pre-filled */}
-                    <button
-                      onClick={() => handleCreateQuote(lead)}
-                      className="text-cream/40 hover:text-gold transition-colors p-1.5 rounded"
-                      title="Create Quote in Calculator"
-                    >
-                      <FileText size={15} />
-                    </button>
-                    {/* Generate Contract */}
-                    <button
-                      onClick={() => handleGenerateContract(lead)}
-                      className="text-cream/40 hover:text-gold transition-colors p-1.5 rounded"
-                      title="Generate contract"
-                    >
-                      <FileSignature size={15} />
-                    </button>
-                    <button onClick={() => openEdit(lead)} className="text-cream/40 hover:text-gold transition-colors p-1.5 rounded">
-                      <Edit2 size={15} />
-                    </button>
-                    <button onClick={() => handleDelete(lead.id)} className="text-cream/40 hover:text-red-400 transition-colors p-1.5 rounded">
-                      <Trash2 size={15} />
-                    </button>
+
+                    {lead.notes && (
+                      <p className="text-xs text-cream/50 italic line-clamp-2">"{lead.notes}"</p>
+                    )}
+
+                    {/* Quote strip */}
+                    {linkedQuote && (
+                      <div className="rounded-md bg-gold/5 border border-gold/15 px-3 py-2">
+                        {(() => {
+                          const today = new Date().toISOString().split('T')[0]
+                          const isExpired = linkedQuote.valid_until && linkedQuote.valid_until < today
+                          const expiresSoon = linkedQuote.valid_until && !isExpired &&
+                            (new Date(linkedQuote.valid_until).getTime() - Date.now()) < 7 * 24 * 60 * 60 * 1000
+                          return (
+                            <div className="flex items-center justify-between gap-2">
+                              <div className="min-w-0">
+                                <div className="flex items-center gap-3 text-xs">
+                                  <span className="text-gold font-semibold">{formatCurrency(linkedQuote.total)}</span>
+                                  <span className="text-cream/40">·</span>
+                                  <span className="text-cream/50">Dep: {formatCurrency(linkedQuote.deposit)}</span>
+                                  <span className="text-cream/40">·</span>
+                                  <span className="text-cream/50">Bal: {formatCurrency(linkedQuote.balance)}</span>
+                                </div>
+                                {(linkedQuote.guest_count || linkedQuote.hours || linkedQuote.bartenders) && (
+                                  <div className="text-xs text-cream/35 mt-0.5">
+                                    {[
+                                      linkedQuote.guest_count && `${linkedQuote.guest_count} guests`,
+                                      linkedQuote.hours && `${linkedQuote.hours}h`,
+                                      linkedQuote.bartenders && `${linkedQuote.bartenders} bar staff`,
+                                    ].filter(Boolean).join(' · ')}
+                                  </div>
+                                )}
+                                {linkedQuote.valid_until && (
+                                  <div className={`flex items-center gap-1 text-xs mt-1 ${
+                                    isExpired ? 'text-danger' : expiresSoon ? 'text-warning' : 'text-cream/40'
+                                  }`}>
+                                    {isExpired
+                                      ? <><AlertCircle size={10} /> Expired {formatDate(linkedQuote.valid_until)}</>
+                                      : expiresSoon
+                                      ? <><Clock size={10} /> Expires {formatDate(linkedQuote.valid_until)} — soon!</>
+                                      : <><Clock size={10} /> Valid until {formatDate(linkedQuote.valid_until)}</>
+                                    }
+                                  </div>
+                                )}
+                              </div>
+                              <div className="flex items-center gap-1.5 shrink-0">
+                                <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${
+                                  linkedQuote.status === 'accepted' ? 'bg-green-500/20 text-green-300' :
+                                  linkedQuote.status === 'sent'     ? 'bg-blue-500/20 text-blue-300' :
+                                  linkedQuote.status === 'declined' ? 'bg-red-500/20 text-red-400' :
+                                                                      'bg-white/5 text-cream/40'
+                                }`}>{linkedQuote.status}</span>
+                                <button onClick={() => handleDownloadQuotePDF(lead, linkedQuote)} className="text-cream/25 hover:text-gold transition-colors" title="Download PDF"><FileDown size={11} /></button>
+                                <button onClick={() => handleCreateQuote(lead)} className="text-cream/25 hover:text-gold transition-colors" title="Revise in calculator"><Pencil size={11} /></button>
+                                <button onClick={() => handleDeleteQuote(linkedQuote.id, lead.id)} className="text-cream/25 hover:text-red-400 transition-colors" title="Delete quote"><Trash2 size={11} /></button>
+                              </div>
+                            </div>
+                          )
+                        })()}
+                      </div>
+                    )}
+
+                    {/* Win probability slider */}
+                    {lead.status !== 'lost' && (
+                      <div className="flex items-center gap-2 text-xs py-1">
+                        <span className="text-cream/40 shrink-0 w-9">Win %</span>
+                        <input
+                          type="range" min="0" max="100" step="5"
+                          value={localProb[lead.id] ?? lead.probability ?? 50}
+                          onChange={e => setLocalProb(p => ({ ...p, [lead.id]: Number(e.target.value) }))}
+                          onPointerUp={e => updateLead.mutate({ id: lead.id, probability: Number((e.target as HTMLInputElement).value) })}
+                          className="flex-1 accent-gold cursor-pointer"
+                          style={{ height: '4px' }}
+                        />
+                        <span className="text-gold font-semibold w-9 text-right shrink-0">{localProb[lead.id] ?? lead.probability ?? 50}%</span>
+                      </div>
+                    )}
+
+                    {/* Status + actions */}
+                    <div className="flex items-center justify-between pt-2 border-t border-white/5">
+                      <select
+                        value={lead.status}
+                        onChange={e => handleStatusChange(lead, e.target.value as Lead['status'])}
+                        className="text-xs bg-white/5 border border-white/10 rounded px-2 py-1 text-cream/70 focus:outline-none focus:border-gold/50"
+                      >
+                        {Object.entries(STATUS_CONFIG).map(([v, { label }]) => (
+                          <option key={v} value={v}>{label}</option>
+                        ))}
+                      </select>
+                      <div className="flex gap-1">
+                        {!linkedQuote && (
+                          <button
+                            onClick={() => {
+                              setCreateQuoteForLead(lead)
+                              setCreateQuoteForm({
+                                total: String(lead.budget || ''),
+                                deposit: lead.budget ? String(Math.round(lead.budget * 0.5)) : '',
+                                balance: lead.budget ? String(lead.budget - Math.round(lead.budget * 0.5)) : '',
+                                guest_count: String(lead.guest_count || ''),
+                                hours: '', valid_until: '',
+                              })
+                              setShowCreateQuote(true)
+                            }}
+                            className="text-cream/40 hover:text-gold transition-colors p-1.5 rounded"
+                            title="Create quote (manual entry)"
+                          ><Plus size={15} /></button>
+                        )}
+                        <button onClick={() => { setImportTargetLead(lead); setShowQuoteImport(true) }} className="text-cream/40 hover:text-gold transition-colors p-1.5 rounded" title="Link quote from Calculator"><Download size={15} /></button>
+                        <button onClick={() => handleCreateQuote(lead)} className="text-cream/40 hover:text-gold transition-colors p-1.5 rounded" title="Create Quote in Calculator"><FileText size={15} /></button>
+                        <button onClick={() => handleGenerateContract(lead)} className="text-cream/40 hover:text-gold transition-colors p-1.5 rounded" title="Generate contract"><FileSignature size={15} /></button>
+                        <button onClick={() => openEdit(lead)} className="text-cream/40 hover:text-gold transition-colors p-1.5 rounded"><Edit2 size={15} /></button>
+                        <button onClick={() => handleDelete(lead.id)} className="text-cream/40 hover:text-red-400 transition-colors p-1.5 rounded"><Trash2 size={15} /></button>
+                      </div>
+                    </div>
                   </div>
-                </div>
+                )}
               </Card>
             )
           })}
