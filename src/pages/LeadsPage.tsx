@@ -360,6 +360,7 @@ export default function LeadsPage() {
       balance:             balance,
       breakdown:           quote.breakdown,
       addonNotes:          quote.addon_notes ?? '',
+      leadNotes:           lead.notes ?? '',
       promoCode:           quote.promo_code,
       bartenders:          quote.bartenders,
     }
