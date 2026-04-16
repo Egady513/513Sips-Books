@@ -7,13 +7,18 @@ interface ModalProps {
   title: string
   children: React.ReactNode
   wide?: boolean
+  /** When true, clicking the dark backdrop will NOT close the modal (good for forms) */
+  preventBackdropClose?: boolean
 }
 
-export default function Modal({ open, onClose, title, children, wide }: ModalProps) {
+export default function Modal({ open, onClose, title, children, wide, preventBackdropClose }: ModalProps) {
   if (!open) return null
 
   return (
-    <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4" onClick={onClose}>
+    <div
+      className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4"
+      onClick={preventBackdropClose ? undefined : onClose}
+    >
       <div
         className={clsx(
           'bg-navy-light rounded-xl border border-gold-dim p-6 max-h-[90vh] overflow-y-auto',

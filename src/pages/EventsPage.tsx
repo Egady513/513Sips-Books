@@ -55,59 +55,74 @@ export default function EventsPage() {
     const total = parseFloat(fd.get('total_amount') as string) || 0
     const deposit = Math.round(total * 0.5)
 
-    const payload = {
+    // Only include fields that exist in the DB — omit undefined/empty strings
+    // so Supabase doesn't error on missing columns
+    const rawEmail = fd.get('client_email') as string
+    const rawPhone = fd.get('client_phone') as string
+    const rawEventName = fd.get('event_name') as string
+    const rawLocation = fd.get('location') as string
+    const rawEventType = fd.get('event_type') as string
+    const rawDescription = fd.get('description') as string
+    const rawGuestCount = parseInt(fd.get('guest_count') as string)
+    const rawServiceHours = parseInt(fd.get('service_hours') as string)
+
+    const payload: Record<string, unknown> = {
       client_name: fd.get('client_name') as string,
-      client_email: fd.get('client_email') as string,
-      client_phone: fd.get('client_phone') as string,
-      event_name: fd.get('event_name') as string,
       event_date: fd.get('event_date') as string,
-      location: fd.get('location') as string,
-      event_type: fd.get('event_type') as string,
-      guest_count: parseInt(fd.get('guest_count') as string) || 0,
-      service_hours: parseInt(fd.get('service_hours') as string) || 3,
-      description: fd.get('description') as string,
       total_amount: total,
       deposit_amount: deposit,
       balance_amount: total - deposit,
       status: editEvent?.status || 'draft',
     }
+    if (rawEmail)                   payload.client_email = rawEmail
+    if (rawPhone)                   payload.client_phone = rawPhone
+    if (rawEventName)               payload.event_name = rawEventName
+    if (rawLocation)                payload.location = rawLocation
+    if (rawEventType)               payload.event_type = rawEventType
+    if (rawDescription)             payload.description = rawDescription
+    if (!isNaN(rawGuestCount))      payload.guest_count = rawGuestCount
+    if (!isNaN(rawServiceHours))    payload.service_hours = rawServiceHours
 
-    if (editEvent) {
-      await updateEvent.mutateAsync({ id: editEvent.id, ...payload })
-      toast.success('Event updated')
-    } else {
-      const newEvent = await createEvent.mutateAsync(payload)
-      // Auto-create AR entries for deposit and balance
-      if (total > 0) {
-        const eventDate = new Date(payload.event_date)
-        const depositDue = new Date(eventDate)
-        depositDue.setDate(depositDue.getDate() - 30)
-        // Clamp deposit due date to today at earliest
-        const today = new Date()
-        today.setHours(0, 0, 0, 0)
-        const depositDueClamped = depositDue < today ? today : depositDue
+    try {
+      if (editEvent) {
+        await updateEvent.mutateAsync({ id: editEvent.id, ...(payload as any) })
+        toast.success('Event updated')
+      } else {
+        const newEvent = await createEvent.mutateAsync(payload as any)
+        // Auto-create AR entries for deposit and balance
+        if (total > 0) {
+          const eventDate = new Date(payload.event_date as string)
+          const depositDue = new Date(eventDate)
+          depositDue.setDate(depositDue.getDate() - 30)
+          // Clamp deposit due date to today at earliest
+          const today = new Date()
+          today.setHours(0, 0, 0, 0)
+          const depositDueClamped = depositDue < today ? today : depositDue
 
-        await createAREntry.mutateAsync({
-          event_id: newEvent.id,
-          entry_type: 'deposit',
-          amount: deposit,
-          status: 'pending',
-          due_date: depositDueClamped.toISOString().split('T')[0],
-        })
-        await createAREntry.mutateAsync({
-          event_id: newEvent.id,
-          entry_type: 'balance',
-          amount: total - deposit,
-          status: 'pending',
-          due_date: payload.event_date,
-        })
+          await createAREntry.mutateAsync({
+            event_id: newEvent.id,
+            entry_type: 'deposit',
+            amount: deposit,
+            status: 'pending',
+            due_date: depositDueClamped.toISOString().split('T')[0],
+          })
+          await createAREntry.mutateAsync({
+            event_id: newEvent.id,
+            entry_type: 'balance',
+            amount: total - deposit,
+            status: 'pending',
+            due_date: payload.event_date as string,
+          })
+        }
+        toast.success('Event created')
+        navigate(`/events/${newEvent.id}`)
       }
-      toast.success('Event created')
-      navigate(`/events/${newEvent.id}`)
+      setShowForm(false)
+      setEditEvent(null)
+    } catch (err: any) {
+      console.error('Event save error:', err)
+      toast.error(err?.message ?? 'Failed to save event — check console for details')
     }
-
-    setShowForm(false)
-    setEditEvent(null)
   }
 
   const handleContractUpload = async (eventId: string, clientName: string) => {
@@ -263,7 +278,7 @@ export default function EventsPage() {
 
       {/* Event Form Modal */}
       <Modal open={showForm} onClose={() => { setShowForm(false); setEditEvent(null) }}
-        title={editEvent ? 'Edit Event' : 'New Event'} wide>
+        title={editEvent ? 'Edit Event' : 'New Event'} wide preventBackdropClose>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>

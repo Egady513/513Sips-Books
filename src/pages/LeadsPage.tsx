@@ -1125,6 +1125,7 @@ export default function LeadsPage() {
         open={showCreateQuote}
         onClose={() => { setShowCreateQuote(false); setCreateQuoteForLead(null) }}
         title={`Create Quote — ${createQuoteForLead?.name || ''}`}
+        preventBackdropClose
       >
         <div className="space-y-4">
           <p className="text-xs text-cream/50 bg-gold/5 border border-gold/15 rounded-lg px-3 py-2">
@@ -1221,6 +1222,7 @@ export default function LeadsPage() {
         open={showForm}
         onClose={() => setShowForm(false)}
         title={editLead ? 'Edit Lead' : 'New Lead'}
+        preventBackdropClose
         wide
       >
         <form onSubmit={handleSubmit} className="space-y-4">
