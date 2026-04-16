@@ -70,6 +70,9 @@ export default function LeadsPage() {
   const [editingAddonNotes, setEditingAddonNotes] = useState<string | null>(null)
   const [addonNotesValue, setAddonNotesValue] = useState('')
 
+  // Local probability state (tracks slider while dragging before save)
+  const [localProb, setLocalProb] = useState<Record<string, number>>({})
+
   // Sprint 4: contract validation modal
   const [showContractValidation, setShowContractValidation] = useState(false)
   const [contractValidationLead, setContractValidationLead] = useState<Lead | null>(null)
@@ -97,7 +100,13 @@ export default function LeadsPage() {
     total:       allLeads.length,
     new:         allLeads.filter(l => l.status === 'new').length,
     booked:      allLeads.filter(l => l.status === 'booked').length,
-    pipeline:    allLeads.filter(l => l.status !== 'lost' && l.budget).reduce((s, l) => s + (l.budget || 0), 0),
+    // Weighted pipeline: use linked quote total (or budget fallback), × win probability
+    pipeline: allLeads.filter(l => l.status !== 'lost').reduce((s, l) => {
+      const quote = recentQuotes.find(q => q.lead_id === l.id)
+      const amount = quote?.total ?? l.budget ?? 0
+      const prob = l.probability ?? 50
+      return s + Math.round(amount * prob / 100)
+    }, 0),
   }
 
   function openNew() {
@@ -580,7 +589,7 @@ export default function LeadsPage() {
         <StatCard label="Total Leads"    value={String(stats.total)}   color="text-gold" />
         <StatCard label="New / Unread"   value={String(stats.new)}     color="text-blue-300" />
         <StatCard label="Booked"         value={String(stats.booked)}  color="text-success" />
-        <StatCard label="Pipeline Value" value={formatCurrency(stats.pipeline)} color="text-warning" />
+        <StatCard label="Wtd. Pipeline" value={formatCurrency(stats.pipeline)} color="text-warning" />
       </div>
 
       {/* Search + Filter */}
@@ -776,6 +785,27 @@ export default function LeadsPage() {
                         </div>
                       )
                     })()}
+                  </div>
+                )}
+
+                {/* Win probability slider */}
+                {lead.status !== 'lost' && (
+                  <div className="flex items-center gap-2 text-xs py-2">
+                    <span className="text-cream/40 shrink-0 w-9">Win %</span>
+                    <input
+                      type="range"
+                      min="0"
+                      max="100"
+                      step="5"
+                      value={localProb[lead.id] ?? lead.probability ?? 50}
+                      onChange={e => setLocalProb(p => ({ ...p, [lead.id]: Number(e.target.value) }))}
+                      onPointerUp={e => updateLead.mutate({ id: lead.id, probability: Number((e.target as HTMLInputElement).value) })}
+                      className="flex-1 accent-gold cursor-pointer"
+                      style={{ height: '4px' }}
+                    />
+                    <span className="text-gold font-semibold w-9 text-right shrink-0">
+                      {localProb[lead.id] ?? lead.probability ?? 50}%
+                    </span>
                   </div>
                 )}
 

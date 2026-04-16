@@ -160,6 +160,7 @@ export interface Lead {
   venue_address?: string
   service_start_time?: string  // "HH:MM" format
   service_end_time?: string    // "HH:MM" format
+  probability?: number         // 0–100 win probability for weighted pipeline
   created_at: string
   updated_at: string
 }
