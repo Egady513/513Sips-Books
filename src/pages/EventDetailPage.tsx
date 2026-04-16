@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useParams, useNavigate, Link } from 'react-router-dom'
 import { useEvent, useUpdateEvent, useUploadContract } from '../hooks/useEvents'
 import { useRecordPayment } from '../hooks/useInvoices'
 import { useEventExpenses, useEventMileage } from '../hooks/useExpenses'
@@ -355,7 +355,7 @@ export default function EventDetailPage() {
             <Card className="text-center py-10 text-cream/50">
               No bills linked to this event.
               <div className="mt-2">
-                <a href="/ap" className="text-gold/70 hover:text-gold text-sm">Add a bill on the Payables page →</a>
+                <Link to="/ap" className="text-gold/70 hover:text-gold text-sm">Add a bill on the Payables page →</Link>
               </div>
             </Card>
           ) : (
@@ -387,7 +387,7 @@ export default function EventDetailPage() {
             <Card className="text-center py-10 text-cream/50">
               No expenses linked to this event.
               <div className="mt-2">
-                <a href="/expenses" className="text-gold/70 hover:text-gold text-sm">Log an expense and link it here →</a>
+                <Link to="/expenses" className="text-gold/70 hover:text-gold text-sm">Log an expense and link it here →</Link>
               </div>
             </Card>
           ) : (
@@ -441,7 +441,7 @@ export default function EventDetailPage() {
             <Card className="text-center py-10 text-cream/50">
               No mileage logged for this event.
               <div className="mt-2">
-                <a href="/expenses" className="text-gold/70 hover:text-gold text-sm">Log mileage and link it here →</a>
+                <Link to="/expenses" className="text-gold/70 hover:text-gold text-sm">Log mileage and link it here →</Link>
               </div>
             </Card>
           ) : (
