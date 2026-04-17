@@ -3,24 +3,80 @@ import { useScheduleC, useTaxEstimate } from '../hooks/useTax'
 import { Card, StatCard } from '../components/ui/Card'
 import { formatCurrency, getCurrentYear } from '../utils/formatters'
 import { SE_TAX_RATE } from '../lib/constants'
+import { Download } from 'lucide-react'
 
 export default function TaxPage() {
   const [year, setYear] = useState(getCurrentYear())
   const { data: scheduleCData, isLoading: loadingSC } = useScheduleC(year)
   const { data: taxEstimate, isLoading: loadingTax } = useTaxEstimate(year)
 
+  function handleExportCSV() {
+    const rows: string[][] = []
+
+    // P&L Summary
+    rows.push([`513 Sips — Tax Export — ${year}`])
+    rows.push([])
+    rows.push(['P&L SUMMARY'])
+    rows.push(['Item', 'Amount'])
+    rows.push(['Gross Revenue', taxEstimate ? String(taxEstimate.grossIncome) : '0'])
+    rows.push(['Total Expenses', taxEstimate ? String(taxEstimate.totalExpenses) : '0'])
+    rows.push(['Net Profit', taxEstimate ? String(taxEstimate.netProfit) : '0'])
+    rows.push([])
+
+    // Schedule C breakdown
+    rows.push(['SCHEDULE C DEDUCTIONS'])
+    rows.push(['Line', 'Description', 'Amount'])
+    ;(scheduleCData || []).forEach(item => {
+      rows.push([`Line ${item.line}`, item.label, String(item.amount)])
+    })
+    const totalDeductions = (scheduleCData || []).reduce((s, i) => s + i.amount, 0)
+    rows.push(['', 'TOTAL DEDUCTIONS', String(totalDeductions)])
+    rows.push([])
+
+    // Self-employment tax estimate
+    if (taxEstimate) {
+      rows.push(['SELF-EMPLOYMENT TAX ESTIMATE'])
+      rows.push(['Item', 'Amount'])
+      rows.push(['SE Taxable Income (92.35% of net)', String(taxEstimate.seTaxableIncome)])
+      rows.push([`SE Tax (${(SE_TAX_RATE * 100).toFixed(1)}%)`, String(taxEstimate.seTax)])
+      rows.push(['SE Tax Deduction (50% of SE tax)', String(taxEstimate.seTaxDeduction)])
+      rows.push(['Estimated Quarterly Payment', String(taxEstimate.estimatedQuarterlyPayment)])
+      rows.push([])
+      rows.push(['Quarterly due dates: Apr 15 / Jun 15 / Sep 15 / Jan 15 (next year)'])
+    }
+
+    const csv = rows.map(r => r.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',')).join('\n')
+    const blob = new Blob([csv], { type: 'text/csv' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `513sips-tax-${year}.csv`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
   const totalDeductions = scheduleCData?.reduce((s, item) => s + item.amount, 0) || 0
 
   return (
     <div className="space-y-6 max-w-6xl">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-3 flex-wrap">
         <h1 className="text-2xl font-bold text-gold">Tax Helper</h1>
-        <select value={year} onChange={e => setYear(Number(e.target.value))}
-          className="bg-navy-lighter border border-gold-dim rounded-lg px-3 py-2 text-cream text-sm">
-          {Array.from({ length: 5 }, (_, i) => getCurrentYear() - 3 + i).map(y => (
-            <option key={y} value={y}>{y}</option>
-          ))}
-        </select>
+        <div className="flex items-center gap-2">
+          <select value={year} onChange={e => setYear(Number(e.target.value))}
+            className="bg-navy-lighter border border-gold-dim rounded-lg px-3 py-2 text-cream text-sm">
+            {Array.from({ length: 5 }, (_, i) => getCurrentYear() - 3 + i).map(y => (
+              <option key={y} value={y}>{y}</option>
+            ))}
+          </select>
+          <button
+            onClick={handleExportCSV}
+            disabled={!taxEstimate && !scheduleCData}
+            className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium bg-gold/10 text-gold border border-gold/30 hover:bg-gold/20 disabled:opacity-40 transition-colors"
+          >
+            <Download size={15} />
+            Export CSV
+          </button>
+        </div>
       </div>
 
       {loadingTax ? (

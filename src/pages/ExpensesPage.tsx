@@ -1,13 +1,14 @@
 import { useState, useRef } from 'react'
 import { useExpenses, useCreateExpense, useUpdateExpense, useDeleteExpense, useUploadReceipt, useMileage, useCreateMileage, useDeleteMileage } from '../hooks/useExpenses'
 import { useEvents } from '../hooks/useEvents'
+import { supabase } from '../lib/supabase'
 import { Card, StatCard } from '../components/ui/Card'
 import Button from '../components/ui/Button'
 import Modal from '../components/ui/Modal'
 import { formatCurrency, formatDate, getCurrentYear } from '../utils/formatters'
 import { EXPENSE_CATEGORIES, MILEAGE_RATES } from '../lib/constants'
 import { getScheduleCLine } from '../utils/taxCalc'
-import { Plus, Receipt, Car, Trash2, Paperclip, Edit2 } from 'lucide-react'
+import { Plus, Receipt, Car, Trash2, Paperclip, Edit2, ScanLine, Loader2 } from 'lucide-react'
 import type { Expense } from '../lib/types'
 import toast from 'react-hot-toast'
 
@@ -19,6 +20,15 @@ export default function ExpensesPage() {
   const [editExpense, setEditExpense] = useState<Expense | null>(null)
   const [showMileageForm, setShowMileageForm] = useState(false)
   const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({})
+
+  // OCR state — pre-fills the new expense form after scanning a receipt
+  const [ocrData, setOcrData] = useState<{
+    vendor?: string; amount?: string; date?: string; description?: string; category?: string
+  } | null>(null)
+  const [isOcrLoading, setIsOcrLoading] = useState(false)
+  const [pendingReceiptFile, setPendingReceiptFile] = useState<File | null>(null)
+  const [formKey, setFormKey] = useState(0)  // increment to force form re-mount with new defaultValues
+  const ocrInputRef = useRef<HTMLInputElement | null>(null)
   const { data: expenses, isLoading: loadingExpenses } = useExpenses(year)
   const { data: mileage, isLoading: loadingMileage } = useMileage(year)
   const { data: events } = useEvents()
@@ -48,6 +58,50 @@ export default function ExpensesPage() {
     }
   }
 
+  // OCR: read file as base64, call edge function, pre-fill form
+  async function handleScanReceipt(file: File) {
+    setIsOcrLoading(true)
+    setPendingReceiptFile(file)
+    try {
+      const base64 = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader()
+        reader.onload = () => resolve((reader.result as string).split(',')[1])
+        reader.onerror = reject
+        reader.readAsDataURL(file)
+      })
+
+      const { data, error } = await supabase.functions.invoke('ocr-receipt', {
+        body: { imageBase64: base64, mediaType: file.type || 'image/jpeg' },
+      })
+      if (error) throw error
+
+      if (data?.success === false) throw new Error(data.error || 'OCR failed')
+
+      setOcrData({
+        vendor:      data.vendor      || '',
+        amount:      data.amount != null ? String(data.amount) : '',
+        date:        data.date        || new Date().toISOString().split('T')[0],
+        description: data.description || '',
+        category:    data.category    || '',
+      })
+      setFormKey(k => k + 1)  // force re-mount so defaultValues pick up OCR data
+      toast.success('Receipt scanned — review the pre-filled fields')
+    } catch (err) {
+      console.error('OCR error:', err)
+      toast.error('Could not scan receipt — fill in manually')
+      setOcrData(null)
+    } finally {
+      setIsOcrLoading(false)
+    }
+  }
+
+  function closeExpenseModal() {
+    setShowExpenseForm(false)
+    setEditExpense(null)
+    setOcrData(null)
+    setPendingReceiptFile(null)
+  }
+
   const handleCreateExpense = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     const fd = new FormData(e.currentTarget)
@@ -70,9 +124,13 @@ export default function ExpensesPage() {
         toast.success('Expense updated')
         setEditExpense(null)
       } else {
-        await createExpense.mutateAsync(payload)
+        const newExpense = await createExpense.mutateAsync(payload)
+        // Upload receipt from OCR scan if one was selected
+        if (pendingReceiptFile && newExpense?.id) {
+          await uploadReceipt.mutateAsync({ file: pendingReceiptFile, expenseId: newExpense.id })
+        }
         toast.success('Expense logged')
-        setShowExpenseForm(false)
+        closeExpenseModal()
       }
     } catch {
       toast.error('Something went wrong')
@@ -277,38 +335,68 @@ export default function ExpensesPage() {
       {(showExpenseForm || !!editExpense) && (
         <Modal
           open={showExpenseForm || !!editExpense}
-          onClose={() => { setShowExpenseForm(false); setEditExpense(null) }}
+          onClose={closeExpenseModal}
           preventBackdropClose
           title={editExpense ? 'Edit Expense' : 'New Expense'}
           wide
         >
-          <form onSubmit={handleCreateExpense} className="space-y-4">
+          <form key={formKey} onSubmit={handleCreateExpense} className="space-y-4">
+            {/* Scan Receipt — only shown when creating a new expense */}
+            {!editExpense && (
+              <div className="flex items-center gap-3 p-3 bg-navy-lighter rounded-lg border border-gold-dim">
+                <input
+                  ref={ocrInputRef}
+                  type="file"
+                  accept="image/*,application/pdf"
+                  className="hidden"
+                  onChange={e => {
+                    const file = e.target.files?.[0]
+                    if (file) handleScanReceipt(file)
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={() => ocrInputRef.current?.click()}
+                  disabled={isOcrLoading}
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-gold/10 text-gold border border-gold/30 hover:bg-gold/20 disabled:opacity-50 transition-colors"
+                >
+                  {isOcrLoading ? <Loader2 size={15} className="animate-spin" /> : <ScanLine size={15} />}
+                  {isOcrLoading ? 'Scanning...' : 'Scan Receipt'}
+                </button>
+                {pendingReceiptFile && !isOcrLoading && (
+                  <span className="text-xs text-success">✓ {pendingReceiptFile.name}</span>
+                )}
+                {!pendingReceiptFile && !isOcrLoading && (
+                  <span className="text-xs text-cream/40">Upload a receipt to auto-fill the form</span>
+                )}
+              </div>
+            )}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs text-cream/50 mb-1">Description *</label>
-                <input name="description" required defaultValue={editExpense?.description || ''}
+                <input name="description" required defaultValue={ocrData?.description || editExpense?.description || ''}
                   className="w-full bg-navy-lighter border border-gold-dim rounded-lg px-3 py-2 text-cream text-sm" />
               </div>
               <div>
                 <label className="block text-xs text-cream/50 mb-1">Amount ($) *</label>
-                <input name="amount" type="number" step="0.01" required defaultValue={editExpense ? String(editExpense.amount) : ''}
+                <input name="amount" type="number" step="0.01" required defaultValue={ocrData?.amount || (editExpense ? String(editExpense.amount) : '')}
                   className="w-full bg-navy-lighter border border-gold-dim rounded-lg px-3 py-2 text-cream text-sm" />
               </div>
               <div>
                 <label className="block text-xs text-cream/50 mb-1">Date *</label>
-                <input name="expense_date" type="date" required defaultValue={editExpense?.expense_date || new Date().toISOString().split('T')[0]}
+                <input name="expense_date" type="date" required defaultValue={ocrData?.date || editExpense?.expense_date || new Date().toISOString().split('T')[0]}
                   className="w-full bg-navy-lighter border border-gold-dim rounded-lg px-3 py-2 text-cream text-sm" />
               </div>
               <div>
                 <label className="block text-xs text-cream/50 mb-1">Category *</label>
-                <select name="category" required defaultValue={editExpense?.category || ''}
+                <select name="category" required defaultValue={ocrData?.category || editExpense?.category || ''}
                   className="w-full bg-navy-lighter border border-gold-dim rounded-lg px-3 py-2 text-cream text-sm">
                   {EXPENSE_CATEGORIES.map(c => <option key={c.value} value={c.value}>{c.label} (Line {c.scheduleCLine})</option>)}
                 </select>
               </div>
               <div>
                 <label className="block text-xs text-cream/50 mb-1">Vendor / Store</label>
-                <input name="vendor" defaultValue={editExpense?.vendor || ''}
+                <input name="vendor" defaultValue={ocrData?.vendor || editExpense?.vendor || ''}
                   className="w-full bg-navy-lighter border border-gold-dim rounded-lg px-3 py-2 text-cream text-sm" />
               </div>
               <div>
@@ -339,7 +427,7 @@ export default function ExpensesPage() {
             </label>
             <div className="flex gap-3 pt-2">
               <Button type="submit" className="flex-1">{editExpense ? 'Save Changes' : 'Add Expense'}</Button>
-              <Button type="button" variant="secondary" onClick={() => { setShowExpenseForm(false); setEditExpense(null) }}>Cancel</Button>
+              <Button type="button" variant="secondary" onClick={closeExpenseModal}>Cancel</Button>
             </div>
           </form>
         </Modal>
