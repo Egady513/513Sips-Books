@@ -6,7 +6,8 @@ import StatusBadge from '../components/ui/StatusBadge'
 import Modal from '../components/ui/Modal'
 import { formatCurrency, formatDate, daysUntil } from '../utils/formatters'
 import { PAYMENT_METHODS } from '../lib/constants'
-import { DollarSign } from 'lucide-react'
+import { DollarSign, Copy } from 'lucide-react'
+import toast from 'react-hot-toast'
 
 export default function ARPage() {
   const [filter, setFilter] = useState('all')
@@ -98,9 +99,24 @@ export default function ARPage() {
                   <div className="flex items-center gap-3">
                     <span className="text-lg font-bold text-gold">{formatCurrency(entry.amount)}</span>
                     {entry.status === 'pending' && (
-                      <Button size="sm" variant="success" onClick={() => setPayEntry(entry)}>
-                        <DollarSign size={14} /> Mark Paid
-                      </Button>
+                      <>
+                        <button
+                          onClick={() => {
+                            const daysLeft = entry.due_date ? Math.round((new Date(entry.due_date).getTime() - Date.now()) / 86400000) : null
+                            const dueStr = daysLeft === null ? '' : daysLeft === 0 ? 'today' : daysLeft < 0 ? `${Math.abs(daysLeft)} days ago` : `in ${daysLeft} day${daysLeft !== 1 ? 's' : ''}`
+                            const msg = `Hi ${entry.events?.client_name || 'there'}! Just a friendly reminder that your ${entry.entry_type} payment of ${formatCurrency(entry.amount)} is due ${dueStr}${entry.due_date ? ` (${entry.due_date})` : ''}. Payment accepted via Venmo, Zelle, cash, or check. Feel free to reach out with any questions!\n— Eddie @ 513 Sips`
+                            navigator.clipboard.writeText(msg)
+                            toast.success('Reminder copied!')
+                          }}
+                          className="text-cream/30 hover:text-blue-300 transition-colors p-1.5 rounded"
+                          title="Copy reminder message"
+                        >
+                          <Copy size={14} />
+                        </button>
+                        <Button size="sm" variant="success" onClick={() => setPayEntry(entry)}>
+                          <DollarSign size={14} /> Mark Paid
+                        </Button>
+                      </>
                     )}
                   </div>
                 </div>

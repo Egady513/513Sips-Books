@@ -1,12 +1,13 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
-import { useDashboardKPIs, useRevenueByMonth, useOverdueAlerts } from '../hooks/useDashboard'
+import { useDashboardKPIs, useRevenueByMonth, useOverdueAlerts, useUpcomingPayments } from '../hooks/useDashboard'
 import { useLeads } from '../hooks/useLeads'
 import { useRecentQuotes } from '../hooks/useQuotes'
 import { StatCard, Card } from '../components/ui/Card'
 import { formatCurrency, getCurrentYear } from '../utils/formatters'
-import { AlertTriangle, ChevronLeft, ChevronRight } from 'lucide-react'
+import { AlertTriangle, ChevronLeft, ChevronRight, Bell, Copy } from 'lucide-react'
+import toast from 'react-hot-toast'
 
 export default function DashboardPage() {
   const [year, setYear] = useState(getCurrentYear())
@@ -15,6 +16,7 @@ export default function DashboardPage() {
   const { data: allLeads = [] } = useLeads()
   const { data: recentQuotes = [] } = useRecentQuotes()
   const { data: overdue } = useOverdueAlerts()
+  const { data: upcomingPayments = [] } = useUpcomingPayments()
 
   const leadStats = {
     newCount:    allLeads.filter(l => l.status === 'new').length,
@@ -82,6 +84,35 @@ export default function DashboardPage() {
                   {overdue!.apCount} overdue bill{overdue!.apCount > 1 ? 's' : ''} ({formatCurrency(overdue!.apTotal)} you owe) →
                 </Link>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Upcoming payments banner */}
+      {upcomingPayments.length > 0 && (
+        <div className="flex items-start gap-3 bg-blue-500/10 border border-blue-500/30 rounded-xl px-4 py-3">
+          <Bell size={18} className="text-blue-300 mt-0.5 flex-shrink-0" />
+          <div className="flex-1 text-sm">
+            <span className="font-semibold text-blue-300">Payments due in the next 7 days:</span>
+            <div className="text-cream/70 mt-1 flex flex-wrap gap-4">
+              {upcomingPayments.map(p => {
+                const daysLeft = Math.round((new Date(p.due_date).getTime() - Date.now()) / 86400000)
+                const msg = `Hi ${p.events?.client_name || 'there'}! Just a reminder that your ${p.entry_type} payment of ${formatCurrency(p.amount)} is due ${daysLeft === 0 ? 'today' : `in ${daysLeft} day${daysLeft !== 1 ? 's' : ''}`} (${p.due_date}). Payment accepted via Venmo, Zelle, cash, or check. Reach out with any questions!\n— Eddie @ 513 Sips`
+                return (
+                  <span key={p.id} className="flex items-center gap-1.5">
+                    <Link to="/ar?filter=pending" className="hover:text-gold transition-colors capitalize">
+                      {p.events?.client_name} — {p.entry_type} {formatCurrency(p.amount)}
+                      {daysLeft === 0 ? ' (today!)' : ` (${daysLeft}d)`}
+                    </Link>
+                    <button
+                      onClick={() => { navigator.clipboard.writeText(msg); toast.success('Reminder copied to clipboard') }}
+                      className="text-blue-300/50 hover:text-blue-300 transition-colors"
+                      title="Copy reminder message"
+                    ><Copy size={11} /></button>
+                  </span>
+                )
+              })}
             </div>
           </div>
         </div>

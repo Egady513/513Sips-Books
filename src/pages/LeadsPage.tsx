@@ -412,6 +412,10 @@ export default function LeadsPage() {
     const total = parseFloat(createQuoteForm.total) || 0
     const deposit = parseFloat(createQuoteForm.deposit) || Math.round(total * 0.5)
     const balance = parseFloat(createQuoteForm.balance) || (total - deposit)
+    if (total > 0 && Math.abs(deposit + balance - total) > 0.01) {
+      toast.error(`Deposit ($${deposit}) + Balance ($${balance}) must equal Total ($${total})`)
+      return
+    }
     try {
       const newQuote = await createQuote.mutateAsync({
         lead_id: createQuoteForLead.id,

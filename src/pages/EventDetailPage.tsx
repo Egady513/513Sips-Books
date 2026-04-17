@@ -9,7 +9,7 @@ import Button from '../components/ui/Button'
 import StatusBadge from '../components/ui/StatusBadge'
 import Modal from '../components/ui/Modal'
 import { formatCurrency, formatDate } from '../utils/formatters'
-import { EVENT_STATUSES, PAYMENT_METHODS, EXPENSE_CATEGORIES } from '../lib/constants'
+import { EVENT_STATUSES, PAYMENT_METHODS, EXPENSE_CATEGORIES, MILEAGE_RATES } from '../lib/constants'
 import {
   ArrowLeft, FileText, Upload, DollarSign, Car, Receipt,
   CheckCircle2, Clock, Phone, Mail, Pencil, Trash2, Plus,
@@ -106,11 +106,13 @@ export default function EventDetailPage() {
     e.preventDefault()
     const fd = new FormData(e.currentTarget)
     const miles = parseFloat(fd.get('miles') as string)
-    const rate = 0.70
+    const tripDate = fd.get('trip_date') as string
+    const tripYear = tripDate ? new Date(tripDate).getFullYear() : new Date().getFullYear()
+    const rate = MILEAGE_RATES[tripYear] || 0.70
     try {
       await createMileage.mutateAsync({
         event_id: id,
-        trip_date: fd.get('trip_date') as string,
+        trip_date: tripDate,
         from_location: (fd.get('from_location') as string) || undefined,
         to_location: (fd.get('to_location') as string) || undefined,
         miles,
@@ -692,7 +694,7 @@ export default function EventDetailPage() {
               <input name="purpose" placeholder="e.g. Drive to event, supply run" className="w-full bg-navy-lighter border border-gold-dim rounded-lg px-3 py-2 text-cream text-sm" />
             </div>
           </div>
-          <p className="text-xs text-cream/30">Rate: $0.70/mile (2025 IRS standard)</p>
+          <p className="text-xs text-cream/30">Rate: ${MILEAGE_RATES[new Date().getFullYear()] || 0.70}/mile ({new Date().getFullYear()} IRS standard)</p>
           <div className="flex gap-3 pt-2">
             <Button type="submit" className="flex-1">Log Mileage</Button>
             <Button type="button" variant="secondary" onClick={() => setShowNewMileage(false)}>Cancel</Button>

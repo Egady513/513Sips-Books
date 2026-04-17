@@ -106,6 +106,33 @@ export function useOverdueAlerts() {
   })
 }
 
+export function useUpcomingPayments() {
+  return useQuery({
+    queryKey: ['dashboard', 'upcoming_payments'],
+    queryFn: async () => {
+      const today = new Date().toISOString().split('T')[0]
+      const in7 = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+
+      const { data } = await supabase
+        .from('ar_entries')
+        .select('id, amount, due_date, entry_type, events(client_name, client_phone, client_email)')
+        .eq('status', 'pending')
+        .gte('due_date', today)
+        .lte('due_date', in7)
+        .order('due_date', { ascending: true })
+
+      return (data || []) as unknown as Array<{
+        id: string
+        amount: number
+        due_date: string
+        entry_type: string
+        events: { client_name: string; client_phone?: string; client_email?: string } | null
+      }>
+    },
+    staleTime: 60_000,
+  })
+}
+
 export function useRevenueByMonth(year?: number) {
   return useQuery({
     queryKey: ['dashboard', 'revenue_by_month', year],
