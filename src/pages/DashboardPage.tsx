@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 import { useDashboardKPIs, useRevenueByMonth, useOverdueAlerts } from '../hooks/useDashboard'
 import { useLeads } from '../hooks/useLeads'
+import { useRecentQuotes } from '../hooks/useQuotes'
 import { StatCard, Card } from '../components/ui/Card'
 import { formatCurrency, getCurrentYear } from '../utils/formatters'
 import { AlertTriangle, ChevronLeft, ChevronRight } from 'lucide-react'
@@ -12,12 +13,18 @@ export default function DashboardPage() {
   const { data: kpis, isLoading } = useDashboardKPIs(year)
   const { data: revenueData } = useRevenueByMonth(year)
   const { data: allLeads = [] } = useLeads()
+  const { data: recentQuotes = [] } = useRecentQuotes()
   const { data: overdue } = useOverdueAlerts()
 
   const leadStats = {
     newCount:    allLeads.filter(l => l.status === 'new').length,
     quotedCount: allLeads.filter(l => l.status === 'quoted' || l.status === 'negotiating').length,
-    pipeline:    allLeads.filter(l => l.status !== 'lost' && l.status !== 'booked' && l.budget).reduce((s, l) => s + (l.budget || 0), 0),
+    pipeline:    allLeads.filter(l => l.status !== 'lost' && l.status !== 'booked').reduce((s, l) => {
+      const quote = recentQuotes.find(q => q.lead_id === l.id)
+      const amount = quote?.total ?? l.budget ?? 0
+      const prob = l.probability ?? 50
+      return s + Math.round(amount * prob / 100)
+    }, 0),
   }
 
   // Dynamic year list: 3 years back through current year + 1
@@ -143,7 +150,7 @@ export default function DashboardPage() {
               <span className="text-yellow-300 font-medium">{leadStats.quotedCount}</span>
             </div>
             <div className="border-t border-gold-dim pt-2 flex justify-between">
-              <span className="text-cream font-medium">Pipeline Value</span>
+              <span className="text-cream font-medium">Wtd. Pipeline</span>
               <span className="text-gold font-bold">{formatCurrency(leadStats.pipeline)}</span>
             </div>
           </div>
