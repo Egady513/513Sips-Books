@@ -2,17 +2,19 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useLeads, useCreateLead, useUpdateLead, useDeleteLead } from '../hooks/useLeads'
 import { useRecentQuotes, useLinkQuoteToLead, useUpdateQuote, useCreateQuote, useDeleteQuote } from '../hooks/useQuotes'
+import { useAlcoholEstimatesByLead } from '../hooks/useAlcoholEstimates'
 import { useCreateEvent } from '../hooks/useEvents'
 import { useCreateAREntry } from '../hooks/useInvoices'
 import type { Quote } from '../hooks/useQuotes'
 import { Card, StatCard } from '../components/ui/Card'
 import Button from '../components/ui/Button'
 import Modal from '../components/ui/Modal'
+import QuoteVersionHistory from '../components/ui/QuoteVersionHistory'
 import { formatCurrency, formatDate } from '../utils/formatters'
 import {
   Plus, Instagram, Users, Phone, Mail, Calendar, DollarSign,
   Trash2, Edit2, Download, ExternalLink, FileSignature, CheckCircle2, FileText, Pencil, FileDown,
-  AlertCircle, Clock, ChevronDown, LayoutGrid, List,
+  AlertCircle, Clock, ChevronDown, LayoutGrid, List, History,
 } from 'lucide-react'
 import type { Lead } from '../lib/types'
 import toast from 'react-hot-toast'
@@ -91,6 +93,10 @@ export default function LeadsPage() {
   const [showCreateQuote, setShowCreateQuote] = useState(false)
   const [createQuoteForLead, setCreateQuoteForLead] = useState<Lead | null>(null)
   const [createQuoteForm, setCreateQuoteForm] = useState({ total: '', deposit: '', balance: '', guest_count: '', hours: '', valid_until: '' })
+
+  // Quote version history modal
+  const [showVersionHistory, setShowVersionHistory] = useState(false)
+  const [versionHistoryQuote, setVersionHistoryQuote] = useState<Quote | null>(null)
 
   const { data: leads = [], isLoading } = useLeads(filter === 'all' ? undefined : filter)
   const createLead = useCreateLead()
@@ -351,6 +357,7 @@ export default function LeadsPage() {
     const balance = quote.balance
 
     const contractData = {
+      leadId:              lead.id,
       clientName:          lead.name,
       clientEmail:         lead.email || '',
       clientPhone:         lead.phone || '',
@@ -724,6 +731,7 @@ export default function LeadsPage() {
             )
           }).map(lead => {
             const linkedQuote = recentQuotes.find(q => q.lead_id === lead.id)
+            const { data: estimate } = useAlcoholEstimatesByLead(lead.id)
             const isExpanded = expandedCards.has(lead.id)
             return (
               <Card key={lead.id} className="hover:border-gold/30 transition-colors">
@@ -838,6 +846,7 @@ export default function LeadsPage() {
                                   linkedQuote.status === 'declined' ? 'bg-red-500/20 text-red-400' :
                                                                       'bg-white/5 text-cream/40'
                                 }`}>{linkedQuote.status}</span>
+                                <button onClick={() => { setVersionHistoryQuote(linkedQuote); setShowVersionHistory(true) }} className="text-cream/25 hover:text-gold transition-colors" title="View version history"><History size={11} /></button>
                                 <button onClick={() => handleDownloadQuotePDF(lead, linkedQuote)} className="text-cream/25 hover:text-gold transition-colors" title="Download PDF"><FileDown size={11} /></button>
                                 <button onClick={() => handleCreateQuote(lead)} className="text-cream/25 hover:text-gold transition-colors" title="Revise in calculator"><Pencil size={11} /></button>
                                 <button onClick={() => handleDeleteQuote(linkedQuote.id, lead.id)} className="text-cream/25 hover:text-red-400 transition-colors" title="Delete quote"><Trash2 size={11} /></button>
@@ -845,6 +854,71 @@ export default function LeadsPage() {
                             </div>
                           )
                         })()}
+                      </div>
+                    )}
+
+                    {/* Contract status */}
+                    <div className="flex items-center gap-2 flex-wrap text-xs">
+                      {lead.unsigned_contract_url ? (
+                        <a
+                          href={lead.unsigned_contract_url}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="flex items-center gap-1 px-2 py-1 bg-blue-500/20 text-blue-300 border border-blue-500/30 rounded-md hover:bg-blue-500/30 transition-colors"
+                        >
+                          <FileText size={11} /> Unsigned ✓
+                        </a>
+                      ) : (
+                        <span className="flex items-center gap-1 px-2 py-1 bg-white/5 text-cream/40 rounded-md">
+                          <FileText size={11} /> Unsigned ○
+                        </span>
+                      )}
+                      {lead.signed_contract_url ? (
+                        <a
+                          href={lead.signed_contract_url}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="flex items-center gap-1 px-2 py-1 bg-green-500/20 text-green-300 border border-green-500/30 rounded-md hover:bg-green-500/30 transition-colors"
+                        >
+                          <FileText size={11} /> Signed ✓
+                        </a>
+                      ) : (
+                        <span className="flex items-center gap-1 px-2 py-1 bg-white/5 text-cream/40 rounded-md">
+                          <FileText size={11} /> Signed ○
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Alcohol estimate strip */}
+                    {estimate && (
+                      <div className="rounded-md bg-amber-500/5 border border-amber-500/15 px-3 py-2">
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-2 text-xs">
+                              <span className="text-amber-300 font-semibold">🍾 Alcohol Estimate</span>
+                              <span className="text-cream/40">·</span>
+                              <span className="text-cream/50">{estimate.total_bottles} bottles</span>
+                            </div>
+                            {Object.entries(estimate.breakdown).filter(([,v]) => typeof v === 'number' && v > 0).length > 0 && (
+                              <div className="text-xs text-cream/35 mt-0.5">
+                                {[
+                                  estimate.breakdown.wine && `${estimate.breakdown.wine} wine`,
+                                  estimate.breakdown.beer && `${estimate.breakdown.beer} beer`,
+                                  estimate.breakdown.spirits && `${estimate.breakdown.spirits} spirits`,
+                                  estimate.breakdown.champagne && `${estimate.breakdown.champagne} champagne`,
+                                  estimate.breakdown.seltzer && `${estimate.breakdown.seltzer} seltzer`,
+                                ].filter(Boolean).join(' · ')}
+                              </div>
+                            )}
+                          </div>
+                          <a
+                            href="https://www.513sips.com/tools/alcohol-estimator.html"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-cream/40 hover:text-gold transition-colors p-1.5 rounded"
+                            title="Open alcohol estimator"
+                          ><ExternalLink size={13} /></a>
+                        </div>
                       </div>
                     )}
 
@@ -1446,6 +1520,21 @@ export default function LeadsPage() {
           </div>
         </div>
       </Modal>
+
+      {/* Quote Version History Modal */}
+      <QuoteVersionHistory
+        open={showVersionHistory}
+        onClose={() => { setShowVersionHistory(false); setVersionHistoryQuote(null) }}
+        versions={versionHistoryQuote?.version_history || []}
+        currentVersion={versionHistoryQuote ? {
+          versionNum: (versionHistoryQuote.version_history?.length || 0) + 1,
+          total: versionHistoryQuote.total,
+          deposit: versionHistoryQuote.deposit,
+          balance: versionHistoryQuote.balance,
+          status: versionHistoryQuote.status,
+          created_at: new Date().toISOString(),
+        } : undefined}
+      />
     </div>
   )
 }

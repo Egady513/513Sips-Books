@@ -4,6 +4,7 @@ import { useEvent, useUpdateEvent, useUploadContract } from '../hooks/useEvents'
 import { useRecordPayment } from '../hooks/useInvoices'
 import { useEventExpenses, useEventMileage, useUpdateExpense, useDeleteExpense, useCreateExpense, useDeleteMileage, useCreateMileage } from '../hooks/useExpenses'
 import { useEventBills } from '../hooks/useBills'
+import { useAlcoholEstimatesByEvent } from '../hooks/useAlcoholEstimates'
 import { Card, StatCard } from '../components/ui/Card'
 import Button from '../components/ui/Button'
 import StatusBadge from '../components/ui/StatusBadge'
@@ -43,6 +44,7 @@ export default function EventDetailPage() {
   const { data: expenses = [] } = useEventExpenses(id)
   const { data: mileage = [] } = useEventMileage(id)
   const { data: bills = [] } = useEventBills(id)
+  const { data: estimate } = useAlcoholEstimatesByEvent(id)
   const updateEvent = useUpdateEvent()
   const uploadContract = useUploadContract()
   const recordPayment = useRecordPayment()
@@ -172,9 +174,18 @@ export default function EventDetailPage() {
     input.onchange = async (e) => {
       const file = (e.target as HTMLInputElement).files?.[0]
       if (!file) return
-      await uploadContract.mutateAsync({ eventId: event.id, file, clientName: event.client_name })
-      await updateEvent.mutateAsync({ id: event.id, status: 'signed' })
-      toast.success('Contract uploaded')
+      try {
+        await uploadContract.mutateAsync({
+          eventId: event.id,
+          file,
+          clientName: event.client_name,
+          isUnsigned: false,
+        })
+        await updateEvent.mutateAsync({ id: event.id, status: 'signed' })
+        toast.success('Contract uploaded')
+      } catch {
+        toast.error('Failed to upload contract')
+      }
     }
     input.click()
   }
@@ -381,6 +392,183 @@ export default function EventDetailPage() {
                 <span className={eventNet >= 0 ? 'text-success' : 'text-danger'}>
                   {formatCurrency(eventNet)}
                 </span>
+              </div>
+            </div>
+          </Card>
+
+          {/* Alcohol Estimate */}
+          {estimate && (
+            <Card>
+              <h3 className="text-xs text-cream/40 uppercase tracking-wider mb-3">🍾 Alcohol Estimate</h3>
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-cream/50">Total Bottles</span>
+                  <span className="text-amber-300 font-semibold">{estimate.total_bottles}</span>
+                </div>
+                {estimate.breakdown && Object.entries(estimate.breakdown).filter(([,v]) => typeof v === 'number' && v > 0).map(([key, value]) => (
+                  <div key={key} className="flex justify-between">
+                    <span className="text-cream/50 capitalize">{key}</span>
+                    <span className="text-cream">{value as number}</span>
+                  </div>
+                ))}
+                <div className="border-t border-gold-dim pt-2 mt-2">
+                  <a
+                    href="https://www.513sips.com/tools/alcohol-estimator.html"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs text-gold hover:text-gold/80 transition-colors"
+                  >
+                    Open estimator →
+                  </a>
+                </div>
+              </div>
+            </Card>
+          )}
+
+          {/* Contracts */}
+          <Card>
+            <h3 className="text-xs text-cream/40 uppercase tracking-wider mb-4">📄 Contracts</h3>
+            <div className="space-y-3">
+              {/* Unsigned Contract */}
+              <div className="border-b border-gold-dim pb-3">
+                <div className="flex items-center justify-between gap-2 mb-2">
+                  <span className="text-sm text-cream/70">Unsigned Contract</span>
+                  {event.unsigned_contract_url && (
+                    <span className="text-xs px-2 py-1 bg-blue-500/20 text-blue-300 border border-blue-500/30 rounded">
+                      ✓
+                    </span>
+                  )}
+                </div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  {event.unsigned_contract_url ? (
+                    <>
+                      <a
+                        href={event.unsigned_contract_url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-xs text-gold/70 hover:text-gold px-3 py-1.5 bg-gold/10 rounded-lg border border-gold/20 transition-colors flex items-center gap-1.5"
+                      >
+                        <FileText size={12} /> View
+                      </a>
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        onClick={() => {
+                          const input = document.createElement('input')
+                          input.type = 'file'
+                          input.accept = '.pdf'
+                          input.onchange = async (e) => {
+                            const file = (e.target as HTMLInputElement).files?.[0]
+                            if (!file) return
+                            try {
+                              await uploadContract.mutateAsync({
+                                eventId: event.id,
+                                file,
+                                clientName: event.client_name,
+                                isUnsigned: true,
+                              })
+                              toast.success('Unsigned contract updated')
+                            } catch {
+                              toast.error('Failed to upload contract')
+                            }
+                          }
+                          input.click()
+                        }}
+                      >
+                        Replace
+                      </Button>
+                    </>
+                  ) : (
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      onClick={() => {
+                        const input = document.createElement('input')
+                        input.type = 'file'
+                        input.accept = '.pdf'
+                        input.onchange = async (e) => {
+                          const file = (e.target as HTMLInputElement).files?.[0]
+                          if (!file) return
+                          try {
+                            await uploadContract.mutateAsync({
+                              eventId: event.id,
+                              file,
+                              clientName: event.client_name,
+                              isUnsigned: true,
+                            })
+                            toast.success('Unsigned contract uploaded')
+                          } catch {
+                            toast.error('Failed to upload contract')
+                          }
+                        }
+                        input.click()
+                      }}
+                    >
+                      <Upload size={14} /> Upload
+                    </Button>
+                  )}
+                </div>
+              </div>
+
+              {/* Signed Contract */}
+              <div>
+                <div className="flex items-center justify-between gap-2 mb-2">
+                  <span className="text-sm text-cream/70">Signed Contract</span>
+                  {event.signed_contract_url && (
+                    <span className="text-xs px-2 py-1 bg-success/20 text-success border border-success/30 rounded">
+                      ✓
+                    </span>
+                  )}
+                </div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  {event.signed_contract_url ? (
+                    <>
+                      <a
+                        href={event.signed_contract_url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-xs text-gold/70 hover:text-gold px-3 py-1.5 bg-gold/10 rounded-lg border border-gold/20 transition-colors flex items-center gap-1.5"
+                      >
+                        <FileText size={12} /> View
+                      </a>
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        onClick={() => {
+                          const input = document.createElement('input')
+                          input.type = 'file'
+                          input.accept = '.pdf'
+                          input.onchange = async (e) => {
+                            const file = (e.target as HTMLInputElement).files?.[0]
+                            if (!file) return
+                            try {
+                              await uploadContract.mutateAsync({
+                                eventId: event.id,
+                                file,
+                                clientName: event.client_name,
+                                isUnsigned: false,
+                              })
+                              toast.success('Signed contract updated')
+                            } catch {
+                              toast.error('Failed to upload contract')
+                            }
+                          }
+                          input.click()
+                        }}
+                      >
+                        Replace
+                      </Button>
+                    </>
+                  ) : (
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      onClick={handleContractUpload}
+                    >
+                      <Upload size={14} /> Upload
+                    </Button>
+                  )}
+                </div>
               </div>
             </div>
           </Card>

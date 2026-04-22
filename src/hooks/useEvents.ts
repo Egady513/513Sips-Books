@@ -86,9 +86,22 @@ export function useDeleteEvent() {
 }
 
 export function useUploadContract() {
+  const qc = useQueryClient()
   return useMutation({
-    mutationFn: async ({ eventId, file, clientName }: { eventId: string; file: File; clientName: string }) => {
-      const fileName = `contracts/${Date.now()}_${clientName.replace(/\s+/g, '_')}.pdf`
+    mutationFn: async ({
+      eventId,
+      file,
+      clientName,
+      isUnsigned = false,
+    }: {
+      eventId: string
+      file: File
+      clientName: string
+      isUnsigned?: boolean
+    }) => {
+      const timestamp = Date.now()
+      const prefix = isUnsigned ? 'unsigned' : 'signed'
+      const fileName = `contracts/${prefix}_${timestamp}_${clientName.replace(/\s+/g, '_')}.pdf`
       const { error: uploadError } = await supabase.storage
         .from('contracts')
         .upload(fileName, file)
@@ -96,13 +109,18 @@ export function useUploadContract() {
 
       const { data: { publicUrl } } = supabase.storage.from('contracts').getPublicUrl(fileName)
 
+      const fieldToUpdate = isUnsigned ? 'unsigned_contract_url' : 'signed_contract_url'
       const { error: updateError } = await supabase
         .from('events')
-        .update({ signed_contract_url: publicUrl })
+        .update({ [fieldToUpdate]: publicUrl })
         .eq('id', eventId)
       if (updateError) throw updateError
 
       return publicUrl
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['events'] })
+      qc.invalidateQueries({ queryKey: ['event'] })
     },
   })
 }

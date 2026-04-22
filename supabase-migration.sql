@@ -143,3 +143,10 @@ ALTER TABLE events ADD COLUMN IF NOT EXISTS service_start_time TEXT;
 ALTER TABLE events ADD COLUMN IF NOT EXISTS service_end_time TEXT;
 
 ALTER TABLE leads ADD COLUMN IF NOT EXISTS converted_event_id UUID REFERENCES events(id) ON DELETE SET NULL;
+
+-- ============================================
+-- 8. SPRINT 5: Add version history to quotes
+-- ============================================
+
+-- version_history is a JSON array of snapshots: [{ versionNum, total, deposit, balance, created_at, status }, ...]
+ALTER TABLE quotes ADD COLUMN IF NOT EXISTS version_history JSONB DEFAULT '[]'::jsonb;

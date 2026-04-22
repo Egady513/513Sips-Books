@@ -22,6 +22,7 @@ export interface Event {
   deposit_amount: number
   balance_amount: number
   status: string
+  unsigned_contract_url?: string
   signed_contract_url?: string
   notes?: string
   created_at: string
@@ -161,6 +162,25 @@ export interface Lead {
   service_start_time?: string  // "HH:MM" format
   service_end_time?: string    // "HH:MM" format
   probability?: number         // 0–100 win probability for weighted pipeline
+  unsigned_contract_url?: string
+  signed_contract_url?: string
+  created_at: string
+  updated_at: string
+}
+
+export interface AlcoholEstimate {
+  id: string
+  lead_id?: string
+  event_id?: string
+  total_bottles: number
+  breakdown: {
+    wine?: number
+    beer?: number
+    spirits?: number
+    champagne?: number
+    seltzer?: number
+    other?: number
+  }
   created_at: string
   updated_at: string
 }

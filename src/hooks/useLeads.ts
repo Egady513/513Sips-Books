@@ -61,3 +61,48 @@ export function useDeleteLead() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['leads'] }),
   })
 }
+
+export function useUploadLeadContract() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async ({
+      leadId,
+      file,
+      isUnsigned = false,
+    }: {
+      leadId: string
+      file: File
+      isUnsigned?: boolean
+    }) => {
+      const timestamp = Date.now()
+      const prefix = isUnsigned ? 'unsigned' : 'signed'
+      const fileName = `contracts/${leadId}/${prefix}_${timestamp}.pdf`
+
+      // Upload to storage
+      const { error: uploadError } = await supabase.storage
+        .from('contracts')
+        .upload(fileName, file)
+
+      if (uploadError) throw uploadError
+
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('contracts')
+        .getPublicUrl(fileName)
+
+      // Update leads table
+      const fieldToUpdate = isUnsigned ? 'unsigned_contract_url' : 'signed_contract_url'
+      const { error: updateError } = await supabase
+        .from('leads')
+        .update({ [fieldToUpdate]: publicUrl })
+        .eq('id', leadId)
+
+      if (updateError) throw updateError
+
+      return publicUrl
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['leads'] })
+    },
+  })
+}
