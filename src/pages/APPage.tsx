@@ -5,6 +5,7 @@ import { Card, StatCard } from '../components/ui/Card'
 import Button from '../components/ui/Button'
 import StatusBadge from '../components/ui/StatusBadge'
 import Modal from '../components/ui/Modal'
+import FilterTabs from '../components/ui/FilterTabs'
 import { formatCurrency, formatDate, daysUntil } from '../utils/formatters'
 import { EXPENSE_CATEGORIES } from '../lib/constants'
 import { getScheduleCLine } from '../utils/taxCalc'
@@ -111,20 +112,17 @@ export default function APPage() {
         <StatCard label="Owed to You" value={formatCurrency(owedToYou)} color="text-gold" />
       </div>
 
-      <div className="flex flex-wrap gap-2">
-        {[
+      <FilterTabs
+        value={filter}
+        onChange={setFilter}
+        options={[
           { value: 'all', label: 'All' },
           { value: 'pending', label: 'Pending' },
           { value: 'paid', label: 'Paid' },
           { value: 'overdue', label: 'Overdue' },
           { value: 'owner_draw', label: '💰 Reimbursements' },
-        ].map(f => (
-          <button key={f.value} onClick={() => setFilter(f.value)}
-            className={`px-3 py-1.5 rounded-lg text-sm ${filter === f.value ? 'bg-gold text-navy font-semibold' : 'bg-navy-lighter text-cream/60'}`}>
-            {f.label}
-          </button>
-        ))}
-      </div>
+        ]}
+      />
 
       {isLoading ? (
         <div className="text-cream/50 text-center py-12">Loading...</div>

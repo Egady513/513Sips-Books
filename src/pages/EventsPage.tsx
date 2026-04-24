@@ -7,6 +7,7 @@ import { Card } from '../components/ui/Card'
 import Button from '../components/ui/Button'
 import StatusBadge from '../components/ui/StatusBadge'
 import Modal from '../components/ui/Modal'
+import FilterTabs from '../components/ui/FilterTabs'
 import { formatCurrency, formatDate } from '../utils/formatters'
 import { EVENT_STATUSES, EVENT_TYPES } from '../lib/constants'
 import { Plus, Upload, FileText, TrendingUp, Archive, Search } from 'lucide-react'
@@ -166,24 +167,11 @@ export default function EventsPage() {
         />
       </div>
 
-      {/* Filter tabs */}
-      <div className="flex flex-wrap gap-2">
-        <button
-          onClick={() => setFilter('all')}
-          className={`px-3 py-1.5 rounded-lg text-sm ${filter === 'all' ? 'bg-gold text-navy font-semibold' : 'bg-navy-lighter text-cream/60'}`}
-        >
-          All
-        </button>
-        {EVENT_STATUSES.map(s => (
-          <button
-            key={s.value}
-            onClick={() => setFilter(s.value)}
-            className={`px-3 py-1.5 rounded-lg text-sm ${filter === s.value ? 'bg-gold text-navy font-semibold' : 'bg-navy-lighter text-cream/60'}`}
-          >
-            {s.label}
-          </button>
-        ))}
-      </div>
+      <FilterTabs
+        value={filter}
+        onChange={setFilter}
+        options={[{ value: 'all', label: 'All' }, ...EVENT_STATUSES.map(s => ({ value: s.value, label: s.label }))]}
+      />
 
       {/* Events list */}
       {isLoading ? (

@@ -1,40 +1,24 @@
 import { useState } from 'react'
-import { useAREntries, useRecordPayment } from '../hooks/useInvoices'
+import { useAREntries } from '../hooks/useInvoices'
 import { Card, StatCard } from '../components/ui/Card'
 import Button from '../components/ui/Button'
 import StatusBadge from '../components/ui/StatusBadge'
-import Modal from '../components/ui/Modal'
+import FilterTabs from '../components/ui/FilterTabs'
+import PaymentRecordModal from '../components/ui/PaymentRecordModal'
 import { formatCurrency, formatDate, daysUntil } from '../utils/formatters'
-import { PAYMENT_METHODS } from '../lib/constants'
 import { DollarSign, Copy } from 'lucide-react'
+import type { AREntry } from '../lib/types'
 import toast from 'react-hot-toast'
 
 export default function ARPage() {
   const [filter, setFilter] = useState('all')
-  const [payEntry, setPayEntry] = useState<any>(null)
-  const [payMethod, setPayMethod] = useState('')
-  const [payNotes, setPayNotes] = useState('')
+  const [payEntry, setPayEntry] = useState<AREntry | null>(null)
   const { data: entries, isLoading } = useAREntries(filter)
-  const recordPayment = useRecordPayment()
 
   const pending = entries?.filter(e => e.status === 'pending') || []
   const received = entries?.filter(e => e.status === 'received') || []
   const totalOutstanding = pending.reduce((s, e) => s + Number(e.amount), 0)
   const totalReceived = received.reduce((s, e) => s + Number(e.amount), 0)
-
-  const handlePayment = async () => {
-    if (!payEntry || !payMethod) return
-    await recordPayment.mutateAsync({
-      entryId: payEntry.id,
-      paymentMethod: payMethod,
-      notes: payNotes || undefined,
-      eventId: payEntry.event_id,
-      entryType: payEntry.entry_type,
-    })
-    setPayEntry(null)
-    setPayMethod('')
-    setPayNotes('')
-  }
 
   return (
     <div className="space-y-6 max-w-6xl">
@@ -47,14 +31,11 @@ export default function ARPage() {
         <StatCard label="Total Entries" value={String(entries?.length || 0)} color="text-gold" />
       </div>
 
-      <div className="flex flex-wrap gap-2">
-        {['all', 'pending', 'received', 'overdue'].map(f => (
-          <button key={f} onClick={() => setFilter(f)}
-            className={`px-3 py-1.5 rounded-lg text-sm capitalize ${filter === f ? 'bg-gold text-navy font-semibold' : 'bg-navy-lighter text-cream/60'}`}>
-            {f}
-          </button>
-        ))}
-      </div>
+      <FilterTabs
+        value={filter}
+        onChange={setFilter}
+        options={['all', 'pending', 'received', 'overdue'].map(f => ({ value: f, label: f.charAt(0).toUpperCase() + f.slice(1) }))}
+      />
 
       {isLoading ? (
         <div className="text-cream/50 text-center py-12">Loading...</div>
@@ -126,41 +107,7 @@ export default function ARPage() {
         </div>
       )}
 
-      {/* Payment Modal */}
-      <Modal open={!!payEntry} onClose={() => setPayEntry(null)} title="Record Payment">
-        {payEntry && (
-          <div className="space-y-4">
-            <div className="text-sm text-cream/60">
-              <p><strong className="text-cream">{payEntry.events?.client_name}</strong></p>
-              <p className="capitalize">{payEntry.entry_type}: {formatCurrency(payEntry.amount)}</p>
-            </div>
-            <div>
-              <label className="block text-xs text-cream/50 mb-1">Payment Method</label>
-              <select value={payMethod} onChange={e => setPayMethod(e.target.value)}
-                className="w-full bg-navy-lighter border border-gold-dim rounded-lg px-3 py-2 text-cream text-sm">
-                <option value="">Select...</option>
-                {PAYMENT_METHODS.map(m => <option key={m.value} value={m.value}>{m.label}</option>)}
-              </select>
-            </div>
-            <div>
-              <label className="block text-xs text-cream/50 mb-1">Notes (optional)</label>
-              <input
-                type="text"
-                placeholder="e.g., Venmo @client, Check #1234..."
-                value={payNotes}
-                onChange={e => setPayNotes(e.target.value)}
-                className="w-full bg-navy-lighter border border-gold-dim rounded-lg px-3 py-2 text-cream text-sm"
-              />
-            </div>
-            <div className="flex gap-3">
-              <Button onClick={handlePayment} disabled={!payMethod} className="flex-1">
-                Confirm Payment
-              </Button>
-              <Button variant="secondary" onClick={() => { setPayEntry(null); setPayNotes('') }}>Cancel</Button>
-            </div>
-          </div>
-        )}
-      </Modal>
+      <PaymentRecordModal entry={payEntry} onClose={() => setPayEntry(null)} />
     </div>
   )
 }

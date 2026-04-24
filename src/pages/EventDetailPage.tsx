@@ -1,17 +1,19 @@
 import { useState } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { useEvent, useUpdateEvent, useUploadContract } from '../hooks/useEvents'
-import { useRecordPayment } from '../hooks/useInvoices'
-import { useEventExpenses, useEventMileage, useUpdateExpense, useDeleteExpense, useDeleteMileage, useCreateMileage } from '../hooks/useExpenses'
+import { useEventExpenses, useEventMileage, useUpdateExpense, useDeleteExpense, useDeleteMileage } from '../hooks/useExpenses'
 import { useEventBills } from '../hooks/useBills'
 import ExpenseFormModal from '../components/ui/ExpenseFormModal'
+import MileageFormModal from '../components/ui/MileageFormModal'
+import FilterTabs from '../components/ui/FilterTabs'
+import PaymentRecordModal from '../components/ui/PaymentRecordModal'
 import { useAlcoholEstimatesByEvent } from '../hooks/useAlcoholEstimates'
 import { Card, StatCard } from '../components/ui/Card'
 import Button from '../components/ui/Button'
 import StatusBadge from '../components/ui/StatusBadge'
 import Modal from '../components/ui/Modal'
 import { formatCurrency, formatDate } from '../utils/formatters'
-import { EVENT_STATUSES, PAYMENT_METHODS, EXPENSE_CATEGORIES, MILEAGE_RATES } from '../lib/constants'
+import { EVENT_STATUSES, EXPENSE_CATEGORIES } from '../lib/constants'
 import {
   ArrowLeft, FileText, Upload, DollarSign, Car, Receipt,
   CheckCircle2, Clock, Phone, Mail, Pencil, Trash2, Plus,
@@ -27,8 +29,6 @@ export default function EventDetailPage() {
 
   const [tab, setTab] = useState<Tab>('overview')
   const [payEntry, setPayEntry] = useState<any>(null)
-  const [payMethod, setPayMethod] = useState('')
-  const [payNotes, setPayNotes] = useState('')
 
   // Expense edit state
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null)
@@ -48,11 +48,9 @@ export default function EventDetailPage() {
   const { data: estimate } = useAlcoholEstimatesByEvent(id)
   const updateEvent = useUpdateEvent()
   const uploadContract = useUploadContract()
-  const recordPayment = useRecordPayment()
   const updateExpense = useUpdateExpense()
   const deleteExpense = useDeleteExpense()
   const deleteMileage = useDeleteMileage()
-  const createMileage = useCreateMileage()
 
   function openExpenseEdit(exp: Expense) {
     setEditingExpense(exp)
@@ -87,28 +85,6 @@ export default function EventDetailPage() {
 
 
 
-  async function handleCreateMileageHere(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault()
-    const fd = new FormData(e.currentTarget)
-    const miles = parseFloat(fd.get('miles') as string)
-    const tripDate = fd.get('trip_date') as string
-    const tripYear = tripDate ? new Date(tripDate).getFullYear() : new Date().getFullYear()
-    const rate = MILEAGE_RATES[tripYear] || 0.70
-    try {
-      await createMileage.mutateAsync({
-        event_id: id,
-        trip_date: tripDate,
-        from_location: (fd.get('from_location') as string) || undefined,
-        to_location: (fd.get('to_location') as string) || undefined,
-        miles,
-        purpose: (fd.get('purpose') as string) || undefined,
-        rate_per_mile: rate,
-      })
-      toast.success('Mileage logged')
-      setShowNewMileage(false)
-    } catch { toast.error('Failed to log mileage') }
-  }
-
   if (isLoading) return <div className="text-cream/50 text-center py-20">Loading event...</div>
   if (!event) return (
     <div className="text-cream/50 text-center py-20">
@@ -130,25 +106,6 @@ export default function EventDetailPage() {
   const totalBills = bills.filter(b => b.status === 'paid').reduce((s, b) => s + Number(b.amount), 0)
   const totalCosts = totalExpenses + totalMileageDeduction + totalBills
   const eventNet = totalReceived - totalCosts
-
-  const handlePayment = async () => {
-    if (!payEntry || !payMethod) return
-    try {
-      await recordPayment.mutateAsync({
-        entryId: payEntry.id,
-        paymentMethod: payMethod,
-        notes: payNotes || undefined,
-        eventId: event.id,
-        entryType: payEntry.entry_type,
-      })
-      toast.success('Payment recorded')
-      setPayEntry(null)
-      setPayMethod('')
-      setPayNotes('')
-    } catch {
-      toast.error('Failed to record payment')
-    }
-  }
 
   const handleContractUpload = () => {
     const input = document.createElement('input')
@@ -256,25 +213,12 @@ export default function EventDetailPage() {
         </div>
       </div>
 
-      {/* Tabs */}
-      <div className="flex gap-1 border-b border-gold-dim">
-        {tabs.map(t => (
-          <button
-            key={t.id}
-            onClick={() => setTab(t.id)}
-            className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
-              tab === t.id
-                ? 'border-gold text-gold'
-                : 'border-transparent text-cream/50 hover:text-cream'
-            }`}
-          >
-            {t.label}
-            {t.count !== undefined && t.count > 0 && (
-              <span className="ml-1.5 text-xs bg-navy-lighter px-1.5 py-0.5 rounded-full">{t.count}</span>
-            )}
-          </button>
-        ))}
-      </div>
+      <FilterTabs
+        variant="underline"
+        value={tab}
+        onChange={v => setTab(v as Tab)}
+        options={tabs.map(t => ({ value: t.id, label: t.label, count: t.count }))}
+      />
 
       {/* ── OVERVIEW TAB ── */}
       {tab === 'overview' && (
@@ -807,75 +751,17 @@ export default function EventDetailPage() {
         eventId={id}
       />
 
-      {/* ── New Mileage Modal (from event detail) ── */}
-      <Modal open={showNewMileage} onClose={() => setShowNewMileage(false)} title="Log Mileage" preventBackdropClose>
-        <form onSubmit={handleCreateMileageHere} className="space-y-3">
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-xs text-cream/50 mb-1">Date *</label>
-              <input name="trip_date" type="date" defaultValue={new Date().toISOString().split('T')[0]} required
-                className="w-full bg-navy-lighter border border-gold-dim rounded-lg px-3 py-2 text-cream text-sm" />
-            </div>
-            <div>
-              <label className="block text-xs text-cream/50 mb-1">Miles *</label>
-              <input name="miles" type="number" step="0.1" required className="w-full bg-navy-lighter border border-gold-dim rounded-lg px-3 py-2 text-cream text-sm" />
-            </div>
-            <div>
-              <label className="block text-xs text-cream/50 mb-1">From</label>
-              <input name="from_location" placeholder="Home" className="w-full bg-navy-lighter border border-gold-dim rounded-lg px-3 py-2 text-cream text-sm" />
-            </div>
-            <div>
-              <label className="block text-xs text-cream/50 mb-1">To</label>
-              <input name="to_location" placeholder="Venue / Store" className="w-full bg-navy-lighter border border-gold-dim rounded-lg px-3 py-2 text-cream text-sm" />
-            </div>
-            <div className="col-span-2">
-              <label className="block text-xs text-cream/50 mb-1">Purpose</label>
-              <input name="purpose" placeholder="e.g. Drive to event, supply run" className="w-full bg-navy-lighter border border-gold-dim rounded-lg px-3 py-2 text-cream text-sm" />
-            </div>
-          </div>
-          <p className="text-xs text-cream/30">Rate: ${MILEAGE_RATES[new Date().getFullYear()] || 0.70}/mile ({new Date().getFullYear()} IRS standard)</p>
-          <div className="flex gap-3 pt-2">
-            <Button type="submit" className="flex-1">Log Mileage</Button>
-            <Button type="button" variant="secondary" onClick={() => setShowNewMileage(false)}>Cancel</Button>
-          </div>
-        </form>
-      </Modal>
+      <MileageFormModal
+        open={showNewMileage}
+        onClose={() => setShowNewMileage(false)}
+        eventId={id}
+      />
 
-      {/* Payment Modal */}
-      <Modal open={!!payEntry} onClose={() => setPayEntry(null)} title="Record Payment">
-        {payEntry && (
-          <div className="space-y-4">
-            <div className="text-sm text-cream/60">
-              <p><strong className="text-cream">{event.client_name}</strong></p>
-              <p className="capitalize">{payEntry.entry_type}: {formatCurrency(payEntry.amount)}</p>
-            </div>
-            <div>
-              <label className="block text-xs text-cream/50 mb-1">Payment Method</label>
-              <select value={payMethod} onChange={e => setPayMethod(e.target.value)}
-                className="w-full bg-navy-lighter border border-gold-dim rounded-lg px-3 py-2 text-cream text-sm">
-                <option value="">Select...</option>
-                {PAYMENT_METHODS.map(m => <option key={m.value} value={m.value}>{m.label}</option>)}
-              </select>
-            </div>
-            <div>
-              <label className="block text-xs text-cream/50 mb-1">Notes (optional)</label>
-              <input
-                type="text"
-                placeholder="e.g., Venmo @client, Check #1234..."
-                value={payNotes}
-                onChange={e => setPayNotes(e.target.value)}
-                className="w-full bg-navy-lighter border border-gold-dim rounded-lg px-3 py-2 text-cream text-sm"
-              />
-            </div>
-            <div className="flex gap-3">
-              <Button onClick={handlePayment} disabled={!payMethod} className="flex-1">
-                Confirm Payment
-              </Button>
-              <Button variant="secondary" onClick={() => { setPayEntry(null); setPayNotes('') }}>Cancel</Button>
-            </div>
-          </div>
-        )}
-      </Modal>
+      <PaymentRecordModal
+        entry={payEntry}
+        clientName={event.client_name}
+        onClose={() => setPayEntry(null)}
+      />
     </div>
   )
 }

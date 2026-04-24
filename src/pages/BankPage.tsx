@@ -7,6 +7,7 @@ import { Card, StatCard } from '../components/ui/Card'
 import Button from '../components/ui/Button'
 import StatusBadge from '../components/ui/StatusBadge'
 import Modal from '../components/ui/Modal'
+import FilterTabs from '../components/ui/FilterTabs'
 import { formatCurrency, formatDate } from '../utils/formatters'
 import { Upload, EyeOff, Link2, CheckCircle2 } from 'lucide-react'
 import type { BankTransaction } from '../lib/types'
@@ -170,15 +171,11 @@ export default function BankPage() {
         )}
       </Card>
 
-      {/* Filter tabs */}
-      <div className="flex flex-wrap gap-2">
-        {['all', 'unmatched', 'matched', 'ignored'].map(f => (
-          <button key={f} onClick={() => setFilter(f)}
-            className={`px-3 py-1.5 rounded-lg text-sm capitalize ${filter === f ? 'bg-gold text-navy font-semibold' : 'bg-navy-lighter text-cream/60'}`}>
-            {f}
-          </button>
-        ))}
-      </div>
+      <FilterTabs
+        value={filter}
+        onChange={setFilter}
+        options={['all', 'unmatched', 'matched', 'ignored'].map(f => ({ value: f, label: f.charAt(0).toUpperCase() + f.slice(1) }))}
+      />
 
       {/* Transaction list */}
       {isLoading ? (

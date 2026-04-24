@@ -1,12 +1,13 @@
 import { useState, useRef } from 'react'
-import { useExpenses, useDeleteExpense, useUploadReceipt, useMileage, useCreateMileage, useDeleteMileage } from '../hooks/useExpenses'
+import { useExpenses, useDeleteExpense, useUploadReceipt, useMileage, useDeleteMileage } from '../hooks/useExpenses'
 import { useEvents } from '../hooks/useEvents'
 import { Card, StatCard } from '../components/ui/Card'
 import Button from '../components/ui/Button'
-import Modal from '../components/ui/Modal'
 import ExpenseFormModal from '../components/ui/ExpenseFormModal'
+import MileageFormModal from '../components/ui/MileageFormModal'
+import FilterTabs from '../components/ui/FilterTabs'
 import { formatCurrency, formatDate, getCurrentYear } from '../utils/formatters'
-import { EXPENSE_CATEGORIES, MILEAGE_RATES } from '../lib/constants'
+import { EXPENSE_CATEGORIES } from '../lib/constants'
 import { Plus, Receipt, Car, Trash2, Paperclip, Edit2 } from 'lucide-react'
 import type { Expense } from '../lib/types'
 import toast from 'react-hot-toast'
@@ -25,7 +26,6 @@ export default function ExpensesPage() {
   const { data: events } = useEvents()
   const deleteExpense = useDeleteExpense()
   const uploadReceipt = useUploadReceipt()
-  const createMileage = useCreateMileage()
   const deleteMileage = useDeleteMileage()
 
   const totalExpenses = (expenses || []).reduce((s, e) => s + Number(e.amount), 0)
@@ -44,23 +44,6 @@ export default function ExpensesPage() {
     } catch {
       // handled by mutation
     }
-  }
-
-  const handleCreateMileage = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    const fd = new FormData(e.currentTarget)
-    const miles = parseFloat(fd.get('miles') as string)
-    const rate = MILEAGE_RATES[year] || 0.70
-    await createMileage.mutateAsync({
-      event_id: fd.get('event_id') as string || undefined,
-      trip_date: fd.get('trip_date') as string,
-      from_location: fd.get('from_location') as string,
-      to_location: fd.get('to_location') as string,
-      miles,
-      purpose: fd.get('purpose') as string,
-      rate_per_mile: rate,
-    })
-    setShowMileageForm(false)
   }
 
   return (
@@ -84,17 +67,14 @@ export default function ExpensesPage() {
         <StatCard label="Mileage Deduction" value={formatCurrency(totalMileageDeduction)} color="text-success" />
       </div>
 
-      {/* Tab toggle */}
-      <div className="flex gap-2 flex-wrap">
-        <button onClick={() => setTab('expenses')}
-          className={`px-4 py-2 rounded-lg text-sm font-medium ${tab === 'expenses' ? 'bg-gold text-navy' : 'bg-navy-lighter text-cream/60'}`}>
-          <Receipt size={14} className="inline mr-1" /> Expenses
-        </button>
-        <button onClick={() => setTab('mileage')}
-          className={`px-4 py-2 rounded-lg text-sm font-medium ${tab === 'mileage' ? 'bg-gold text-navy' : 'bg-navy-lighter text-cream/60'}`}>
-          <Car size={14} className="inline mr-1" /> Mileage
-        </button>
-      </div>
+      <FilterTabs
+        value={tab}
+        onChange={v => setTab(v as typeof tab)}
+        options={[
+          { value: 'expenses', label: '📋 Expenses' },
+          { value: 'mileage', label: '🚗 Mileage' },
+        ]}
+      />
 
       {tab === 'expenses' && (
         <div className="flex gap-2">
@@ -246,49 +226,12 @@ export default function ExpensesPage() {
         events={events}
       />
 
-      {/* Mileage Modal */}
-      <Modal open={showMileageForm} onClose={() => setShowMileageForm(false)} title="Log Mileage" preventBackdropClose>
-        <form onSubmit={handleCreateMileage} className="space-y-4">
-          <div>
-            <label className="block text-xs text-cream/50 mb-1">Trip Date *</label>
-            <input name="trip_date" type="date" required defaultValue={new Date().toISOString().split('T')[0]}
-              className="w-full bg-navy-lighter border border-gold-dim rounded-lg px-3 py-2 text-cream text-sm" />
-          </div>
-          <div>
-            <label className="block text-xs text-cream/50 mb-1">From</label>
-            <input name="from_location" placeholder="e.g., Home"
-              className="w-full bg-navy-lighter border border-gold-dim rounded-lg px-3 py-2 text-cream text-sm" />
-          </div>
-          <div>
-            <label className="block text-xs text-cream/50 mb-1">To</label>
-            <input name="to_location" placeholder="e.g., Venue"
-              className="w-full bg-navy-lighter border border-gold-dim rounded-lg px-3 py-2 text-cream text-sm" />
-          </div>
-          <div>
-            <label className="block text-xs text-cream/50 mb-1">Miles *</label>
-            <input name="miles" type="number" step="0.1" required
-              className="w-full bg-navy-lighter border border-gold-dim rounded-lg px-3 py-2 text-cream text-sm" />
-          </div>
-          <div>
-            <label className="block text-xs text-cream/50 mb-1">Purpose</label>
-            <input name="purpose" placeholder="e.g., Supply run for event"
-              className="w-full bg-navy-lighter border border-gold-dim rounded-lg px-3 py-2 text-cream text-sm" />
-          </div>
-          <div>
-            <label className="block text-xs text-cream/50 mb-1">Link to Event</label>
-            <select name="event_id"
-              className="w-full bg-navy-lighter border border-gold-dim rounded-lg px-3 py-2 text-cream text-sm">
-              <option value="">None</option>
-              {events?.map(ev => <option key={ev.id} value={ev.id}>{ev.client_name} - {formatDate(ev.event_date)}</option>)}
-            </select>
-          </div>
-          <p className="text-xs text-cream/40">Rate: ${MILEAGE_RATES[year] || 0.70}/mile ({year} IRS standard rate)</p>
-          <div className="flex gap-3 pt-2">
-            <Button type="submit" className="flex-1">Log Mileage</Button>
-            <Button type="button" variant="secondary" onClick={() => setShowMileageForm(false)}>Cancel</Button>
-          </div>
-        </form>
-      </Modal>
+      <MileageFormModal
+        open={showMileageForm}
+        onClose={() => setShowMileageForm(false)}
+        events={events}
+        year={year}
+      />
     </div>
   )
 }
