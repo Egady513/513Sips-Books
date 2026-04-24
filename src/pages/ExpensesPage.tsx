@@ -8,9 +8,8 @@ import MileageFormModal from '../components/ui/MileageFormModal'
 import FilterTabs from '../components/ui/FilterTabs'
 import { formatCurrency, formatDate, getCurrentYear } from '../utils/formatters'
 import { EXPENSE_CATEGORIES } from '../lib/constants'
-import { Plus, Receipt, Car, Trash2, Paperclip, Edit2 } from 'lucide-react'
+import { Plus, Car, Trash2, Paperclip, Edit2 } from 'lucide-react'
 import type { Expense } from '../lib/types'
-import toast from 'react-hot-toast'
 
 export default function ExpensesPage() {
   const [year] = useState(getCurrentYear())
