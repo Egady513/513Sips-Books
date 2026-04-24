@@ -2,8 +2,9 @@ import { useState } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { useEvent, useUpdateEvent, useUploadContract } from '../hooks/useEvents'
 import { useRecordPayment } from '../hooks/useInvoices'
-import { useEventExpenses, useEventMileage, useUpdateExpense, useDeleteExpense, useCreateExpense, useDeleteMileage, useCreateMileage } from '../hooks/useExpenses'
+import { useEventExpenses, useEventMileage, useUpdateExpense, useDeleteExpense, useDeleteMileage, useCreateMileage } from '../hooks/useExpenses'
 import { useEventBills } from '../hooks/useBills'
+import ExpenseFormModal from '../components/ui/ExpenseFormModal'
 import { useAlcoholEstimatesByEvent } from '../hooks/useAlcoholEstimates'
 import { Card, StatCard } from '../components/ui/Card'
 import Button from '../components/ui/Button'
@@ -50,7 +51,6 @@ export default function EventDetailPage() {
   const recordPayment = useRecordPayment()
   const updateExpense = useUpdateExpense()
   const deleteExpense = useDeleteExpense()
-  const createExpense = useCreateExpense()
   const deleteMileage = useDeleteMileage()
   const createMileage = useCreateMileage()
 
@@ -85,24 +85,7 @@ export default function EventDetailPage() {
     } catch { toast.error('Failed to update expense') }
   }
 
-  async function handleCreateExpenseHere(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault()
-    const fd = new FormData(e.currentTarget)
-    try {
-      await createExpense.mutateAsync({
-        event_id: id,
-        description: fd.get('description') as string,
-        amount: parseFloat(fd.get('amount') as string),
-        category: fd.get('category') as string,
-        expense_date: fd.get('expense_date') as string,
-        vendor: (fd.get('vendor') as string) || undefined,
-        is_tax_deductible: fd.get('is_tax_deductible') === 'on',
-        notes: (fd.get('notes') as string) || undefined,
-      })
-      toast.success('Expense added')
-      setShowNewExpense(false)
-    } catch { toast.error('Failed to add expense') }
-  }
+
 
   async function handleCreateMileageHere(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -817,44 +800,12 @@ export default function EventDetailPage() {
         </div>
       </Modal>
 
-      {/* ── New Expense Modal (from event detail) ── */}
-      <Modal open={showNewExpense} onClose={() => setShowNewExpense(false)} title="New Expense" preventBackdropClose>
-        <form onSubmit={handleCreateExpenseHere} className="space-y-3">
-          <div className="grid grid-cols-2 gap-3">
-            <div className="col-span-2">
-              <label className="block text-xs text-cream/50 mb-1">Description *</label>
-              <input name="description" required className="w-full bg-navy-lighter border border-gold-dim rounded-lg px-3 py-2 text-cream text-sm" />
-            </div>
-            <div>
-              <label className="block text-xs text-cream/50 mb-1">Amount ($) *</label>
-              <input name="amount" type="number" step="0.01" required className="w-full bg-navy-lighter border border-gold-dim rounded-lg px-3 py-2 text-cream text-sm" />
-            </div>
-            <div>
-              <label className="block text-xs text-cream/50 mb-1">Date *</label>
-              <input name="expense_date" type="date" defaultValue={new Date().toISOString().split('T')[0]} required
-                className="w-full bg-navy-lighter border border-gold-dim rounded-lg px-3 py-2 text-cream text-sm" />
-            </div>
-            <div>
-              <label className="block text-xs text-cream/50 mb-1">Category</label>
-              <select name="category" className="w-full bg-navy-lighter border border-gold-dim rounded-lg px-3 py-2 text-cream text-sm">
-                {EXPENSE_CATEGORIES.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
-              </select>
-            </div>
-            <div>
-              <label className="block text-xs text-cream/50 mb-1">Vendor / Store</label>
-              <input name="vendor" className="w-full bg-navy-lighter border border-gold-dim rounded-lg px-3 py-2 text-cream text-sm" />
-            </div>
-          </div>
-          <label className="flex items-center gap-2 cursor-pointer">
-            <input type="checkbox" name="is_tax_deductible" defaultChecked className="w-4 h-4 accent-gold" />
-            <span className="text-sm text-cream/70">Tax write-off (Schedule C)</span>
-          </label>
-          <div className="flex gap-3 pt-2">
-            <Button type="submit" className="flex-1">Add Expense</Button>
-            <Button type="button" variant="secondary" onClick={() => setShowNewExpense(false)}>Cancel</Button>
-          </div>
-        </form>
-      </Modal>
+      {/* ── New Expense Modal ── */}
+      <ExpenseFormModal
+        open={showNewExpense}
+        onClose={() => setShowNewExpense(false)}
+        eventId={id}
+      />
 
       {/* ── New Mileage Modal (from event detail) ── */}
       <Modal open={showNewMileage} onClose={() => setShowNewMileage(false)} title="Log Mileage" preventBackdropClose>
