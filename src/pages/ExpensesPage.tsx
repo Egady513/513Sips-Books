@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react'
 import { useExpenses, useCreateExpense, useUpdateExpense, useDeleteExpense, useUploadReceipt, useMileage, useCreateMileage, useDeleteMileage } from '../hooks/useExpenses'
 import { useEvents } from '../hooks/useEvents'
+import { useVendors, useCreateBill } from '../hooks/useBills'
 import { supabase } from '../lib/supabase'
 import { Card, StatCard } from '../components/ui/Card'
 import Button from '../components/ui/Button'
@@ -28,14 +29,17 @@ export default function ExpensesPage() {
   const [isOcrLoading, setIsOcrLoading] = useState(false)
   const [pendingReceiptFile, setPendingReceiptFile] = useState<File | null>(null)
   const [formKey, setFormKey] = useState(0)  // increment to force form re-mount with new defaultValues
+  const [addToAP, setAddToAP] = useState(false)
   const ocrInputRef = useRef<HTMLInputElement | null>(null)
   const { data: expenses, isLoading: loadingExpenses } = useExpenses(year)
   const { data: mileage, isLoading: loadingMileage } = useMileage(year)
   const { data: events } = useEvents()
+  const { data: vendors } = useVendors()
   const createExpense = useCreateExpense()
   const updateExpense = useUpdateExpense()
   const deleteExpense = useDeleteExpense()
   const uploadReceipt = useUploadReceipt()
+  const createBill = useCreateBill()
   const createMileage = useCreateMileage()
   const deleteMileage = useDeleteMileage()
 
@@ -100,6 +104,7 @@ export default function ExpensesPage() {
     setEditExpense(null)
     setOcrData(null)
     setPendingReceiptFile(null)
+    setAddToAP(false)
   }
 
   const handleCreateExpense = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -107,8 +112,9 @@ export default function ExpensesPage() {
     const fd = new FormData(e.currentTarget)
     const category = fd.get('category') as string
     const isTaxDeductible = fd.get('is_tax_deductible') === 'on'
+    const eventId = (fd.get('event_id') as string) || undefined
     const payload = {
-      event_id: (fd.get('event_id') as string) || undefined,
+      event_id: eventId,
       description: fd.get('description') as string,
       category,
       amount: parseFloat(fd.get('amount') as string),
@@ -125,11 +131,25 @@ export default function ExpensesPage() {
         setEditExpense(null)
       } else {
         const newExpense = await createExpense.mutateAsync(payload)
-        // Upload receipt from OCR scan if one was selected
         if (pendingReceiptFile && newExpense?.id) {
           await uploadReceipt.mutateAsync({ file: pendingReceiptFile, expenseId: newExpense.id })
         }
-        toast.success('Expense logged')
+        if (addToAP) {
+          const apVendorId = (fd.get('ap_vendor_id') as string) || undefined
+          const apDueDate = (fd.get('ap_due_date') as string) || undefined
+          await createBill.mutateAsync({
+            vendor_id: apVendorId,
+            event_id: eventId,
+            description: payload.description,
+            amount: payload.amount,
+            category: payload.category,
+            due_date: apDueDate || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+            status: 'pending',
+          })
+          toast.success('Expense logged + added to AP')
+        } else {
+          toast.success('Expense logged')
+        }
         closeExpenseModal()
       }
     } catch {
@@ -425,6 +445,46 @@ export default function ExpensesPage() {
                 <p className="text-xs text-cream/40 mt-0.5">Check if this is a deductible business expense (appears on Schedule C)</p>
               </div>
             </label>
+
+            {/* AP toggle — only on new expenses */}
+            {!editExpense && (
+              <div className="space-y-3">
+                <label className="flex items-center gap-3 text-sm text-cream/70 cursor-pointer p-3 bg-navy-lighter rounded-lg border border-gold-dim hover:border-gold/40 transition-colors">
+                  <input
+                    type="checkbox"
+                    checked={addToAP}
+                    onChange={e => setAddToAP(e.target.checked)}
+                    className="w-4 h-4 rounded accent-gold"
+                  />
+                  <div>
+                    <span className="font-medium text-cream">Needs to be paid back</span>
+                    <p className="text-xs text-cream/40 mt-0.5">I paid out of pocket — add this to Accounts Payable</p>
+                  </div>
+                </label>
+
+                {addToAP && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-3 bg-navy-lighter rounded-lg border border-gold/30">
+                    <div>
+                      <label className="block text-xs text-cream/50 mb-1">Pay to (Vendor) *</label>
+                      <select name="ap_vendor_id" required className="w-full bg-navy border border-gold-dim rounded-lg px-3 py-2 text-cream text-sm">
+                        <option value="">Select vendor…</option>
+                        {vendors?.map(v => <option key={v.id} value={v.id}>{v.name}</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs text-cream/50 mb-1">Due Date</label>
+                      <input
+                        name="ap_due_date"
+                        type="date"
+                        defaultValue={new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]}
+                        className="w-full bg-navy border border-gold-dim rounded-lg px-3 py-2 text-cream text-sm"
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
             <div className="flex gap-3 pt-2">
               <Button type="submit" className="flex-1">{editExpense ? 'Save Changes' : 'Add Expense'}</Button>
               <Button type="button" variant="secondary" onClick={closeExpenseModal}>Cancel</Button>
