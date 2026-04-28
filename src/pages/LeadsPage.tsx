@@ -460,10 +460,128 @@ export default function LeadsPage() {
     }
   }
 
-  // Open calculator with lead pre-loaded — Eddie uses "Export Quote to PDF" from there
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  function handleDownloadQuotePDF(lead: Lead, _quote: Quote) {
-    handleCreateQuote(lead)
+  // Generate clean quote PDF directly from saved Supabase data — no calculator needed
+  function handleDownloadQuotePDF(lead: Lead, quote: Quote) {
+    const today = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
+    const eventDate = lead.event_date
+      ? new Date(lead.event_date + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
+      : 'TBD'
+    const fmt = (n: number) => '$' + n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+
+    // Build itemized breakdown rows from stored breakdown object
+    const bd = (quote.breakdown && typeof quote.breakdown === 'object' && !Array.isArray(quote.breakdown))
+      ? quote.breakdown as Record<string, unknown>
+      : null
+
+    let breakdownRows = ''
+    if (bd) {
+      const base = typeof bd.base === 'number' ? bd.base : 650
+      const baseLabel = bd.base === 395 ? 'Base — Small Group (2 hrs, ≤20 guests)' : 'Base Package (3 hrs, ≤50 guests)'
+      breakdownRows += `<div class="brow"><span>${baseLabel}</span><span>${fmt(base)}</span></div>`
+      if (typeof bd.staffing === 'number' && bd.staffing > 0)
+        breakdownRows += `<div class="brow"><span>Additional Staffing</span><span>+${fmt(bd.staffing)}</span></div>`
+      if (typeof bd.volume === 'number' && bd.volume > 0)
+        breakdownRows += `<div class="brow"><span>High-Volume Adjustment</span><span>+${fmt(bd.volume)}</span></div>`
+      if (typeof bd.extraHours === 'number' && bd.extraHours > 0)
+        breakdownRows += `<div class="brow"><span>Extended Hours</span><span>+${fmt(bd.extraHours)}</span></div>`
+      if (typeof bd.twoHrReduction === 'number' && bd.twoHrReduction > 0)
+        breakdownRows += `<div class="brow green"><span>2-Hour Service</span><span>-${fmt(bd.twoHrReduction)}</span></div>`
+      if (typeof bd.package === 'number' && bd.package > 0)
+        breakdownRows += `<div class="brow"><span>Full Bar Upgrade</span><span>+${fmt(bd.package)}</span></div>`
+      if (typeof bd.glassware === 'number' && bd.glassware > 0)
+        breakdownRows += `<div class="brow"><span>Glassware</span><span>+${fmt(bd.glassware)}</span></div>`
+      if (typeof bd.travel === 'number' && bd.travel > 0)
+        breakdownRows += `<div class="brow"><span>Travel Fee</span><span>+${fmt(bd.travel)}</span></div>`
+      if (typeof bd.cocktails === 'number' && bd.cocktails > 0)
+        breakdownRows += `<div class="brow gold"><span>Signature Cocktails</span><span>+${fmt(bd.cocktails)}</span></div>`
+      if (typeof bd.addons === 'number' && bd.addons > 0)
+        breakdownRows += `<div class="brow gold"><span>Premium Add-Ons</span><span>+${fmt(bd.addons)}</span></div>`
+      if (typeof bd.custom === 'number' && bd.custom > 0)
+        breakdownRows += `<div class="brow gold"><span>Custom Add-Ons</span><span>+${fmt(bd.custom)}</span></div>`
+      if (typeof bd.discount === 'number' && bd.discount > 0) {
+        const promoLabel = quote.promo_code ? quote.promo_code : 'Adjustment'
+        breakdownRows += `<div class="brow green"><span>${promoLabel}</span><span>-${fmt(bd.discount)}</span></div>`
+      }
+    }
+
+    const html = `<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><title>513 Sips Quote — ${lead.name}</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:Georgia,'Times New Roman',serif;color:#111;background:#fff;padding:48px;max-width:720px;margin:0 auto}
+  .header{text-align:center;border-bottom:3px solid #D4AF37;padding-bottom:24px;margin-bottom:32px}
+  .brand{font-size:36px;color:#D4AF37;font-weight:bold;letter-spacing:3px}
+  .tagline{font-size:12px;color:#777;margin-top:6px;letter-spacing:2px;text-transform:uppercase}
+  .doc-title{font-size:22px;color:#0A1628;margin-top:28px;text-align:center;font-weight:normal;letter-spacing:1px}
+  .doc-date{text-align:center;color:#999;font-size:12px;margin-top:6px}
+  .section{margin:24px 0}
+  .section-title{font-size:10px;text-transform:uppercase;letter-spacing:2px;color:#D4AF37;border-bottom:1px solid #D4AF37;padding-bottom:5px;margin-bottom:14px}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px 32px}
+  .field{display:flex;flex-direction:column}
+  .label{font-size:10px;color:#999;text-transform:uppercase;letter-spacing:1px;margin-bottom:2px}
+  .value{font-size:14px;color:#111}
+  .breakdown{border:1px solid #e8e0c0;border-radius:8px;overflow:hidden;margin-top:8px}
+  .brow{display:flex;justify-content:space-between;padding:9px 16px;border-bottom:1px solid #f0e8d0;font-size:14px}
+  .brow:last-child{border-bottom:none}
+  .brow.gold{color:#8a6a00}
+  .brow.green{color:#2e7d32}
+  .totals{margin-top:16px;border:1px solid #e8e0c0;border-radius:8px;overflow:hidden}
+  .trow{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:1px solid #f0e8d0;font-size:14px}
+  .trow:last-child{border-bottom:none}
+  .trow.total{background:#0A1628;color:#FAF8F3;font-weight:600}
+  .trow.total span:last-child{font-size:20px;color:#D4AF37}
+  .footer{text-align:center;margin-top:32px;padding-top:16px;border-top:1px solid #eee;font-size:11px;color:#aaa}
+  @media print{body{padding:28px}}
+</style></head>
+<body>
+<div class="header">
+  <div class="brand">513 SIPS</div>
+  <div class="tagline">Mobile Craft Bartending · Cincinnati, OH</div>
+</div>
+<div class="doc-title">Service Quote</div>
+<div class="doc-date">Prepared ${today}${quote.valid_until ? ` · Valid until ${new Date(quote.valid_until + 'T12:00:00').toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}` : ' · Valid for 30 days'}</div>
+
+<div class="section">
+  <div class="section-title">Client Information</div>
+  <div class="grid">
+    <div class="field"><span class="label">Client Name</span><span class="value">${lead.name}</span></div>
+    <div class="field"><span class="label">Event Type</span><span class="value">${lead.event_type || '—'}</span></div>
+    <div class="field"><span class="label">Email</span><span class="value">${lead.email || '—'}</span></div>
+    <div class="field"><span class="label">Phone</span><span class="value">${lead.phone || '—'}</span></div>
+  </div>
+</div>
+
+<div class="section">
+  <div class="section-title">Event Details</div>
+  <div class="grid">
+    <div class="field"><span class="label">Event Date</span><span class="value">${eventDate}</span></div>
+    <div class="field"><span class="label">Venue</span><span class="value">${lead.venue_name || lead.venue_address || '—'}</span></div>
+    <div class="field"><span class="label">Guest Count</span><span class="value">${lead.guest_count ?? quote.guest_count ?? '—'}</span></div>
+    <div class="field"><span class="label">Service Hours</span><span class="value">${quote.hours ?? 3} hours</span></div>
+    ${lead.service_start_time ? `<div class="field"><span class="label">Service Time</span><span class="value">${lead.service_start_time}${lead.service_end_time ? ' – ' + lead.service_end_time : ''}</span></div>` : ''}
+    ${quote.bartenders ? `<div class="field"><span class="label">Bar Staff</span><span class="value">${quote.bartenders} bartender${quote.bartenders > 1 ? 's' : ''}</span></div>` : ''}
+  </div>
+</div>
+
+<div class="section">
+  <div class="section-title">Pricing</div>
+  ${breakdownRows ? `<div class="breakdown">${breakdownRows}</div>` : ''}
+  <div class="totals" style="${breakdownRows ? 'margin-top:12px' : ''}">
+    <div class="trow total">
+      <span>Total Investment</span>
+      <span>${fmt(quote.total)}</span>
+    </div>
+    <div class="trow"><span>Deposit (50% — due to secure date)</span><span>${fmt(quote.deposit)}</span></div>
+    <div class="trow"><span>Balance (due on event date)</span><span>${fmt(quote.balance)}</span></div>
+  </div>
+</div>
+
+<div class="footer">513 Sips LLC · Cincinnati, OH · 513sips.com · instagram.com/513sips</div>
+<script>window.onload=()=>{window.print()}</script>
+</body></html>`
+
+    const win = window.open('', '_blank')
+    if (win) { win.document.write(html); win.document.close() }
   }
 
   // Open calculator with lead pre-loaded — Eddie uses "Export Quote to PDF" from there
