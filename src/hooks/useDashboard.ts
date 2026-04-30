@@ -8,33 +8,24 @@ export function useDashboardKPIs(year?: number) {
     queryFn: async () => {
       const y = year || new Date().getFullYear()
 
-      // Total revenue: sum of received AR entries for the year
+      // REVENUE: Received + Pending AR for the year
       const { data: arData } = await supabase
         .from('ar_entries')
-        .select('amount, received_at')
-        .eq('status', 'received')
+        .select('amount, received_at, status, due_date')
 
-      const totalRevenue = (arData || [])
-        .filter(e => e.received_at && new Date(e.received_at).getFullYear() === y)
+      const receivedAR = (arData || [])
+        .filter(e => e.status === 'received' && e.received_at && new Date(e.received_at).getFullYear() === y)
         .reduce((sum, e) => sum + Number(e.amount), 0)
 
-      // Outstanding AR
-      const { data: pendingAR } = await supabase
-        .from('ar_entries')
-        .select('amount')
-        .eq('status', 'pending')
+      const pendingARYear = (arData || [])
+        .filter(e => e.status === 'pending' && e.due_date && new Date(e.due_date).getFullYear() === y)
 
-      const outstandingAR = (pendingAR || []).reduce((sum, e) => sum + Number(e.amount), 0)
+      const outstandingAR = pendingARYear.reduce((sum, e) => sum + Number(e.amount), 0)
 
-      // Outstanding AP
-      const { data: pendingAP } = await supabase
-        .from('ap_entries')
-        .select('amount')
-        .eq('status', 'pending')
+      // ACCRUAL REVENUE: Received + Pending for the year
+      const accrualRevenue = receivedAR + outstandingAR
 
-      const outstandingAP = (pendingAP || []).reduce((sum, e) => sum + Number(e.amount), 0)
-
-      // Total expenses for the year
+      // EXPENSES: For the year
       const { data: expenseData } = await supabase
         .from('expenses')
         .select('amount')
@@ -43,7 +34,16 @@ export function useDashboardKPIs(year?: number) {
 
       const totalExpenses = (expenseData || []).reduce((sum, e) => sum + Number(e.amount), 0)
 
-      // Also add paid AP entries as expenses — exclude owner draws (not tax-deductible)
+      // MILEAGE: For the year (tax-deductible deduction)
+      const { data: mileageData } = await supabase
+        .from('mileage_log')
+        .select('deduction_amount')
+        .gte('trip_date', `${y}-01-01`)
+        .lte('trip_date', `${y}-12-31`)
+
+      const totalMileage = (mileageData || []).reduce((sum, e) => sum + Number(e.deduction_amount), 0)
+
+      // ACCOUNTS PAYABLE: Paid + Pending
       const { data: paidAP } = await supabase
         .from('ap_entries')
         .select('amount, paid_at, is_owner_draw')
@@ -54,7 +54,20 @@ export function useDashboardKPIs(year?: number) {
         .filter(e => e.paid_at && new Date(e.paid_at).getFullYear() === y)
         .reduce((sum, e) => sum + Number(e.amount), 0)
 
-      const allExpenses = totalExpenses + paidAPTotal
+      const { data: pendingAP } = await supabase
+        .from('ap_entries')
+        .select('amount, due_date, is_owner_draw')
+        .eq('status', 'pending')
+        .eq('is_owner_draw', false)
+
+      const pendingAPTotal = (pendingAP || [])
+        .filter(e => e.due_date && new Date(e.due_date).getFullYear() === y)
+        .reduce((sum, e) => sum + Number(e.amount), 0)
+
+      const ownerReimbursementDue = (pendingAP || []).reduce((sum, e) => sum + Number(e.amount), 0)
+
+      // ACCRUAL EXPENSES: All expenses + paid AP + pending AP + mileage
+      const accrualExpenses = totalExpenses + paidAPTotal + pendingAPTotal + totalMileage
 
       // Active events
       const { data: activeEvents } = await supabase
@@ -63,12 +76,14 @@ export function useDashboardKPIs(year?: number) {
         .in('status', ['signed', 'deposit_paid'])
 
       const kpis: DashboardKPIs = {
-        totalRevenue,
+        totalRevenue: receivedAR,
         outstandingAR,
-        outstandingAP,
-        netProfit: totalRevenue - allExpenses,
+        accrualRevenue,
+        outstandingAP: paidAPTotal + pendingAPTotal,
+        ownerReimbursementDue,
+        netProfit: accrualRevenue - accrualExpenses,
         activeEvents: activeEvents?.length || 0,
-        totalExpenses: allExpenses,
+        totalExpenses: accrualExpenses,
       }
 
       return kpis
