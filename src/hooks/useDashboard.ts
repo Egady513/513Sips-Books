@@ -43,12 +43,11 @@ export function useDashboardKPIs(year?: number) {
 
       const totalMileage = (mileageData || []).reduce((sum, e) => sum + Number(e.deduction_amount), 0)
 
-      // ACCOUNTS PAYABLE: Paid + Pending
+      // ACCOUNTS PAYABLE: Paid + Pending — includes owner-draw entries (expenses Eddie fronted)
       const { data: paidAP } = await supabase
         .from('ap_entries')
         .select('amount, paid_at, is_owner_draw')
         .eq('status', 'paid')
-        .eq('is_owner_draw', false)
 
       const paidAPTotal = (paidAP || [])
         .filter(e => e.paid_at && new Date(e.paid_at).getFullYear() === y)
@@ -58,13 +57,15 @@ export function useDashboardKPIs(year?: number) {
         .from('ap_entries')
         .select('amount, due_date, is_owner_draw')
         .eq('status', 'pending')
-        .eq('is_owner_draw', false)
 
       const pendingAPTotal = (pendingAP || [])
         .filter(e => e.due_date && new Date(e.due_date).getFullYear() === y)
         .reduce((sum, e) => sum + Number(e.amount), 0)
 
-      const ownerReimbursementDue = (pendingAP || []).reduce((sum, e) => sum + Number(e.amount), 0)
+      // Owner reimbursement = pending entries where Eddie fronted the cost (is_owner_draw)
+      const ownerReimbursementDue = (pendingAP || [])
+        .filter(e => e.is_owner_draw)
+        .reduce((sum, e) => sum + Number(e.amount), 0)
 
       // ACCRUAL EXPENSES: All expenses + paid AP + pending AP + mileage
       const accrualExpenses = totalExpenses + paidAPTotal + pendingAPTotal + totalMileage

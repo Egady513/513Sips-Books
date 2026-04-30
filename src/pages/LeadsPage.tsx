@@ -93,7 +93,7 @@ export default function LeadsPage() {
   // Manual quote creation
   const [showCreateQuote, setShowCreateQuote] = useState(false)
   const [createQuoteForLead, setCreateQuoteForLead] = useState<Lead | null>(null)
-  const [createQuoteForm, setCreateQuoteForm] = useState({ total: '', deposit: '', balance: '', guest_count: '', hours: '', valid_until: '' })
+  const [createQuoteForm, setCreateQuoteForm] = useState({ total: '', deposit: '', balance: '', guest_count: '', hours: '', valid_until: '', addon_notes: '' })
 
   // Quote version history modal
   const [showVersionHistory, setShowVersionHistory] = useState(false)
@@ -497,6 +497,7 @@ export default function LeadsPage() {
         guest_count: parseInt(createQuoteForm.guest_count) || undefined,
         hours: parseFloat(createQuoteForm.hours) || undefined,
         valid_until: createQuoteForm.valid_until || undefined,
+        addon_notes: createQuoteForm.addon_notes || undefined,
         status: 'sent',
       })
       // Sync lead budget and advance status to quoted
@@ -508,7 +509,7 @@ export default function LeadsPage() {
       toast.success(`Quote created — ${newQuote.id.slice(0, 8)}`)
       setShowCreateQuote(false)
       setCreateQuoteForLead(null)
-      setCreateQuoteForm({ total: '', deposit: '', balance: '', guest_count: '', hours: '', valid_until: '' })
+      setCreateQuoteForm({ total: '', deposit: '', balance: '', guest_count: '', hours: '', valid_until: '', addon_notes: '' })
     } catch {
       toast.error('Failed to create quote')
     }
@@ -533,6 +534,28 @@ export default function LeadsPage() {
       ? new Date(lead.event_date + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
       : 'TBD'
     const fmt = (n: number) => '$' + n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+
+    // Build multi-event package block (only for numEvents > 1)
+    let eventPkgBlock = ''
+    if (numEvents > 1 && quote.addon_notes) {
+      const lines = quote.addon_notes.split('\n').filter(l => l.trim())
+      const eventRows = lines.map(line => {
+        // Parse "Name: $Amount" or "Name — Detail: $Amount"
+        const match = line.match(/^(.+?):\s*\$?([\d,]+(?:\.\d{0,2})?)$/)
+        if (match) {
+          const [, name, amount] = match
+          const amt = parseFloat(amount.replace(/,/g, ''))
+          return `<div class="evt-row"><span class="evt-name">${name.trim()}</span><span class="evt-amt">${fmt(amt)}</span></div>`
+        }
+        return `<div class="evt-row"><span class="evt-name">${line}</span><span class="evt-amt"></span></div>`
+      }).join('')
+      eventPkgBlock = `
+        <div class="evt-pkg">
+          <div class="evt-pkg-header">📋 ${numEvents}-Event Package Breakdown</div>
+          ${eventRows}
+          <div class="evt-subtotal"><span>${numEvents} events included in this quote</span><span style="font-weight:700;color:#5a4a00">${fmt(quote.total)} combined</span></div>
+        </div>`
+    }
 
     // Build itemized breakdown rows from stored breakdown object
     const bd = (quote.breakdown && typeof quote.breakdown === 'object' && !Array.isArray(quote.breakdown))
@@ -591,6 +614,13 @@ export default function LeadsPage() {
   .brow:last-child{border-bottom:none}
   .brow.gold{color:#8a6a00}
   .brow.green{color:#2e7d32}
+  .evt-pkg{background:#f8f4e8;border:2px solid #D4AF37;border-radius:8px;overflow:hidden;margin-bottom:16px}
+  .evt-pkg-header{background:#D4AF37;color:#0A1628;font-size:11px;text-transform:uppercase;letter-spacing:2px;font-weight:700;padding:8px 16px}
+  .evt-row{display:flex;justify-content:space-between;align-items:center;padding:11px 16px;border-bottom:1px solid #e8d880;font-size:14px}
+  .evt-row:last-child{border-bottom:none}
+  .evt-row .evt-name{font-weight:600;color:#0A1628}
+  .evt-row .evt-amt{font-weight:700;color:#8a6a00;font-size:15px}
+  .evt-subtotal{display:flex;justify-content:space-between;padding:10px 16px;background:#ede8c8;font-size:13px;color:#555;border-top:1px solid #d4c870}
   .totals{margin-top:16px;border:1px solid #e8e0c0;border-radius:8px;overflow:hidden}
   .trow{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:1px solid #f0e8d0;font-size:14px}
   .trow:last-child{border-bottom:none}
@@ -626,12 +656,13 @@ export default function LeadsPage() {
     <div class="field"><span class="label">Service Hours</span><span class="value">${quote.hours ?? 3} hours</span></div>
     ${lead.service_start_time ? `<div class="field"><span class="label">Service Time</span><span class="value">${lead.service_start_time}${lead.service_end_time ? ' – ' + lead.service_end_time : ''}</span></div>` : ''}
     ${quote.bartenders ? `<div class="field"><span class="label">Bar Staff</span><span class="value">${quote.bartenders} bartender${quote.bartenders > 1 ? 's' : ''}</span></div>` : ''}
-    ${numEvents > 1 ? `<div class="field" style="grid-column:1/-1"><span class="label">Package</span><span class="value">${numEvents}-event package · ${fmt(Math.round(quote.total / numEvents))}/event</span></div>` : ''}
+    ${numEvents > 1 ? `<div class="field" style="grid-column:1/-1"><span class="label">Package</span><span class="value">${numEvents}-Event Package</span></div>` : ''}
   </div>
 </div>
 
 <div class="section">
   <div class="section-title">Pricing</div>
+  ${eventPkgBlock}
   ${breakdownRows ? `<div class="breakdown">${breakdownRows}</div>` : ''}
   <div class="totals" style="${breakdownRows ? 'margin-top:12px' : ''}">
     <div class="trow total">
@@ -1074,12 +1105,20 @@ export default function LeadsPage() {
                           <button
                             onClick={() => {
                               setCreateQuoteForLead(lead)
+                              const n = lead.number_of_events ?? 1
+                              const perEvent = lead.budget ? Math.round(lead.budget / n) : 0
+                              const template = n > 1
+                                ? Array.from({ length: n }, (_, i) =>
+                                    `Event ${i + 1} — ${lead.event_type || 'Event'}: $${perEvent || ''}`
+                                  ).join('\n')
+                                : ''
                               setCreateQuoteForm({
                                 total: String(lead.budget || ''),
                                 deposit: lead.budget ? String(Math.round(lead.budget * 0.5)) : '',
                                 balance: lead.budget ? String(lead.budget - Math.round(lead.budget * 0.5)) : '',
                                 guest_count: String(lead.guest_count || ''),
                                 hours: '', valid_until: '',
+                                addon_notes: template,
                               })
                               setShowCreateQuote(true)
                             }}
@@ -1319,7 +1358,7 @@ export default function LeadsPage() {
       {/* Create Quote Modal — manual entry without calculator */}
       <Modal
         open={showCreateQuote}
-        onClose={() => { setShowCreateQuote(false); setCreateQuoteForLead(null) }}
+        onClose={() => { setShowCreateQuote(false); setCreateQuoteForLead(null); setCreateQuoteForm({ total: '', deposit: '', balance: '', guest_count: '', hours: '', valid_until: '', addon_notes: '' }) }}
         title={`Create Quote — ${createQuoteForLead?.name || ''}`}
         preventBackdropClose
       >
@@ -1398,6 +1437,25 @@ export default function LeadsPage() {
               Quote will show as expired after {formatDate(createQuoteForm.valid_until)}
             </p>
           )}
+
+          {/* Multi-event breakdown — only shown when lead has >1 event */}
+          {(createQuoteForLead?.number_of_events ?? 1) > 1 && (
+            <div className="border border-blue-500/30 bg-blue-500/5 rounded-lg p-3 space-y-2">
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-semibold text-blue-300 uppercase tracking-wider">📋 Event Breakdown</span>
+                <span className="text-xs text-cream/40">(shown prominently on PDF — one event per line)</span>
+              </div>
+              <textarea
+                rows={createQuoteForLead?.number_of_events ?? 2}
+                placeholder={`Event 1 — Women's Night: $500\nEvent 2 — Men's Night + Custom Ice: $750`}
+                value={createQuoteForm.addon_notes}
+                onChange={e => setCreateQuoteForm(f => ({ ...f, addon_notes: e.target.value }))}
+                className="w-full bg-navy-lighter border border-blue-500/30 rounded-lg px-3 py-2 text-cream text-sm resize-none font-mono"
+              />
+              <p className="text-xs text-cream/35">Format: <code className="text-blue-300">Event N — Description: $Amount</code> — each line becomes a row on the quote PDF</p>
+            </div>
+          )}
+
           <div className="flex gap-3 pt-2">
             <Button
               className="flex-1"
