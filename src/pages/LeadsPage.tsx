@@ -462,8 +462,11 @@ export default function LeadsPage() {
   }
 
   // Sprint 2: open calculator pre-filled for a lead
+  // Opens calculator pre-filled; multi-event leads pass ?events=N to enable tabbed mode
   function handleCreateQuote(lead: Lead) {
-    const url = `https://www.513sips.com/tools/calculator.html?lead_id=${lead.id}&name=${encodeURIComponent(lead.name)}&guests=${lead.guest_count || ''}&date=${lead.event_date || ''}`
+    const n = lead.number_of_events ?? 1
+    const eventsParam = n > 1 ? `&events=${n}` : ''
+    const url = `https://www.513sips.com/tools/calculator.html?lead_id=${lead.id}&name=${encodeURIComponent(lead.name)}&guests=${lead.guest_count || ''}&date=${lead.event_date || ''}${eventsParam}`
     window.open(url, '_blank')
   }
 
