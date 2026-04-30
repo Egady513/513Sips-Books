@@ -2,6 +2,7 @@
 
 export interface Event {
   id: string
+  lead_id?: string
   client_name: string
   client_email?: string
   client_phone?: string
@@ -99,6 +100,7 @@ export interface Expense {
   expense_date: string
   vendor?: string
   is_tax_deductible: boolean
+  is_owner_funded?: boolean
   schedule_c_line?: string
   receipt_url?: string
   notes?: string
@@ -161,6 +163,7 @@ export interface Lead {
   venue_address?: string
   service_start_time?: string  // "HH:MM" format
   service_end_time?: string    // "HH:MM" format
+  number_of_events?: number
   probability?: number         // 0–100 win probability for weighted pipeline
   unsigned_contract_url?: string
   signed_contract_url?: string
@@ -189,7 +192,9 @@ export interface AlcoholEstimate {
 export interface DashboardKPIs {
   totalRevenue: number
   outstandingAR: number
+  accrualRevenue: number
   outstandingAP: number
+  ownerReimbursementDue: number
   netProfit: number
   activeEvents: number
   totalExpenses: number

@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useLeads, useCreateLead, useUpdateLead, useDeleteLead } from '../hooks/useLeads'
 import { useRecentQuotes, useLinkQuoteToLead, useUpdateQuote, useCreateQuote, useDeleteQuote } from '../hooks/useQuotes'
 import { useAlcoholEstimatesByLead } from '../hooks/useAlcoholEstimates'
-import { useCreateEvent } from '../hooks/useEvents'
+import { useCreateEvent, useLinkedEvents } from '../hooks/useEvents'
 import { useCreateAREntry } from '../hooks/useInvoices'
 import type { Quote } from '../hooks/useQuotes'
 import { Card, StatCard } from '../components/ui/Card'
@@ -14,7 +14,7 @@ import { formatCurrency, formatDate } from '../utils/formatters'
 import {
   Plus, Instagram, Users, Phone, Mail, Calendar, DollarSign,
   Trash2, Edit2, Download, ExternalLink, FileSignature, CheckCircle2, FileText, Pencil, FileDown,
-  AlertCircle, Clock, ChevronDown, LayoutGrid, List, History,
+  AlertCircle, Clock, ChevronDown, LayoutGrid, List, History, CalendarPlus,
 } from 'lucide-react'
 import type { Lead } from '../lib/types'
 import toast from 'react-hot-toast'
@@ -51,6 +51,7 @@ const emptyForm = {
   guest_count: '', budget: '', source: 'instagram', status: 'new', notes: '',
   venue_name: '', venue_contact_name: '', venue_contact_phone: '',
   venue_address: '', service_start_time: '', service_end_time: '',
+  number_of_events: '1',
 }
 
 export default function LeadsPage() {
@@ -98,6 +99,14 @@ export default function LeadsPage() {
   const [showVersionHistory, setShowVersionHistory] = useState(false)
   const [versionHistoryQuote, setVersionHistoryQuote] = useState<Quote | null>(null)
 
+  // Multi-event: Add Event modal
+  const [showAddEvent, setShowAddEvent] = useState(false)
+  const [addEventLead, setAddEventLead] = useState<Lead | null>(null)
+  const [addEventForm, setAddEventForm] = useState({ event_name: '', event_date: '', total: '', deposit: '', balance: '' })
+
+  // Multi-event: editable per-event amount in the booking confirmation modal
+  const [bookingEventAmount, setBookingEventAmount] = useState<string>('')
+
   const { data: leads = [], isLoading } = useLeads(filter === 'all' ? undefined : filter)
   const createLead = useCreateLead()
   const updateLead = useUpdateLead()
@@ -109,6 +118,7 @@ export default function LeadsPage() {
   const updateQuote = useUpdateQuote()
   const createQuote = useCreateQuote()
   const deleteQuote = useDeleteQuote()
+  const { data: linkedEvents = [] } = useLinkedEvents()
 
   const allLeads = useLeads().data || []
   const stats = {
@@ -149,6 +159,7 @@ export default function LeadsPage() {
       venue_address:       lead.venue_address || '',
       service_start_time:  lead.service_start_time || '',
       service_end_time:    lead.service_end_time || '',
+      number_of_events:    String(lead.number_of_events ?? 1),
     })
     setShowForm(true)
   }
@@ -172,6 +183,7 @@ export default function LeadsPage() {
       venue_address:       form.venue_address || undefined,
       service_start_time:  form.service_start_time || undefined,
       service_end_time:    form.service_end_time || undefined,
+      number_of_events:    parseInt(form.number_of_events) || 1,
     }
 
     try {
@@ -201,10 +213,16 @@ export default function LeadsPage() {
   // Handle status change — intercept "booked" to trigger conversion flow
   async function handleStatusChange(lead: Lead, status: Lead['status']) {
     if (status === 'booked' && lead.status !== 'booked') {
-      // Find linked quote
       const linked = recentQuotes.find(q => q.lead_id === lead.id)
       setBookingLead(lead)
       setBookingQuote(linked || null)
+      // Pre-fill per-event amount for multi-event leads
+      const numEvents = lead.number_of_events ?? 1
+      if (linked && numEvents > 1) {
+        setBookingEventAmount(String(Math.round(linked.total / numEvents)))
+      } else {
+        setBookingEventAmount('')
+      }
       setShowBookConfirm(true)
       return
     }
@@ -219,9 +237,12 @@ export default function LeadsPage() {
     const quote = bookingQuote
 
     try {
-      const total = quote?.total ?? (lead.budget ?? 0)
-      const deposit = quote?.deposit ?? Math.round(total * 0.5)
-      const balance = quote?.balance ?? (total - deposit)
+      const isMultiEvent = (lead.number_of_events ?? 1) > 1
+      const total = isMultiEvent && bookingEventAmount
+        ? parseFloat(bookingEventAmount)
+        : (quote?.total ?? (lead.budget ?? 0))
+      const deposit = Math.round(total * 0.5)
+      const balance = total - deposit
 
       // Determine service_hours from quote or default 4
       const serviceHours = quote?.hours ?? 4
@@ -255,6 +276,7 @@ export default function LeadsPage() {
         balance_amount:       balance,
         status:               'signed',
         notes:                lead.notes,
+        lead_id:              lead.id,
       })
 
       // Create AR entries
@@ -295,10 +317,53 @@ export default function LeadsPage() {
       setShowBookConfirm(false)
       setBookingLead(null)
       setBookingQuote(null)
+      setBookingEventAmount('')
       navigate(`/events/${newEvent.id}`)
     } catch (err) {
       console.error(err)
       toast.error('Failed to create event')
+    }
+  }
+
+  async function handleAddEvent() {
+    if (!addEventLead) return
+    const total = parseFloat(addEventForm.total) || 0
+    const deposit = parseFloat(addEventForm.deposit) || Math.round(total * 0.5)
+    const balance = parseFloat(addEventForm.balance) || (total - deposit)
+    try {
+      const newEvent = await createEvent.mutateAsync({
+        client_name:         addEventLead.name,
+        client_email:        addEventLead.email,
+        client_phone:        addEventLead.phone,
+        event_name:          addEventForm.event_name || addEventLead.name,
+        event_date:          addEventForm.event_date || new Date().toISOString().split('T')[0],
+        location:            addEventLead.venue_name || addEventLead.venue_address || '',
+        venue_contact_name:  addEventLead.venue_contact_name,
+        venue_contact_phone: addEventLead.venue_contact_phone,
+        venue_address:       addEventLead.venue_address,
+        event_type:          addEventLead.event_type,
+        guest_count:         addEventLead.guest_count,
+        total_amount:        total,
+        deposit_amount:      deposit,
+        balance_amount:      balance,
+        status:              'signed',
+        notes:               addEventLead.notes,
+        lead_id:             addEventLead.id,
+      })
+      if (total > 0 && addEventForm.event_date) {
+        const eventDate = new Date(addEventForm.event_date)
+        const depositDue = new Date(eventDate)
+        depositDue.setDate(depositDue.getDate() - 30)
+        await createAREntry.mutateAsync({ event_id: newEvent.id, entry_type: 'deposit', amount: deposit, status: 'pending', due_date: depositDue.toISOString().split('T')[0] })
+        await createAREntry.mutateAsync({ event_id: newEvent.id, entry_type: 'balance', amount: balance, status: 'pending', due_date: addEventForm.event_date })
+      }
+      toast.success(`Event added for ${addEventLead.name}`)
+      setShowAddEvent(false)
+      setAddEventLead(null)
+      setAddEventForm({ event_name: '', event_date: '', total: '', deposit: '', balance: '' })
+    } catch (err) {
+      console.error(err)
+      toast.error('Failed to add event')
     }
   }
 
@@ -463,6 +528,7 @@ export default function LeadsPage() {
   // Generate clean quote PDF directly from saved Supabase data — no calculator needed
   function handleDownloadQuotePDF(lead: Lead, quote: Quote) {
     const today = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
+    const numEvents = lead.number_of_events ?? 1
     const eventDate = lead.event_date
       ? new Date(lead.event_date + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
       : 'TBD'
@@ -560,6 +626,7 @@ export default function LeadsPage() {
     <div class="field"><span class="label">Service Hours</span><span class="value">${quote.hours ?? 3} hours</span></div>
     ${lead.service_start_time ? `<div class="field"><span class="label">Service Time</span><span class="value">${lead.service_start_time}${lead.service_end_time ? ' – ' + lead.service_end_time : ''}</span></div>` : ''}
     ${quote.bartenders ? `<div class="field"><span class="label">Bar Staff</span><span class="value">${quote.bartenders} bartender${quote.bartenders > 1 ? 's' : ''}</span></div>` : ''}
+    ${numEvents > 1 ? `<div class="field" style="grid-column:1/-1"><span class="label">Package</span><span class="value">${numEvents}-event package · ${fmt(Math.round(quote.total / numEvents))}/event</span></div>` : ''}
   </div>
 </div>
 
@@ -924,6 +991,57 @@ export default function LeadsPage() {
                       </div>
                     )}
 
+                    {/* Multi-event progress */}
+                    {(lead.number_of_events ?? 1) > 1 && (() => {
+                      const linkedForLead = linkedEvents.filter(e => e.lead_id === lead.id)
+                      const bookedCount = linkedForLead.length
+                      const totalEvents = lead.number_of_events ?? 1
+                      const atCapacity = bookedCount >= totalEvents
+                      const quote = recentQuotes.find(q => q.lead_id === lead.id)
+                      const perEventAmt = quote ? Math.round(quote.total / totalEvents) : undefined
+                      return (
+                        <div className="rounded-md bg-blue-500/5 border border-blue-500/15 px-3 py-2">
+                          <div className="flex items-center justify-between gap-2">
+                            <div className="min-w-0">
+                              <div className="flex items-center gap-2 text-xs">
+                                <span className={`font-semibold ${atCapacity ? 'text-green-300' : 'text-blue-300'}`}>
+                                  {atCapacity ? '✓' : <CalendarPlus size={11} className="inline mr-0.5" />}
+                                  {bookedCount} of {totalEvents} events added
+                                </span>
+                                {perEventAmt && !atCapacity && (
+                                  <span className="text-cream/40">· ~{formatCurrency(perEventAmt)}/event</span>
+                                )}
+                              </div>
+                              {linkedForLead.map(e => (
+                                <div key={e.id} className="text-xs text-cream/35 mt-0.5">
+                                  {e.event_name || 'Event'}{e.event_date ? ` · ${formatDate(e.event_date)}` : ' · Date TBD'}
+                                </div>
+                              ))}
+                            </div>
+                            {!atCapacity && (
+                              <button
+                                onClick={() => {
+                                  const nextNum = bookedCount + 1
+                                  setAddEventLead(lead)
+                                  setAddEventForm({
+                                    event_name: `${lead.name} — Event ${nextNum}`,
+                                    event_date: '',
+                                    total: String(perEventAmt || ''),
+                                    deposit: String(perEventAmt ? Math.round(perEventAmt * 0.5) : ''),
+                                    balance: String(perEventAmt ? perEventAmt - Math.round(perEventAmt * 0.5) : ''),
+                                  })
+                                  setShowAddEvent(true)
+                                }}
+                                className="text-blue-300 hover:text-blue-200 text-xs px-2 py-1 bg-blue-500/10 rounded border border-blue-500/20 hover:bg-blue-500/20 transition-colors shrink-0 flex items-center gap-1"
+                              >
+                                <CalendarPlus size={11} /> Add Event
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      )
+                    })()}
+
                     {/* Win probability slider */}
                     {lead.status !== 'lost' && (
                       <div className="flex items-center gap-2 text-xs py-1">
@@ -987,7 +1105,7 @@ export default function LeadsPage() {
       {/* Book Confirmation Modal */}
       <Modal
         open={showBookConfirm}
-        onClose={() => { setShowBookConfirm(false); setBookingLead(null); setBookingQuote(null) }}
+        onClose={() => { setShowBookConfirm(false); setBookingLead(null); setBookingQuote(null); setBookingEventAmount('') }}
         title="Confirm Booking"
       >
         {bookingLead && (
@@ -1033,6 +1151,23 @@ export default function LeadsPage() {
                 <p className="text-warning text-xs">No quote linked — event will be created with $0 total. You can edit it on the Events page.</p>
               )}
             </div>
+            {(bookingLead.number_of_events ?? 1) > 1 && (
+              <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-3 space-y-2">
+                <p className="text-blue-300 text-xs font-medium">
+                  Multi-event booking · {bookingLead.number_of_events} events total — creating Event 1
+                </p>
+                <div className="flex items-center gap-2">
+                  <label className="text-cream/60 text-xs shrink-0">Event 1 Amount ($)</label>
+                  <input
+                    type="number"
+                    value={bookingEventAmount}
+                    onChange={e => setBookingEventAmount(e.target.value)}
+                    className="flex-1 bg-navy-lighter border border-gold-dim rounded px-2 py-1 text-cream text-sm"
+                  />
+                </div>
+                <p className="text-cream/40 text-xs">Add remaining events from the lead card after booking.</p>
+              </div>
+            )}
             <p className="text-sm text-cream/60">
               This will create an Event record and AR entries (deposit + balance), then mark this lead as Booked.
             </p>
@@ -1375,7 +1510,7 @@ export default function LeadsPage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-3 gap-3">
             <div>
               <label className="block text-xs text-cream/50 mb-1">Guest Count</label>
               <input
@@ -1394,6 +1529,20 @@ export default function LeadsPage() {
                 placeholder="800"
                 value={form.budget}
                 onChange={set('budget')}
+              />
+            </div>
+            <div>
+              <label className="block text-xs text-cream/50 mb-1">
+                # of Events
+                <span className="ml-1 text-cream/30">(default 1)</span>
+              </label>
+              <input
+                type="number"
+                min="1"
+                className="w-full bg-navy-lighter border border-gold-dim rounded-lg px-3 py-2 text-cream text-sm"
+                placeholder="1"
+                value={form.number_of_events}
+                onChange={set('number_of_events')}
               />
             </div>
           </div>
@@ -1537,6 +1686,84 @@ export default function LeadsPage() {
           created_at: new Date().toISOString(),
         } : undefined}
       />
+
+      {/* Add Event Modal — for events 2+ on multi-event leads */}
+      <Modal
+        open={showAddEvent}
+        onClose={() => { setShowAddEvent(false); setAddEventLead(null) }}
+        title={`Add Event — ${addEventLead?.name || ''}`}
+        preventBackdropClose
+      >
+        <div className="space-y-4">
+          <p className="text-xs text-cream/50 bg-blue-500/5 border border-blue-500/15 rounded-lg px-3 py-2">
+            Adding an event to a {addEventLead?.number_of_events}-event booking.
+            {' '}{linkedEvents.filter(e => e.lead_id === addEventLead?.id).length + 1} of {addEventLead?.number_of_events}.
+          </p>
+          <div>
+            <label className="block text-xs text-cream/50 mb-1">Event Name</label>
+            <input
+              className="w-full bg-navy-lighter border border-gold-dim rounded-lg px-3 py-2 text-cream text-sm"
+              placeholder="e.g. Women's Night"
+              value={addEventForm.event_name}
+              onChange={e => setAddEventForm(f => ({ ...f, event_name: e.target.value }))}
+            />
+          </div>
+          <div>
+            <label className="block text-xs text-cream/50 mb-1">Event Date</label>
+            <input
+              type="date"
+              className="w-full bg-navy-lighter border border-gold-dim rounded-lg px-3 py-2 text-cream text-sm"
+              value={addEventForm.event_date}
+              onChange={e => setAddEventForm(f => ({ ...f, event_date: e.target.value }))}
+            />
+          </div>
+          <div className="grid grid-cols-3 gap-3">
+            <div>
+              <label className="block text-xs text-cream/50 mb-1">Total ($) *</label>
+              <input
+                type="number" step="0.01"
+                value={addEventForm.total}
+                onChange={e => {
+                  const t = parseFloat(e.target.value) || 0
+                  const dep = Math.round(t * 0.5)
+                  setAddEventForm(f => ({ ...f, total: e.target.value, deposit: String(dep), balance: String(t - dep) }))
+                }}
+                className="w-full bg-navy-lighter border border-gold-dim rounded-lg px-3 py-2 text-cream text-sm"
+              />
+            </div>
+            <div>
+              <label className="block text-xs text-cream/50 mb-1">Deposit ($)</label>
+              <input
+                type="number" step="0.01"
+                value={addEventForm.deposit}
+                onChange={e => setAddEventForm(f => ({ ...f, deposit: e.target.value, balance: String((parseFloat(f.total) || 0) - (parseFloat(e.target.value) || 0)) }))}
+                className="w-full bg-navy-lighter border border-gold-dim rounded-lg px-3 py-2 text-cream text-sm"
+              />
+            </div>
+            <div>
+              <label className="block text-xs text-cream/50 mb-1">Balance ($)</label>
+              <input
+                type="number" step="0.01"
+                value={addEventForm.balance}
+                onChange={e => setAddEventForm(f => ({ ...f, balance: e.target.value }))}
+                className="w-full bg-navy-lighter border border-gold-dim rounded-lg px-3 py-2 text-cream text-sm"
+              />
+            </div>
+          </div>
+          <div className="flex gap-3 pt-2">
+            <Button
+              className="flex-1"
+              onClick={handleAddEvent}
+              disabled={!addEventForm.total || parseFloat(addEventForm.total) <= 0}
+            >
+              <CalendarPlus size={16} /> Add Event
+            </Button>
+            <Button variant="secondary" onClick={() => { setShowAddEvent(false); setAddEventLead(null) }}>
+              Cancel
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   )
 }

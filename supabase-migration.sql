@@ -150,3 +150,16 @@ ALTER TABLE leads ADD COLUMN IF NOT EXISTS converted_event_id UUID REFERENCES ev
 
 -- version_history is a JSON array of snapshots: [{ versionNum, total, deposit, balance, created_at, status }, ...]
 ALTER TABLE quotes ADD COLUMN IF NOT EXISTS version_history JSONB DEFAULT '[]'::jsonb;
+
+-- ============================================
+-- 9. MULTI-EVENT BOOKING SUPPORT
+-- ============================================
+
+-- number_of_events on leads: how many events are covered by this quote (default 1)
+ALTER TABLE leads ADD COLUMN IF NOT EXISTS number_of_events INTEGER DEFAULT 1;
+
+-- lead_id on events: links an event back to its originating lead (supports multiple events per lead)
+ALTER TABLE events ADD COLUMN IF NOT EXISTS lead_id UUID REFERENCES leads(id) ON DELETE SET NULL;
+
+-- Index for fast lookup of all events belonging to a lead
+CREATE INDEX IF NOT EXISTS events_lead_id_idx ON events(lead_id);

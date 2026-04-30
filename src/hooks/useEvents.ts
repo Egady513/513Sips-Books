@@ -85,6 +85,21 @@ export function useDeleteEvent() {
   })
 }
 
+export function useLinkedEvents() {
+  return useQuery({
+    queryKey: ['events', 'linked'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('events')
+        .select('id, lead_id, event_name, event_date, total_amount, status')
+        .not('lead_id', 'is', null)
+        .order('event_date', { ascending: true })
+      if (error) throw error
+      return data as Pick<Event, 'id' | 'lead_id' | 'event_name' | 'event_date' | 'total_amount' | 'status'>[]
+    },
+  })
+}
+
 export function useUploadContract() {
   const qc = useQueryClient()
   return useMutation({
