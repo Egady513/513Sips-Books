@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useLeads, useCreateLead, useUpdateLead, useDeleteLead } from '../hooks/useLeads'
 import { useRecentQuotes, useLinkQuoteToLead, useUpdateQuote, useCreateQuote, useDeleteQuote } from '../hooks/useQuotes'
 import { useAlcoholEstimatesByLead } from '../hooks/useAlcoholEstimates'
@@ -56,7 +56,6 @@ const emptyForm = {
 
 export default function LeadsPage() {
   const navigate = useNavigate()
-  const [searchParams, setSearchParams] = useSearchParams()
   const [filter, setFilter] = useState('all')
   const [search, setSearch] = useState('')
   const [showForm, setShowForm] = useState(false)
@@ -120,36 +119,6 @@ export default function LeadsPage() {
   const createQuote = useCreateQuote()
   const deleteQuote = useDeleteQuote()
   const { data: linkedEvents = [] } = useLinkedEvents()
-
-  // ── Calculator → Books quote pre-fill ──────────────────────────────────────
-  // When calculator opens Books with ?cq_lead=ID&cq=base64data, pre-fill the
-  // existing quote creation modal so Eddie can review and save normally.
-  useEffect(() => {
-    const cqLeadId = searchParams.get('cq_lead')
-    const cqEncoded = searchParams.get('cq')
-    if (!cqLeadId || !cqEncoded || !leads.length) return
-    try {
-      const data = JSON.parse(decodeURIComponent(escape(atob(cqEncoded))))
-      const lead = leads.find(l => l.id === cqLeadId)
-      if (!lead) return
-      setCreateQuoteForLead(lead)
-      setCreateQuoteForm({
-        total:       String(data.total ?? ''),
-        deposit:     String(data.deposit ?? ''),
-        balance:     String(data.balance ?? ''),
-        guest_count: String(data.guests ?? ''),
-        hours:       String(data.hours ?? ''),
-        valid_until: data.valid_until ?? '',
-        addon_notes: data.addon_notes ?? '',
-      })
-      setShowCreateQuote(true)
-      // Remove params so a refresh doesn't re-open the modal
-      setSearchParams({}, { replace: true })
-    } catch (e) {
-      console.error('Failed to parse calculator quote data', e)
-    }
-  }, [leads, searchParams])
-  // ───────────────────────────────────────────────────────────────────────────
 
   const allLeads = useLeads().data || []
   const stats = {
