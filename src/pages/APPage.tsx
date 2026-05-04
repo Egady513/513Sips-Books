@@ -6,7 +6,7 @@ import Button from '../components/ui/Button'
 import StatusBadge from '../components/ui/StatusBadge'
 import Modal from '../components/ui/Modal'
 import FilterTabs from '../components/ui/FilterTabs'
-import { formatCurrency, formatDate, daysUntil } from '../utils/formatters'
+import { formatCurrency, formatDate, daysUntil, getCurrentYear } from '../utils/formatters'
 import { EXPENSE_CATEGORIES } from '../lib/constants'
 import { getScheduleCLine } from '../utils/taxCalc'
 import { Plus, DollarSign, UserPlus, Trash2, Pencil } from 'lucide-react'
@@ -48,9 +48,11 @@ export default function APPage() {
     } catch { toast.error('Failed to update bill') }
   }
 
+  const currentYear = getCurrentYear()
   const pending = bills?.filter(b => b.status === 'pending') || []
-  const totalOutstanding = pending.reduce((s, b) => s + Number(b.amount), 0)
-  const totalPaid = (bills?.filter(b => b.status === 'paid') || []).reduce((s, b) => s + Number(b.amount), 0)
+  // Outstanding = vendor bills only (owner-draw tracked separately under "Owed to You")
+  const totalOutstanding = pending.filter(b => !b.is_owner_draw).reduce((s, b) => s + Number(b.amount), 0)
+  const totalPaid = (bills?.filter(b => b.status === 'paid' && b.paid_at && new Date(b.paid_at).getFullYear() === currentYear) || []).reduce((s, b) => s + Number(b.amount), 0)
   const owedToYou = pending.filter(b => b.is_owner_draw).reduce((s, b) => s + Number(b.amount), 0)
 
   // client-side filter for owner draw tab

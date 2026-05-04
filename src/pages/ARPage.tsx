@@ -5,7 +5,7 @@ import Button from '../components/ui/Button'
 import StatusBadge from '../components/ui/StatusBadge'
 import FilterTabs from '../components/ui/FilterTabs'
 import PaymentRecordModal from '../components/ui/PaymentRecordModal'
-import { formatCurrency, formatDate, daysUntil } from '../utils/formatters'
+import { formatCurrency, formatDate, daysUntil, getCurrentYear } from '../utils/formatters'
 import { DollarSign, Copy } from 'lucide-react'
 import type { AREntry } from '../lib/types'
 import toast from 'react-hot-toast'
@@ -15,10 +15,13 @@ export default function ARPage() {
   const [payEntry, setPayEntry] = useState<AREntry | null>(null)
   const { data: entries, isLoading } = useAREntries(filter)
 
+  const currentYear = getCurrentYear()
   const pending = entries?.filter(e => e.status === 'pending') || []
   const received = entries?.filter(e => e.status === 'received') || []
   const totalOutstanding = pending.reduce((s, e) => s + Number(e.amount), 0)
-  const totalReceived = received.reduce((s, e) => s + Number(e.amount), 0)
+  const totalReceived = received
+    .filter(e => e.received_at && new Date(e.received_at).getFullYear() === currentYear)
+    .reduce((s, e) => s + Number(e.amount), 0)
 
   return (
     <div className="space-y-6 max-w-6xl">
