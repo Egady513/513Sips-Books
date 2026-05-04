@@ -532,68 +532,139 @@ export default function LeadsPage() {
   // Generate clean quote PDF directly from saved Supabase data — no calculator needed
   function handleDownloadQuotePDF(lead: Lead, quote: Quote) {
     const today = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
-    const numEvents = lead.number_of_events ?? 1
-    const eventDate = lead.event_date
-      ? new Date(lead.event_date + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
-      : 'TBD'
     const fmt = (n: number) => '$' + n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+    const validUntilStr = quote.valid_until
+      ? new Date(quote.valid_until + 'T12:00:00').toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+      : null
+    const dateSubtitle = `Prepared ${today}${validUntilStr ? ` · Valid until ${validUntilStr}` : ' · Valid for 30 days'}`
 
-    // Build multi-event package block (only for numEvents > 1)
-    let eventPkgBlock = ''
-    if (numEvents > 1 && quote.addon_notes) {
-      const lines = quote.addon_notes.split('\n').filter(l => l.trim())
-      const eventRows = lines.map(line => {
-        // Parse "Name: $Amount" or "Name — Detail: $Amount"
-        const match = line.match(/^(.+?):\s*\$?([\d,]+(?:\.\d{0,2})?)$/)
-        if (match) {
-          const [, name, amount] = match
-          const amt = parseFloat(amount.replace(/,/g, ''))
-          return `<div class="evt-row"><span class="evt-name">${name.trim()}</span><span class="evt-amt">${fmt(amt)}</span></div>`
-        }
-        return `<div class="evt-row"><span class="evt-name">${line}</span><span class="evt-amt"></span></div>`
+    // Shared helper: convert a breakdown object into HTML rows
+    function buildBdRows(bd: Record<string, unknown> | null, promoCode?: string | null): string {
+      if (!bd) return ''
+      let rows = ''
+      const base = typeof bd.base === 'number' ? bd.base : 650
+      rows += `<div class="brow"><span>${bd.base === 395 ? 'Base — Small Group (2 hrs, ≤20 guests)' : 'Base Package (3 hrs, ≤50 guests)'}</span><span>${fmt(base)}</span></div>`
+      if (typeof bd.staffing === 'number' && bd.staffing > 0)
+        rows += `<div class="brow"><span>Additional Bartenders</span><span>+${fmt(bd.staffing)}</span></div>`
+      if (typeof bd.volume === 'number' && bd.volume > 0)
+        rows += `<div class="brow"><span>High-Volume Event Adjustment</span><span>+${fmt(bd.volume)}</span></div>`
+      if (typeof bd.extraHours === 'number' && bd.extraHours > 0)
+        rows += `<div class="brow"><span>Extended Service Hours</span><span>+${fmt(bd.extraHours)}</span></div>`
+      if (typeof bd.twoHrReduction === 'number' && bd.twoHrReduction > 0)
+        rows += `<div class="brow green"><span>2-Hour Service Reduction</span><span>-${fmt(bd.twoHrReduction)}</span></div>`
+      if (typeof bd.package === 'number' && bd.package > 0)
+        rows += `<div class="brow"><span>Full Bar Upgrade</span><span>+${fmt(bd.package)}</span></div>`
+      if (typeof bd.glassware === 'number' && bd.glassware > 0)
+        rows += `<div class="brow"><span>Premium Glassware</span><span>+${fmt(bd.glassware)}</span></div>`
+      if (typeof bd.travel === 'number' && bd.travel > 0)
+        rows += `<div class="brow"><span>Travel Fee</span><span>+${fmt(bd.travel)}</span></div>`
+      if (typeof bd.cocktails === 'number' && bd.cocktails > 0)
+        rows += `<div class="brow gold"><span>Signature Cocktails</span><span>+${fmt(bd.cocktails)}</span></div>`
+      if (typeof bd.addons === 'number' && bd.addons > 0)
+        rows += `<div class="brow gold"><span>Premium Add-Ons</span><span>+${fmt(bd.addons)}</span></div>`
+      if (typeof bd.customItemsTotal === 'number' && bd.customItemsTotal > 0)
+        rows += `<div class="brow gold"><span>Custom Add-Ons</span><span>+${fmt(bd.customItemsTotal)}</span></div>`
+      if (typeof bd.discount === 'number' && bd.discount > 0)
+        rows += `<div class="brow green"><span>${promoCode ?? 'Promo Discount'}</span><span>-${fmt(bd.discount)}</span></div>`
+      if (typeof bd.customDiscount === 'number' && bd.customDiscount > 0)
+        rows += `<div class="brow green"><span>${(bd.customDiscountLabel as string) || 'Custom Discount'}</span><span>-${fmt(bd.customDiscount)}</span></div>`
+      return rows
+    }
+
+    // Multi-event with per-event breakdowns (saved after 2026-05-04)
+    const isRichMultiEvent = Array.isArray(quote.breakdown) && (quote.breakdown as unknown[]).length > 1
+
+    let bodyHTML = ''
+
+    if (isRichMultiEvent) {
+      type EvtEntry = { name: string; total: number; bd: Record<string, unknown> | null }
+      const events = quote.breakdown as unknown as EvtEntry[]
+      const eventSections = events.map(evt => {
+        const rows = buildBdRows(evt.bd, null)
+        return `
+        <div class="evt-block">
+          <div class="evt-block-name">${evt.name}</div>
+          <div class="evt-block-total-label">ESTIMATED TOTAL</div>
+          <div class="evt-block-total-amt">${fmt(evt.total)}</div>
+          ${rows ? `<div class="breakdown" style="border-radius:0;border-left:none;border-right:none;border-bottom:none">${rows}</div>` : ''}
+        </div>`
       }).join('')
-      eventPkgBlock = `
+
+      bodyHTML = `
+<div class="section">
+  <div class="section-title">Quote Summary</div>
+  ${eventSections}
+  <div class="totals" style="margin-top:20px">
+    <div class="trow total"><span>Total Event Investment</span><span>${fmt(quote.total)}</span></div>
+    <div class="trow"><span>Deposit Due Now (50%)</span><span>${fmt(quote.deposit)}</span></div>
+    <div class="trow"><span>Balance Due (14 days prior)</span><span>${fmt(quote.balance)}</span></div>
+  </div>
+</div>`
+
+    } else {
+      // Single event (or legacy multi-event without per-event breakdowns)
+      const eventDate = lead.event_date
+        ? new Date(lead.event_date + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
+        : 'TBD'
+      const numEvents = lead.number_of_events ?? 1
+
+      // Legacy multi-event fallback (old addon_notes-only format)
+      let eventPkgBlock = ''
+      if (numEvents > 1 && quote.addon_notes) {
+        const lines = quote.addon_notes.split('\n').filter((l: string) => l.trim())
+        const eventRows = lines.map((line: string) => {
+          const match = line.match(/^(.+?):\s*\$?([\d,]+(?:\.\d{0,2})?)$/)
+          if (match) {
+            const [, name, amount] = match
+            return `<div class="evt-row"><span class="evt-name">${name.trim()}</span><span class="evt-amt">${fmt(parseFloat(amount.replace(/,/g, '')))}</span></div>`
+          }
+          return `<div class="evt-row"><span class="evt-name">${line}</span><span class="evt-amt"></span></div>`
+        }).join('')
+        eventPkgBlock = `
         <div class="evt-pkg">
           <div class="evt-pkg-header">📋 ${numEvents}-Event Package Breakdown</div>
           ${eventRows}
-          <div class="evt-subtotal"><span>${numEvents} events included in this quote</span><span style="font-weight:700;color:#5a4a00">${fmt(quote.total)} combined</span></div>
+          <div class="evt-subtotal"><span>${numEvents} events included</span><span style="font-weight:700;color:#5a4a00">${fmt(quote.total)} combined</span></div>
         </div>`
-    }
-
-    // Build itemized breakdown rows from stored breakdown object
-    const bd = (quote.breakdown && typeof quote.breakdown === 'object' && !Array.isArray(quote.breakdown))
-      ? quote.breakdown as Record<string, unknown>
-      : null
-
-    let breakdownRows = ''
-    if (bd) {
-      const base = typeof bd.base === 'number' ? bd.base : 650
-      const baseLabel = bd.base === 395 ? 'Base — Small Group (2 hrs, ≤20 guests)' : 'Base Package (3 hrs, ≤50 guests)'
-      breakdownRows += `<div class="brow"><span>${baseLabel}</span><span>${fmt(base)}</span></div>`
-      if (typeof bd.staffing === 'number' && bd.staffing > 0)
-        breakdownRows += `<div class="brow"><span>Additional Staffing</span><span>+${fmt(bd.staffing)}</span></div>`
-      if (typeof bd.volume === 'number' && bd.volume > 0)
-        breakdownRows += `<div class="brow"><span>High-Volume Adjustment</span><span>+${fmt(bd.volume)}</span></div>`
-      if (typeof bd.extraHours === 'number' && bd.extraHours > 0)
-        breakdownRows += `<div class="brow"><span>Extended Hours</span><span>+${fmt(bd.extraHours)}</span></div>`
-      if (typeof bd.twoHrReduction === 'number' && bd.twoHrReduction > 0)
-        breakdownRows += `<div class="brow green"><span>2-Hour Service</span><span>-${fmt(bd.twoHrReduction)}</span></div>`
-      if (typeof bd.package === 'number' && bd.package > 0)
-        breakdownRows += `<div class="brow"><span>Full Bar Upgrade</span><span>+${fmt(bd.package)}</span></div>`
-      if (typeof bd.glassware === 'number' && bd.glassware > 0)
-        breakdownRows += `<div class="brow"><span>Glassware</span><span>+${fmt(bd.glassware)}</span></div>`
-      if (typeof bd.travel === 'number' && bd.travel > 0)
-        breakdownRows += `<div class="brow"><span>Travel Fee</span><span>+${fmt(bd.travel)}</span></div>`
-      if (typeof bd.cocktails === 'number' && bd.cocktails > 0)
-        breakdownRows += `<div class="brow gold"><span>Signature Cocktails</span><span>+${fmt(bd.cocktails)}</span></div>`
-      if (typeof bd.addons === 'number' && bd.addons > 0)
-        breakdownRows += `<div class="brow gold"><span>Premium Add-Ons</span><span>+${fmt(bd.addons)}</span></div>`
-      if (typeof bd.custom === 'number' && bd.custom > 0)
-        breakdownRows += `<div class="brow gold"><span>Custom Add-Ons</span><span>+${fmt(bd.custom)}</span></div>`
-      if (typeof bd.discount === 'number' && bd.discount > 0) {
-        const promoLabel = quote.promo_code ? quote.promo_code : 'Adjustment'
-        breakdownRows += `<div class="brow green"><span>${promoLabel}</span><span>-${fmt(bd.discount)}</span></div>`
       }
+
+      const bd = (!Array.isArray(quote.breakdown) && quote.breakdown && typeof quote.breakdown === 'object')
+        ? quote.breakdown as Record<string, unknown>
+        : null
+      const breakdownRows = buildBdRows(bd, quote.promo_code)
+
+      bodyHTML = `
+<div class="section">
+  <div class="section-title">Client Information</div>
+  <div class="grid">
+    <div class="field"><span class="label">Client Name</span><span class="value">${lead.name}</span></div>
+    <div class="field"><span class="label">Event Type</span><span class="value">${lead.event_type || '—'}</span></div>
+    <div class="field"><span class="label">Email</span><span class="value">${lead.email || '—'}</span></div>
+    <div class="field"><span class="label">Phone</span><span class="value">${lead.phone || '—'}</span></div>
+  </div>
+</div>
+<div class="section">
+  <div class="section-title">Event Details</div>
+  <div class="grid">
+    <div class="field"><span class="label">Event Date</span><span class="value">${eventDate}</span></div>
+    <div class="field"><span class="label">Venue</span><span class="value">${lead.venue_name || lead.venue_address || '—'}</span></div>
+    <div class="field"><span class="label">Guest Count</span><span class="value">${lead.guest_count ?? quote.guest_count ?? '—'}</span></div>
+    <div class="field"><span class="label">Service Hours</span><span class="value">${quote.hours ?? 3} hours</span></div>
+    ${lead.service_start_time ? `<div class="field"><span class="label">Service Time</span><span class="value">${lead.service_start_time}${lead.service_end_time ? ' – ' + lead.service_end_time : ''}</span></div>` : ''}
+    ${quote.bartenders ? `<div class="field"><span class="label">Bar Staff</span><span class="value">${quote.bartenders} bartender${(quote.bartenders as number) > 1 ? 's' : ''}</span></div>` : ''}
+    ${numEvents > 1 ? `<div class="field" style="grid-column:1/-1"><span class="label">Package</span><span class="value">${numEvents}-Event Package</span></div>` : ''}
+  </div>
+</div>
+<div class="section">
+  <div class="section-title">Pricing</div>
+  ${eventPkgBlock}
+  ${breakdownRows ? `<div class="breakdown">${breakdownRows}</div>` : ''}
+  <div class="totals" style="${breakdownRows || eventPkgBlock ? 'margin-top:12px' : ''}">
+    <div class="trow total"><span>Total Investment</span><span>${fmt(quote.total)}</span></div>
+    <div class="trow"><span>Deposit (50% — due to secure date)</span><span>${fmt(quote.deposit)}</span></div>
+    <div class="trow"><span>Balance (due on event date)</span><span>${fmt(quote.balance)}</span></div>
+  </div>
+</div>`
     }
 
     const html = `<!DOCTYPE html>
@@ -601,11 +672,10 @@ export default function LeadsPage() {
 <style>
   *{margin:0;padding:0;box-sizing:border-box}
   body{font-family:Georgia,'Times New Roman',serif;color:#111;background:#fff;padding:48px;max-width:720px;margin:0 auto}
-  .header{text-align:center;border-bottom:3px solid #D4AF37;padding-bottom:24px;margin-bottom:32px}
+  .header{text-align:center;border-bottom:3px solid #D4AF37;padding-bottom:24px;margin-bottom:8px}
   .brand{font-size:36px;color:#D4AF37;font-weight:bold;letter-spacing:3px}
   .tagline{font-size:12px;color:#777;margin-top:6px;letter-spacing:2px;text-transform:uppercase}
-  .doc-title{font-size:22px;color:#0A1628;margin-top:28px;text-align:center;font-weight:normal;letter-spacing:1px}
-  .doc-date{text-align:center;color:#999;font-size:12px;margin-top:6px}
+  .doc-date{text-align:center;color:#999;font-size:12px;margin-bottom:24px}
   .section{margin:24px 0}
   .section-title{font-size:10px;text-transform:uppercase;letter-spacing:2px;color:#D4AF37;border-bottom:1px solid #D4AF37;padding-bottom:5px;margin-bottom:14px}
   .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px 32px}
@@ -624,7 +694,11 @@ export default function LeadsPage() {
   .evt-row .evt-name{font-weight:600;color:#0A1628}
   .evt-row .evt-amt{font-weight:700;color:#8a6a00;font-size:15px}
   .evt-subtotal{display:flex;justify-content:space-between;padding:10px 16px;background:#ede8c8;font-size:13px;color:#555;border-top:1px solid #d4c870}
-  .totals{margin-top:16px;border:1px solid #e8e0c0;border-radius:8px;overflow:hidden}
+  .evt-block{border:2px solid #D4AF37;border-radius:8px;overflow:hidden;margin-bottom:20px}
+  .evt-block-name{background:#D4AF37;color:#0A1628;font-size:12px;font-weight:700;letter-spacing:2px;padding:10px 16px;text-transform:uppercase}
+  .evt-block-total-label{text-align:center;font-size:10px;letter-spacing:2px;color:#999;text-transform:uppercase;padding:14px 16px 2px}
+  .evt-block-total-amt{text-align:center;font-size:30px;color:#0A1628;font-weight:bold;padding-bottom:14px}
+  .totals{border:1px solid #e8e0c0;border-radius:8px;overflow:hidden}
   .trow{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:1px solid #f0e8d0;font-size:14px}
   .trow:last-child{border-bottom:none}
   .trow.total{background:#0A1628;color:#FAF8F3;font-weight:600}
@@ -637,46 +711,8 @@ export default function LeadsPage() {
   <div class="brand">513 SIPS</div>
   <div class="tagline">Mobile Craft Bartending · Cincinnati, OH</div>
 </div>
-<div class="doc-title">Service Quote</div>
-<div class="doc-date">Prepared ${today}${quote.valid_until ? ` · Valid until ${new Date(quote.valid_until + 'T12:00:00').toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}` : ' · Valid for 30 days'}</div>
-
-<div class="section">
-  <div class="section-title">Client Information</div>
-  <div class="grid">
-    <div class="field"><span class="label">Client Name</span><span class="value">${lead.name}</span></div>
-    <div class="field"><span class="label">Event Type</span><span class="value">${lead.event_type || '—'}</span></div>
-    <div class="field"><span class="label">Email</span><span class="value">${lead.email || '—'}</span></div>
-    <div class="field"><span class="label">Phone</span><span class="value">${lead.phone || '—'}</span></div>
-  </div>
-</div>
-
-<div class="section">
-  <div class="section-title">Event Details</div>
-  <div class="grid">
-    <div class="field"><span class="label">Event Date</span><span class="value">${eventDate}</span></div>
-    <div class="field"><span class="label">Venue</span><span class="value">${lead.venue_name || lead.venue_address || '—'}</span></div>
-    <div class="field"><span class="label">Guest Count</span><span class="value">${lead.guest_count ?? quote.guest_count ?? '—'}</span></div>
-    <div class="field"><span class="label">Service Hours</span><span class="value">${quote.hours ?? 3} hours</span></div>
-    ${lead.service_start_time ? `<div class="field"><span class="label">Service Time</span><span class="value">${lead.service_start_time}${lead.service_end_time ? ' – ' + lead.service_end_time : ''}</span></div>` : ''}
-    ${quote.bartenders ? `<div class="field"><span class="label">Bar Staff</span><span class="value">${quote.bartenders} bartender${quote.bartenders > 1 ? 's' : ''}</span></div>` : ''}
-    ${numEvents > 1 ? `<div class="field" style="grid-column:1/-1"><span class="label">Package</span><span class="value">${numEvents}-Event Package</span></div>` : ''}
-  </div>
-</div>
-
-<div class="section">
-  <div class="section-title">Pricing</div>
-  ${eventPkgBlock}
-  ${breakdownRows ? `<div class="breakdown">${breakdownRows}</div>` : ''}
-  <div class="totals" style="${breakdownRows ? 'margin-top:12px' : ''}">
-    <div class="trow total">
-      <span>Total Investment</span>
-      <span>${fmt(quote.total)}</span>
-    </div>
-    <div class="trow"><span>Deposit (50% — due to secure date)</span><span>${fmt(quote.deposit)}</span></div>
-    <div class="trow"><span>Balance (due on event date)</span><span>${fmt(quote.balance)}</span></div>
-  </div>
-</div>
-
+<div class="doc-date">${dateSubtitle}</div>
+${bodyHTML}
 <div class="footer">513 Sips LLC · Cincinnati, OH · 513sips.com · instagram.com/513sips</div>
 <script>window.onload=()=>{window.print()}</script>
 </body></html>`

@@ -6,6 +6,7 @@ import Modal from './Modal'
 import Button from './Button'
 import { EXPENSE_CATEGORIES } from '../../lib/constants'
 import { getScheduleCLine } from '../../utils/taxCalc'
+import { formatCurrency } from '../../utils/formatters'
 import { ScanLine, Loader2 } from 'lucide-react'
 import type { Expense, Event } from '../../lib/types'
 import toast from 'react-hot-toast'
@@ -54,7 +55,7 @@ export default function ExpenseFormModal({ open, onClose, eventId, editExpense, 
         reader.onerror = reject
         reader.readAsDataURL(file)
       })
-      const { data, error } = await supabase.functions.invoke('ocr-receipt', {
+      const { data, error } = await supabase.functions.invoke('rapid-processor', {
         body: { imageBase64: base64, mediaType: file.type || 'image/jpeg' },
       })
       if (error) throw error
@@ -115,9 +116,9 @@ export default function ExpenseFormModal({ open, onClose, eventId, editExpense, 
             due_date: apDueDate || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
             status: 'pending',
           })
-          toast.success('Expense logged + added to AP')
+          toast.success(`✓ Expense logged. Created AP bill for ${formatCurrency(payload.amount)} (reduces profit + tracked as amount owed to you)`)
         } else {
-          toast.success('Expense added')
+          toast.success('✓ Expense added (reduces profit)')
         }
       }
       handleClose()
@@ -237,6 +238,13 @@ export default function ExpenseFormModal({ open, onClose, eventId, editExpense, 
         {/* AP toggle — new expenses only */}
         {!isEditing && (
           <div className="space-y-3">
+            <div className="p-3 bg-navy-lighter rounded-lg border border-gold-dim">
+              <p className="text-xs text-cream/60 mb-3">
+                <span className="font-medium text-cream">How accounting works here:</span>
+                <br className="mt-1" />
+                When you add an expense, it immediately reduces profit. If you paid out-of-pocket, check "Needs to be paid back" to also track it as a bill the business owes you.
+              </p>
+            </div>
             <label className="flex items-center gap-3 text-sm text-cream/70 cursor-pointer p-3 bg-navy-lighter rounded-lg border border-gold-dim hover:border-gold/40 transition-colors">
               <input
                 type="checkbox"
@@ -245,8 +253,8 @@ export default function ExpenseFormModal({ open, onClose, eventId, editExpense, 
                 className="w-4 h-4 rounded accent-gold"
               />
               <div>
-                <span className="font-medium text-cream">Needs to be paid back</span>
-                <p className="text-xs text-cream/40 mt-0.5">I paid out of pocket — add this to Accounts Payable</p>
+                <span className="font-medium text-cream">I paid out of pocket — track as bill due to me</span>
+                <p className="text-xs text-cream/40 mt-0.5">Creates an Accounts Payable entry so you see how much the business owes you</p>
               </div>
             </label>
             {addToAP && (
