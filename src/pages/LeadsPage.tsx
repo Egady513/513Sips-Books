@@ -683,19 +683,19 @@ export default function LeadsPage() {
 <html><head><meta charset="UTF-8"><title>513 Sips Quote — ${lead.name}</title>
 <style>
   *{margin:0;padding:0;box-sizing:border-box}
-  body{font-family:Georgia,'Times New Roman',serif;color:#111;background:#fff;padding:32px 48px;max-width:720px;margin:0 auto}
-  .header{text-align:center;border-bottom:3px solid #D4AF37;padding-bottom:16px;margin-bottom:6px}
-  .brand{font-size:32px;color:#D4AF37;font-weight:bold;letter-spacing:3px}
-  .tagline{font-size:11px;color:#777;margin-top:4px;letter-spacing:2px;text-transform:uppercase}
-  .doc-date{text-align:center;color:#999;font-size:11px;margin-bottom:16px}
-  .section{margin:16px 0}
-  .section-title{font-size:10px;text-transform:uppercase;letter-spacing:2px;color:#D4AF37;border-bottom:1px solid #D4AF37;padding-bottom:5px;margin-bottom:14px}
+  body{font-family:Georgia,'Times New Roman',serif;color:#111;background:#fff;padding:24px 40px;max-width:720px;margin:0 auto}
+  .header{text-align:center;border-bottom:3px solid #D4AF37;padding-bottom:12px;margin-bottom:4px}
+  .brand{font-size:28px;color:#D4AF37;font-weight:bold;letter-spacing:3px}
+  .tagline{font-size:10px;color:#777;margin-top:3px;letter-spacing:2px;text-transform:uppercase}
+  .doc-date{text-align:center;color:#999;font-size:10px;margin-bottom:12px}
+  .section{margin:10px 0}
+  .section-title{font-size:10px;text-transform:uppercase;letter-spacing:2px;color:#D4AF37;border-bottom:1px solid #D4AF37;padding-bottom:4px;margin-bottom:8px}
   .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px 32px}
   .field{display:flex;flex-direction:column}
   .label{font-size:10px;color:#999;text-transform:uppercase;letter-spacing:1px;margin-bottom:2px}
   .value{font-size:14px;color:#111}
   .breakdown{border:1px solid #e8e0c0;border-radius:8px;overflow:hidden;margin-top:8px}
-  .brow{display:flex;justify-content:space-between;padding:6px 14px;border-bottom:1px solid #f0e8d0;font-size:13px}
+  .brow{display:flex;justify-content:space-between;padding:5px 14px;border-bottom:1px solid #f0e8d0;font-size:12px}
   .brow:last-child{border-bottom:none}
   .brow.gold{color:#8a6a00}
   .brow.green{color:#2e7d32}
@@ -710,15 +710,15 @@ export default function LeadsPage() {
   .evt-block-header{background:#D4AF37;display:flex;justify-content:space-between;align-items:center;padding:8px 14px}
   .evt-block-name{color:#0A1628;font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase}
   .evt-block-stats{color:#3a2800;font-size:10px;font-weight:600;letter-spacing:0.5px}
-  .evt-block-total-label{text-align:center;font-size:9px;letter-spacing:2px;color:#999;text-transform:uppercase;padding:8px 16px 1px}
-  .evt-block-total-amt{text-align:center;font-size:22px;color:#0A1628;font-weight:bold;padding-bottom:8px}
+  .evt-block-total-label{text-align:center;font-size:9px;letter-spacing:2px;color:#999;text-transform:uppercase;padding:6px 16px 0}
+  .evt-block-total-amt{text-align:center;font-size:18px;color:#0A1628;font-weight:bold;padding-bottom:6px}
   .totals{border:1px solid #e8e0c0;border-radius:8px;overflow:hidden}
-  .trow{display:flex;justify-content:space-between;align-items:center;padding:9px 14px;border-bottom:1px solid #f0e8d0;font-size:13px}
+  .trow{display:flex;justify-content:space-between;align-items:center;padding:7px 14px;border-bottom:1px solid #f0e8d0;font-size:12px}
   .trow:last-child{border-bottom:none}
   .trow.total{background:#0A1628;color:#FAF8F3;font-weight:600}
   .trow.total span:last-child{font-size:20px;color:#D4AF37}
-  .footer{text-align:center;margin-top:32px;padding-top:16px;border-top:1px solid #eee;font-size:11px;color:#aaa}
-  @media print{body{padding:28px}}
+  .footer{text-align:center;margin-top:16px;padding-top:10px;border-top:1px solid #eee;font-size:10px;color:#aaa}
+  @media print{body{padding:16px 32px}}
 </style></head>
 <body>
 <div class="header">
