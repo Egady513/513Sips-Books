@@ -63,14 +63,23 @@ export function useDashboardKPIs(year?: number) {
         .filter(e => e.due_date && new Date(e.due_date).getFullYear() === y)
         .reduce((sum, e) => sum + Number(e.amount), 0)
 
-      // Owner reimbursement = pending entries where Eddie fronted the cost (is_owner_draw)
+      // Owner reimbursement widget = ALL pending owner-draw (not year-filtered — total owed to Eddie)
       const ownerReimbursementDue = (pendingAP || [])
         .filter(e => e.is_owner_draw)
         .reduce((sum, e) => sum + Number(e.amount), 0)
 
-      // ACCRUAL EXPENSES: All expenses + vendor AP (NOT owner-draw, to avoid double-counting)
-      // Owner-draw entries are already counted in totalExpenses when "I paid out of pocket" was checked
-      const vendorAPTotal = paidAPTotal + pendingAPTotal - ownerReimbursementDue
+      // For P&L: exclude ALL owner-draw AP (paid + pending, year-filtered) to prevent double-counting.
+      // Owner-draw AP is already captured in totalExpenses via the expense record created alongside it.
+      const paidOwnerDrawYear = (paidAP || [])
+        .filter(e => e.due_date && new Date(e.due_date).getFullYear() === y && e.is_owner_draw)
+        .reduce((sum, e) => sum + Number(e.amount), 0)
+
+      const pendingOwnerDrawYear = (pendingAP || [])
+        .filter(e => e.due_date && new Date(e.due_date).getFullYear() === y && e.is_owner_draw)
+        .reduce((sum, e) => sum + Number(e.amount), 0)
+
+      // ACCRUAL EXPENSES: expenses + vendor-only AP + mileage (owner-draw AP fully excluded)
+      const vendorAPTotal = paidAPTotal + pendingAPTotal - paidOwnerDrawYear - pendingOwnerDrawYear
       const accrualExpenses = totalExpenses + vendorAPTotal + totalMileage
 
       // Active events

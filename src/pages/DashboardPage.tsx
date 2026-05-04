@@ -21,7 +21,7 @@ export default function DashboardPage() {
   const leadStats = {
     newCount:    allLeads.filter(l => l.status === 'new').length,
     quotedCount: allLeads.filter(l => l.status === 'quoted' || l.status === 'negotiating').length,
-    pipeline:    allLeads.filter(l => l.status !== 'lost' && l.status !== 'booked').reduce((s, l) => {
+    pipeline:    allLeads.filter(l => l.status !== 'lost').reduce((s, l) => {
       const quote = recentQuotes.find(q => q.lead_id === l.id)
       const amount = quote?.total ?? l.budget ?? 0
       const prob = l.probability ?? 50
