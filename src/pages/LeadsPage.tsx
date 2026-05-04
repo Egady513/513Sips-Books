@@ -560,8 +560,12 @@ export default function LeadsPage() {
         rows += `<div class="brow"><span>Travel Fee</span><span>+${fmt(bd.travel)}</span></div>`
       if (typeof bd.cocktails === 'number' && bd.cocktails > 0)
         rows += `<div class="brow gold"><span>Signature Cocktails</span><span>+${fmt(bd.cocktails)}</span></div>`
-      if (typeof bd.addons === 'number' && bd.addons > 0)
-        rows += `<div class="brow gold"><span>Premium Add-Ons</span><span>+${fmt(bd.addons)}</span></div>`
+      if (typeof bd.addons === 'number' && bd.addons > 0) {
+        const detail = Array.isArray(bd.addonsList) && (bd.addonsList as string[]).length > 0
+          ? ` (${(bd.addonsList as string[]).join(', ')})`
+          : ''
+        rows += `<div class="brow gold"><span>Premium Add-Ons${detail}</span><span>+${fmt(bd.addons)}</span></div>`
+      }
       if (typeof bd.customItemsTotal === 'number' && bd.customItemsTotal > 0)
         rows += `<div class="brow gold"><span>Custom Add-Ons</span><span>+${fmt(bd.customItemsTotal)}</span></div>`
       if (typeof bd.discount === 'number' && bd.discount > 0)
@@ -577,13 +581,21 @@ export default function LeadsPage() {
     let bodyHTML = ''
 
     if (isRichMultiEvent) {
-      type EvtEntry = { name: string; total: number; bd: Record<string, unknown> | null }
+      type EvtEntry = { name: string; total: number; guestCount?: number; hours?: number; bartenders?: number; bd: Record<string, unknown> | null }
       const events = quote.breakdown as unknown as EvtEntry[]
       const eventSections = events.map(evt => {
         const rows = buildBdRows(evt.bd, null)
+        const stats = [
+          evt.guestCount ? `${evt.guestCount} Guests` : null,
+          evt.hours ? `${evt.hours} Hrs` : null,
+          evt.bartenders ? `${evt.bartenders} Bartender${evt.bartenders > 1 ? 's' : ''}` : null,
+        ].filter(Boolean).join(' · ')
         return `
         <div class="evt-block">
-          <div class="evt-block-name">${evt.name}</div>
+          <div class="evt-block-header">
+            <span class="evt-block-name">${evt.name}</span>
+            ${stats ? `<span class="evt-block-stats">${stats}</span>` : ''}
+          </div>
           <div class="evt-block-total-label">ESTIMATED TOTAL</div>
           <div class="evt-block-total-amt">${fmt(evt.total)}</div>
           ${rows ? `<div class="breakdown" style="border-radius:0;border-left:none;border-right:none;border-bottom:none">${rows}</div>` : ''}
@@ -594,7 +606,7 @@ export default function LeadsPage() {
 <div class="section">
   <div class="section-title">Quote Summary</div>
   ${eventSections}
-  <div class="totals" style="margin-top:20px">
+  <div class="totals" style="margin-top:16px">
     <div class="trow total"><span>Total Event Investment</span><span>${fmt(quote.total)}</span></div>
     <div class="trow"><span>Deposit Due Now (50%)</span><span>${fmt(quote.deposit)}</span></div>
     <div class="trow"><span>Balance Due (14 days prior)</span><span>${fmt(quote.balance)}</span></div>
@@ -671,19 +683,19 @@ export default function LeadsPage() {
 <html><head><meta charset="UTF-8"><title>513 Sips Quote — ${lead.name}</title>
 <style>
   *{margin:0;padding:0;box-sizing:border-box}
-  body{font-family:Georgia,'Times New Roman',serif;color:#111;background:#fff;padding:48px;max-width:720px;margin:0 auto}
-  .header{text-align:center;border-bottom:3px solid #D4AF37;padding-bottom:24px;margin-bottom:8px}
-  .brand{font-size:36px;color:#D4AF37;font-weight:bold;letter-spacing:3px}
-  .tagline{font-size:12px;color:#777;margin-top:6px;letter-spacing:2px;text-transform:uppercase}
-  .doc-date{text-align:center;color:#999;font-size:12px;margin-bottom:24px}
-  .section{margin:24px 0}
+  body{font-family:Georgia,'Times New Roman',serif;color:#111;background:#fff;padding:32px 48px;max-width:720px;margin:0 auto}
+  .header{text-align:center;border-bottom:3px solid #D4AF37;padding-bottom:16px;margin-bottom:6px}
+  .brand{font-size:32px;color:#D4AF37;font-weight:bold;letter-spacing:3px}
+  .tagline{font-size:11px;color:#777;margin-top:4px;letter-spacing:2px;text-transform:uppercase}
+  .doc-date{text-align:center;color:#999;font-size:11px;margin-bottom:16px}
+  .section{margin:16px 0}
   .section-title{font-size:10px;text-transform:uppercase;letter-spacing:2px;color:#D4AF37;border-bottom:1px solid #D4AF37;padding-bottom:5px;margin-bottom:14px}
   .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px 32px}
   .field{display:flex;flex-direction:column}
   .label{font-size:10px;color:#999;text-transform:uppercase;letter-spacing:1px;margin-bottom:2px}
   .value{font-size:14px;color:#111}
   .breakdown{border:1px solid #e8e0c0;border-radius:8px;overflow:hidden;margin-top:8px}
-  .brow{display:flex;justify-content:space-between;padding:9px 16px;border-bottom:1px solid #f0e8d0;font-size:14px}
+  .brow{display:flex;justify-content:space-between;padding:6px 14px;border-bottom:1px solid #f0e8d0;font-size:13px}
   .brow:last-child{border-bottom:none}
   .brow.gold{color:#8a6a00}
   .brow.green{color:#2e7d32}
@@ -694,12 +706,14 @@ export default function LeadsPage() {
   .evt-row .evt-name{font-weight:600;color:#0A1628}
   .evt-row .evt-amt{font-weight:700;color:#8a6a00;font-size:15px}
   .evt-subtotal{display:flex;justify-content:space-between;padding:10px 16px;background:#ede8c8;font-size:13px;color:#555;border-top:1px solid #d4c870}
-  .evt-block{border:2px solid #D4AF37;border-radius:8px;overflow:hidden;margin-bottom:20px}
-  .evt-block-name{background:#D4AF37;color:#0A1628;font-size:12px;font-weight:700;letter-spacing:2px;padding:10px 16px;text-transform:uppercase}
-  .evt-block-total-label{text-align:center;font-size:10px;letter-spacing:2px;color:#999;text-transform:uppercase;padding:14px 16px 2px}
-  .evt-block-total-amt{text-align:center;font-size:30px;color:#0A1628;font-weight:bold;padding-bottom:14px}
+  .evt-block{border:2px solid #D4AF37;border-radius:8px;overflow:hidden;margin-bottom:12px}
+  .evt-block-header{background:#D4AF37;display:flex;justify-content:space-between;align-items:center;padding:8px 14px}
+  .evt-block-name{color:#0A1628;font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase}
+  .evt-block-stats{color:#3a2800;font-size:10px;font-weight:600;letter-spacing:0.5px}
+  .evt-block-total-label{text-align:center;font-size:9px;letter-spacing:2px;color:#999;text-transform:uppercase;padding:8px 16px 1px}
+  .evt-block-total-amt{text-align:center;font-size:22px;color:#0A1628;font-weight:bold;padding-bottom:8px}
   .totals{border:1px solid #e8e0c0;border-radius:8px;overflow:hidden}
-  .trow{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:1px solid #f0e8d0;font-size:14px}
+  .trow{display:flex;justify-content:space-between;align-items:center;padding:9px 14px;border-bottom:1px solid #f0e8d0;font-size:13px}
   .trow:last-child{border-bottom:none}
   .trow.total{background:#0A1628;color:#FAF8F3;font-weight:600}
   .trow.total span:last-child{font-size:20px;color:#D4AF37}
