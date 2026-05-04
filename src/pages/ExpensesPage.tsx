@@ -76,21 +76,28 @@ export default function ExpensesPage() {
       />
 
       {tab === 'expenses' && (
-        <div className="flex gap-2">
-          {(['all', 'event', 'general'] as const).map(f => (
-            <button
-              key={f}
-              onClick={() => setExpenseFilter(f)}
-              className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
-                expenseFilter === f
-                  ? 'bg-gold/20 text-gold border border-gold/30'
-                  : 'bg-white/5 text-cream/50 hover:text-cream border border-transparent'
-              }`}
-            >
-              {f === 'all' ? 'All' : f === 'event' ? 'Event Expenses' : 'General Expenses'}
-            </button>
-          ))}
-        </div>
+        <>
+          <Card className="p-3 bg-navy-lighter/50 border-gold-dim">
+            <p className="text-xs text-cream/60">
+              <span className="text-gold font-medium">How accounting works:</span> All expenses reduce profit immediately. If you paid out-of-pocket, they're also tracked as AP (amount the business owes you). View AP bills in the sidebar to see your reimbursement due.
+            </p>
+          </Card>
+          <div className="flex gap-2">
+            {(['all', 'event', 'general'] as const).map(f => (
+              <button
+                key={f}
+                onClick={() => setExpenseFilter(f)}
+                className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
+                  expenseFilter === f
+                    ? 'bg-gold/20 text-gold border border-gold/30'
+                    : 'bg-white/5 text-cream/50 hover:text-cream border border-transparent'
+                }`}
+              >
+                {f === 'all' ? 'All' : f === 'event' ? 'Event Expenses' : 'General Expenses'}
+              </button>
+            ))}
+          </div>
+        </>
       )}
 
       {/* Expenses Tab */}

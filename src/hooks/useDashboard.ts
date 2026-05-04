@@ -44,13 +44,14 @@ export function useDashboardKPIs(year?: number) {
       const totalMileage = (mileageData || []).reduce((sum, e) => sum + Number(e.deduction_amount), 0)
 
       // ACCOUNTS PAYABLE: Paid + Pending — includes owner-draw entries (expenses Eddie fronted)
+      // Use due_date for both (accrual accounting) — recognize expense when due, not when paid
       const { data: paidAP } = await supabase
         .from('ap_entries')
-        .select('amount, paid_at, is_owner_draw')
+        .select('amount, due_date, is_owner_draw')
         .eq('status', 'paid')
 
       const paidAPTotal = (paidAP || [])
-        .filter(e => e.paid_at && new Date(e.paid_at).getFullYear() === y)
+        .filter(e => e.due_date && new Date(e.due_date).getFullYear() === y)
         .reduce((sum, e) => sum + Number(e.amount), 0)
 
       const { data: pendingAP } = await supabase
@@ -67,8 +68,10 @@ export function useDashboardKPIs(year?: number) {
         .filter(e => e.is_owner_draw)
         .reduce((sum, e) => sum + Number(e.amount), 0)
 
-      // ACCRUAL EXPENSES: All expenses + paid AP + pending AP + mileage
-      const accrualExpenses = totalExpenses + paidAPTotal + pendingAPTotal + totalMileage
+      // ACCRUAL EXPENSES: All expenses + vendor AP (NOT owner-draw, to avoid double-counting)
+      // Owner-draw entries are already counted in totalExpenses when "I paid out of pocket" was checked
+      const vendorAPTotal = paidAPTotal + pendingAPTotal - ownerReimbursementDue
+      const accrualExpenses = totalExpenses + vendorAPTotal + totalMileage
 
       // Active events
       const { data: activeEvents } = await supabase
@@ -80,7 +83,7 @@ export function useDashboardKPIs(year?: number) {
         totalRevenue: receivedAR,
         outstandingAR,
         accrualRevenue,
-        outstandingAP: paidAPTotal + pendingAPTotal,
+        outstandingAP: pendingAPTotal,
         ownerReimbursementDue,
         netProfit: accrualRevenue - accrualExpenses,
         activeEvents: activeEvents?.length || 0,

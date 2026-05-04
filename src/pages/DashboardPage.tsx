@@ -120,10 +120,10 @@ export default function DashboardPage() {
 
       {/* KPI Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
-        <StatCard label="Total Revenue" value={formatCurrency(kpis?.totalRevenue || 0)} color="text-success" />
-        <StatCard label="Outstanding AR" value={formatCurrency(kpis?.outstandingAR || 0)} color="text-warning" />
-        <StatCard label="Outstanding AP" value={formatCurrency(kpis?.outstandingAP || 0)} color="text-danger" />
-        <StatCard label="Net Profit" value={formatCurrency(kpis?.netProfit || 0)} color={kpis && kpis.netProfit >= 0 ? 'text-success' : 'text-danger'} />
+        <StatCard label="Received Revenue" value={formatCurrency(kpis?.totalRevenue || 0)} color="text-success" />
+        <StatCard label="Pending Revenue" value={formatCurrency(kpis?.outstandingAR || 0)} color="text-blue-300" />
+        <StatCard label="Bills Due" value={formatCurrency(kpis?.outstandingAP || 0)} color="text-danger" />
+        <StatCard label="Accrual Net Profit" value={formatCurrency(kpis?.netProfit || 0)} color={kpis && kpis.netProfit >= 0 ? 'text-success' : 'text-danger'} />
         <StatCard label="Active Events" value={String(kpis?.activeEvents || 0)} color="text-gold" />
       </div>
 
@@ -150,23 +150,42 @@ export default function DashboardPage() {
       {/* Bottom cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card>
-          <h3 className="text-sm text-cream/50 uppercase tracking-wider mb-3">P&L Summary — {year}</h3>
+          <h3 className="text-sm text-cream/50 uppercase tracking-wider mb-3">P&L Summary (Accrual) — {year}</h3>
           <div className="space-y-2">
             <div className="flex justify-between">
-              <span className="text-cream/60">Gross Revenue</span>
-              <span className="text-success font-medium">{formatCurrency(kpis?.totalRevenue || 0)}</span>
+              <span className="text-cream/60">Accrual Revenue</span>
+              <span className="text-success font-medium">{formatCurrency(kpis?.accrualRevenue || 0)}</span>
+            </div>
+            <div className="text-xs text-cream/40 flex justify-between mb-2">
+              <span>(Received: {formatCurrency(kpis?.totalRevenue || 0)}, Pending: {formatCurrency(kpis?.outstandingAR || 0)})</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-cream/60">Total Expenses</span>
+              <span className="text-cream/60">Total Expenses (incl. AP + Mileage)</span>
               <span className="text-danger font-medium">-{formatCurrency(kpis?.totalExpenses || 0)}</span>
             </div>
             <div className="border-t border-gold-dim pt-2 flex justify-between">
-              <span className="text-cream font-medium">Net Profit</span>
+              <span className="text-cream font-medium">Accrual Net Profit</span>
               <span className={`font-bold ${(kpis?.netProfit || 0) >= 0 ? 'text-success' : 'text-danger'}`}>
                 {formatCurrency(kpis?.netProfit || 0)}
               </span>
             </div>
           </div>
+        </Card>
+
+        <Card>
+          <h3 className="text-sm text-cream/50 uppercase tracking-wider mb-3">Owner Reimbursement</h3>
+          <div className="space-y-2">
+            <div className="flex justify-between">
+              <span className="text-cream/60">Amount Due to You</span>
+              <span className="text-warning font-bold text-lg">{formatCurrency(kpis?.ownerReimbursementDue || 0)}</span>
+            </div>
+            <p className="text-xs text-cream/40 mt-3">
+              Money the business owes you for out-of-pocket expenses. You can settle this once the business has revenue.
+            </p>
+          </div>
+          <Link to="/ap?filter=pending" className="block mt-3 text-xs text-gold/60 hover:text-gold transition-colors">
+            View bills to pay →
+          </Link>
         </Card>
 
         <Card>
