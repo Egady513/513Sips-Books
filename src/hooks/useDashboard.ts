@@ -37,11 +37,11 @@ export function useDashboardKPIs(year?: number) {
       // MILEAGE: For the year (tax-deductible deduction)
       const { data: mileageData } = await supabase
         .from('mileage_log')
-        .select('deduction_amount')
+        .select('miles, rate_per_mile')
         .gte('trip_date', `${y}-01-01`)
         .lte('trip_date', `${y}-12-31`)
 
-      const totalMileage = (mileageData || []).reduce((sum, e) => sum + Number(e.deduction_amount), 0)
+      const totalMileage = (mileageData || []).reduce((sum, e) => sum + Number(e.miles) * Number(e.rate_per_mile), 0)
 
       // ACCOUNTS PAYABLE: Paid + Pending — includes owner-draw entries (expenses Eddie fronted)
       // Use due_date for both (accrual accounting) — recognize expense when due, not when paid

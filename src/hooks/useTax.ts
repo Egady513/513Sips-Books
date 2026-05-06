@@ -17,7 +17,7 @@ export function useScheduleC(year: number) {
       // Get mileage deductions
       const { data: mileage } = await supabase
         .from('mileage_log')
-        .select('deduction_amount')
+        .select('miles, rate_per_mile')
         .gte('trip_date', `${year}-01-01`)
         .lte('trip_date', `${year}-12-31`)
 
@@ -39,7 +39,7 @@ export function useScheduleC(year: number) {
 
       // Add mileage to line 10
       ;(mileage || []).forEach(m => {
-        lineItems['10'] = (lineItems['10'] || 0) + Number(m.deduction_amount)
+        lineItems['10'] = (lineItems['10'] || 0) + Number(m.miles) * Number(m.rate_per_mile)
       })
 
       // Add paid bills (excluding owner draws)
@@ -81,7 +81,7 @@ export function useTaxEstimate(year: number) {
 
       const { data: mileage } = await supabase
         .from('mileage_log')
-        .select('deduction_amount')
+        .select('miles, rate_per_mile')
         .gte('trip_date', `${year}-01-01`)
         .lte('trip_date', `${year}-12-31`)
 
@@ -94,7 +94,7 @@ export function useTaxEstimate(year: number) {
 
       const totalExpenses =
         (expenses || []).reduce((s, e) => s + Number(e.amount), 0) +
-        (mileage || []).reduce((s, m) => s + Number(m.deduction_amount), 0) +
+        (mileage || []).reduce((s, m) => s + Number(m.miles) * Number(m.rate_per_mile), 0) +
         (paidBills || [])
           .filter(b => b.paid_at && new Date(b.paid_at).getFullYear() === year)
           .reduce((s, b) => s + Number(b.amount), 0)

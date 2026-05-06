@@ -1,6 +1,21 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '../lib/supabase'
 
+export function useAllLeadAlcoholEstimates() {
+  return useQuery({
+    queryKey: ['alcohol-estimates', 'all-leads'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('alcohol_estimates')
+        .select('*')
+        .not('lead_id', 'is', null)
+        .order('created_at', { ascending: false })
+      if (error) throw error
+      return data || []
+    },
+  })
+}
+
 export function useAlcoholEstimatesByLead(leadId: string | null | undefined) {
   return useQuery({
     queryKey: ['alcohol-estimates', 'lead', leadId],

@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useLeads, useCreateLead, useUpdateLead, useDeleteLead } from '../hooks/useLeads'
 import { useRecentQuotes, useLinkQuoteToLead, useUpdateQuote, useCreateQuote, useDeleteQuote } from '../hooks/useQuotes'
-import { useAlcoholEstimatesByLead } from '../hooks/useAlcoholEstimates'
+import { useAllLeadAlcoholEstimates } from '../hooks/useAlcoholEstimates'
 import { useCreateEvent, useLinkedEvents } from '../hooks/useEvents'
 import { useCreateAREntry } from '../hooks/useInvoices'
 import type { Quote } from '../hooks/useQuotes'
@@ -119,6 +119,7 @@ export default function LeadsPage() {
   const createQuote = useCreateQuote()
   const deleteQuote = useDeleteQuote()
   const { data: linkedEvents = [] } = useLinkedEvents()
+  const { data: allLeadEstimates = [] } = useAllLeadAlcoholEstimates()
 
   const allLeads = useLeads().data || []
   const stats = {
@@ -884,7 +885,7 @@ ${bodyHTML}
             )
           }).map(lead => {
             const linkedQuote = recentQuotes.find(q => q.lead_id === lead.id)
-            const { data: estimate } = useAlcoholEstimatesByLead(lead.id)
+            const estimate = allLeadEstimates.find(e => e.lead_id === lead.id) || null
             const isExpanded = expandedCards.has(lead.id)
             return (
               <Card key={lead.id} className="hover:border-gold/30 transition-colors">

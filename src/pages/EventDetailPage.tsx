@@ -324,9 +324,9 @@ export default function EventDetailPage() {
           </Card>
 
           {/* Alcohol Estimate */}
-          {estimate && (
-            <Card>
-              <h3 className="text-xs text-cream/40 uppercase tracking-wider mb-3">🍾 Alcohol Estimate</h3>
+          <Card>
+            <h3 className="text-xs text-cream/40 uppercase tracking-wider mb-3">🍾 Alcohol Estimate</h3>
+            {estimate ? (
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
                   <span className="text-cream/50">Total Bottles</span>
@@ -340,17 +340,29 @@ export default function EventDetailPage() {
                 ))}
                 <div className="border-t border-gold-dim pt-2 mt-2">
                   <a
-                    href="https://www.513sips.com/tools/alcohol-estimator.html"
+                    href={`https://www.513sips.com/tools/alcohol-estimator.html?event_id=${id}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-xs text-gold hover:text-gold/80 transition-colors"
                   >
-                    Open estimator →
+                    Re-run estimator →
                   </a>
                 </div>
               </div>
-            </Card>
-          )}
+            ) : (
+              <div className="text-center py-3">
+                <p className="text-xs text-cream/40 mb-3">No estimate yet for this event.</p>
+                <a
+                  href={`https://www.513sips.com/tools/alcohol-estimator.html?event_id=${id}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-block px-3 py-1.5 rounded-lg text-xs font-medium bg-gold/10 text-gold border border-gold/30 hover:bg-gold/20 transition-colors"
+                >
+                  Run Alcohol Estimator →
+                </a>
+              </div>
+            )}
+          </Card>
 
           {/* Contracts */}
           <Card>
