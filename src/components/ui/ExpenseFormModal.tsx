@@ -115,6 +115,7 @@ export default function ExpenseFormModal({ open, onClose, eventId, editExpense, 
             category: payload.category,
             due_date: apDueDate || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
             status: 'pending',
+            is_owner_draw: true,
           })
           toast.success(`✓ Expense logged. Created AP bill for ${formatCurrency(payload.amount)} (reduces profit + tracked as amount owed to you)`)
         } else {
