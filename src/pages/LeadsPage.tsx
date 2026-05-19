@@ -99,6 +99,10 @@ export default function LeadsPage() {
   const [showVersionHistory, setShowVersionHistory] = useState(false)
   const [versionHistoryQuote, setVersionHistoryQuote] = useState<Quote | null>(null)
 
+  // Inline valid_until editing
+  const [editingValidUntil, setEditingValidUntil] = useState<string | null>(null)
+  const [validUntilValue, setValidUntilValue] = useState('')
+
   // Multi-event: Add Event modal
   const [showAddEvent, setShowAddEvent] = useState(false)
   const [addEventLead, setAddEventLead] = useState<Lead | null>(null)
@@ -1004,18 +1008,42 @@ ${bodyHTML}
                                     ].filter(Boolean).join(' · ')}
                                   </div>
                                 )}
-                                {linkedQuote.valid_until && (
-                                  <div className={`flex items-center gap-1 text-xs mt-1 ${
-                                    isExpired ? 'text-danger' : expiresSoon ? 'text-warning' : 'text-cream/40'
-                                  }`}>
-                                    {isExpired
-                                      ? <><AlertCircle size={10} /> Expired {formatDate(linkedQuote.valid_until)}</>
-                                      : expiresSoon
-                                      ? <><Clock size={10} /> Expires {formatDate(linkedQuote.valid_until)} — soon!</>
-                                      : <><Clock size={10} /> Valid until {formatDate(linkedQuote.valid_until)}</>
-                                    }
-                                  </div>
-                                )}
+                                <div className="flex items-center gap-1 text-xs mt-1">
+                                  {editingValidUntil === linkedQuote.id ? (
+                                    <>
+                                      <input
+                                        type="date"
+                                        value={validUntilValue}
+                                        onChange={e => setValidUntilValue(e.target.value)}
+                                        className="bg-navy-dark border border-gold/30 rounded px-1.5 py-0.5 text-cream text-xs focus:outline-none focus:border-gold/60"
+                                      />
+                                      <button
+                                        onClick={async () => {
+                                          await updateQuote.mutateAsync({ id: linkedQuote.id, valid_until: validUntilValue || undefined })
+                                          setEditingValidUntil(null)
+                                        }}
+                                        className="text-xs text-success hover:text-success/80 px-1"
+                                      >Save</button>
+                                      <button onClick={() => setEditingValidUntil(null)} className="text-xs text-cream/40 hover:text-cream/60">Cancel</button>
+                                    </>
+                                  ) : linkedQuote.valid_until ? (
+                                    <span className={`flex items-center gap-1 cursor-pointer hover:opacity-80 ${isExpired ? 'text-danger' : expiresSoon ? 'text-warning' : 'text-cream/40'}`}
+                                      onClick={() => { setEditingValidUntil(linkedQuote.id); setValidUntilValue(linkedQuote.valid_until!) }}
+                                      title="Click to edit expiry date">
+                                      {isExpired
+                                        ? <><AlertCircle size={10} /> Expired {formatDate(linkedQuote.valid_until)}</>
+                                        : expiresSoon
+                                        ? <><Clock size={10} /> Expires {formatDate(linkedQuote.valid_until)} — soon!</>
+                                        : <><Clock size={10} /> Valid until {formatDate(linkedQuote.valid_until)}</>
+                                      }
+                                    </span>
+                                  ) : (
+                                    <button
+                                      onClick={() => { setEditingValidUntil(linkedQuote.id); setValidUntilValue('') }}
+                                      className="text-cream/25 hover:text-cream/50 text-xs"
+                                    >+ Set expiry date</button>
+                                  )}
+                                </div>
                               </div>
                               <div className="flex items-center gap-1.5 shrink-0">
                                 <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${
