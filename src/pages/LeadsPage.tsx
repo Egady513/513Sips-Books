@@ -537,7 +537,7 @@ export default function LeadsPage() {
     const validUntilStr = quote.valid_until
       ? new Date(quote.valid_until + 'T12:00:00').toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
       : null
-    const dateSubtitle = `Prepared ${today}${validUntilStr ? ` · Valid until ${validUntilStr}` : ' · Valid for 30 days'}`
+    const dateSubtitle = `Prepared ${today}${validUntilStr ? ` · Valid until ${validUntilStr}` : ''}`
 
     // Shared helper: convert a breakdown object into HTML rows
     function buildBdRows(bd: Record<string, unknown> | null, promoCode?: string | null): string {
