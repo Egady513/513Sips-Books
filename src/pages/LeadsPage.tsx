@@ -581,6 +581,15 @@ export default function LeadsPage() {
 
     let bodyHTML = ''
 
+    // 14-day payment logic (shared by both single and multi-event branches)
+    const _eventDateObj = lead.event_date ? new Date(lead.event_date + 'T12:00:00') : null
+    const _daysUntilEvent = _eventDateObj ? Math.round((_eventDateObj.getTime() - Date.now()) / 86400000) : null
+    const _within14Days = _daysUntilEvent !== null && _daysUntilEvent <= 14
+    const _balanceDueDateStr = _eventDateObj
+      ? new Date(_eventDateObj.getTime() - 14 * 24 * 60 * 60 * 1000)
+          .toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+      : null
+
     if (isRichMultiEvent) {
       type EvtEntry = { name: string; total: number; guestCount?: number; hours?: number; bartenders?: number; bd: Record<string, unknown> | null }
       const events = quote.breakdown as unknown as EvtEntry[]
@@ -608,9 +617,12 @@ export default function LeadsPage() {
   <div class="section-title">Quote Summary</div>
   ${eventSections}
   <div class="totals" style="margin-top:16px">
-    <div class="trow total"><span>Total Event Investment</span><span>${fmt(quote.total)}</span></div>
-    <div class="trow"><span>Deposit Due Now (50%)</span><span>${fmt(quote.deposit)}</span></div>
-    <div class="trow"><span>Balance Due (14 days prior)</span><span>${fmt(quote.balance)}</span></div>
+    ${_within14Days ? '' : `<div class="trow total"><span>Total Event Investment</span><span>${fmt(quote.total)}</span></div>`}
+    ${_within14Days
+      ? `<div class="trow total"><span>Full Balance Due to Secure Date</span><span>${fmt(quote.total)}</span></div>`
+      : `<div class="trow"><span>Deposit Due Now (50%)</span><span>${fmt(quote.deposit)}</span></div>
+    <div class="trow"><span>Balance Due${_balanceDueDateStr ? ' by ' + _balanceDueDateStr : ' (14 days prior to event)'}</span><span>${fmt(quote.balance)}</span></div>`
+    }
   </div>
 </div>`
 
@@ -620,6 +632,19 @@ export default function LeadsPage() {
         ? new Date(lead.event_date + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
         : 'TBD'
       const numEvents = lead.number_of_events ?? 1
+
+      // 14-day payment logic
+      const eventDateObj = lead.event_date ? new Date(lead.event_date + 'T12:00:00') : null
+      const daysUntilEvent = eventDateObj ? Math.round((eventDateObj.getTime() - Date.now()) / 86400000) : null
+      const within14Days = daysUntilEvent !== null && daysUntilEvent <= 14
+      const balanceDueDateStr = eventDateObj
+        ? new Date(eventDateObj.getTime() - 14 * 24 * 60 * 60 * 1000)
+            .toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+        : null
+      const paymentRows = within14Days
+        ? `<div class="trow total"><span>Full Balance Due to Secure Date</span><span>${fmt(quote.total)}</span></div>`
+        : `<div class="trow"><span>Deposit (50% — due to secure date)</span><span>${fmt(quote.deposit)}</span></div>
+    <div class="trow"><span>Balance Due${balanceDueDateStr ? ' by ' + balanceDueDateStr : ' (14 days prior to event)'}</span><span>${fmt(quote.balance)}</span></div>`
 
       // Legacy multi-event fallback (old addon_notes-only format)
       let eventPkgBlock = ''
@@ -673,9 +698,8 @@ export default function LeadsPage() {
   ${eventPkgBlock}
   ${breakdownRows ? `<div class="breakdown">${breakdownRows}</div>` : ''}
   <div class="totals" style="${breakdownRows || eventPkgBlock ? 'margin-top:12px' : ''}">
-    <div class="trow total"><span>Total Investment</span><span>${fmt(quote.total)}</span></div>
-    <div class="trow"><span>Deposit (50% — due to secure date)</span><span>${fmt(quote.deposit)}</span></div>
-    <div class="trow"><span>Balance (due on event date)</span><span>${fmt(quote.balance)}</span></div>
+    ${within14Days ? '' : `<div class="trow total"><span>Total Investment</span><span>${fmt(quote.total)}</span></div>`}
+    ${paymentRows}
   </div>
 </div>`
     }
