@@ -468,10 +468,12 @@ export default function LeadsPage() {
 
   // Sprint 2: open calculator pre-filled for a lead
   // Opens calculator pre-filled; multi-event leads pass ?events=N to enable tabbed mode
-  function handleCreateQuote(lead: Lead) {
+  // Pass existingQuote to open in edit mode — calculator will load and PATCH on save
+  function handleCreateQuote(lead: Lead, existingQuote?: Quote) {
     const n = lead.number_of_events ?? 1
     const eventsParam = n > 1 ? `&events=${n}` : ''
-    const url = `https://www.513sips.com/tools/calculator.html?lead_id=${lead.id}&name=${encodeURIComponent(lead.name)}&guests=${lead.guest_count || ''}&date=${lead.event_date || ''}${eventsParam}`
+    const quoteParam = existingQuote ? `&quote_id=${existingQuote.id}` : ''
+    const url = `https://www.513sips.com/tools/calculator.html?lead_id=${lead.id}&name=${encodeURIComponent(lead.name)}&guests=${lead.guest_count || ''}&date=${lead.event_date || ''}${eventsParam}${quoteParam}`
     window.open(url, '_blank')
   }
 
@@ -1054,7 +1056,7 @@ ${bodyHTML}
                                 }`}>{linkedQuote.status}</span>
                                 <button onClick={() => { setVersionHistoryQuote(linkedQuote); setShowVersionHistory(true) }} className="text-cream/25 hover:text-gold transition-colors" title="View version history"><History size={11} /></button>
                                 <button onClick={() => handleDownloadQuotePDF(lead, linkedQuote)} className="text-cream/25 hover:text-gold transition-colors" title="Download PDF"><FileDown size={11} /></button>
-                                <button onClick={() => handleCreateQuote(lead)} className="text-cream/25 hover:text-gold transition-colors" title="Revise in calculator"><Pencil size={11} /></button>
+                                <button onClick={() => handleCreateQuote(lead, linkedQuote)} className="text-cream/25 hover:text-gold transition-colors" title="Revise in calculator"><Pencil size={11} /></button>
                                 <button onClick={() => handleDeleteQuote(linkedQuote.id, lead.id)} className="text-cream/25 hover:text-red-400 transition-colors" title="Delete quote"><Trash2 size={11} /></button>
                               </div>
                             </div>
