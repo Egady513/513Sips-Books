@@ -451,14 +451,103 @@ export default function LeadsPage() {
       bartenders:          quote.bartenders,
     }
 
-    const quotePayload = {
-      total, deposit, balance,
-      guestCount: quote.guest_count,
-      hours: quote.hours,
-      bartenders: quote.bartenders,
-      breakdown: quote.breakdown,
-      promoCode: quote.promo_code,
+    // Multi-event quotes need a special `events` shape so contract.html can render
+    // each event's full pricing breakdown (cocktails, ice, custom discounts, etc.).
+    // Without isMultiEvent + events, contract.html falls into the single-event
+    // renderer and shows only "Base Package: $650".
+    const bdRaw = quote.breakdown as unknown
+    const isMultiEventQuote = Array.isArray(bdRaw) && (bdRaw as unknown[]).length > 1
+
+    type LegacyEvtBd = {
+      base?: number; package?: number; glassware?: number; cocktails?: number;
+      addons?: number; addonsList?: string[];
+      customDiscount?: number; customDiscountLabel?: string;
     }
+    type LegacyEvt = {
+      name?: string; total?: number; guestCount?: number; hours?: number; bartenders?: number;
+      bd?: LegacyEvtBd | null;
+      _config?: {
+        eventName?: string; smallGroup?: boolean; packageType?: string; glassware?: string;
+        cocktailCount?: string; drinkBigIce?: boolean; iceCount?: string;
+        promoCode?: string;
+        customPromo?: { label?: string; type?: string } | null;
+        customPromoAmount?: string;
+      } | null;
+    }
+
+    function eventFromQuoteBreakdown(evt: LegacyEvt, idx: number) {
+      // New quotes (saved 2026-06+) carry the full form snapshot in _config
+      const cfg = evt?._config
+      if (cfg) {
+        return {
+          name:              cfg.eventName || evt?.name || `Event ${idx + 1}`,
+          total:             evt?.total || 0,
+          deposit:           Math.round((evt?.total || 0) * 0.5),
+          balance:           (evt?.total || 0) - Math.round((evt?.total || 0) * 0.5),
+          guestCount:        evt?.guestCount,
+          hours:             evt?.hours,
+          isSmallGroup:      !!cfg.smallGroup,
+          packageType:       cfg.packageType || 'beerwine',
+          glassware:         cfg.glassware || 'plastic',
+          cocktailCount:     parseInt(cfg.cocktailCount || '0') || 0,
+          drinkBigIce:       !!cfg.drinkBigIce,
+          iceCount:          parseInt(cfg.iceCount || '0') || 0,
+          promoCode:         cfg.promoCode || null,
+          customPromo:       cfg.customPromo || null,
+          customPromoAmount: cfg.customPromoAmount || null,
+        }
+      }
+      // Legacy quotes: derive from the line-item bd
+      const bd: LegacyEvtBd = evt?.bd || {}
+      const addonsList = Array.isArray(bd.addonsList) ? bd.addonsList : []
+      const iceLabel = addonsList.find((s: string) => typeof s === 'string' && s.startsWith('Custom Logo Ice'))
+      const iceMatch = iceLabel ? iceLabel.match(/\((\d+)\s+cubes\)/) : null
+      const guests = evt?.guestCount || 0
+      const plasticEstimate = Math.round(guests * 2.50)
+      const glasswareMode = !bd.glassware ? 'none' : (bd.glassware <= plasticEstimate + 5 ? 'plastic' : 'glass')
+      const customPromo = (bd.customDiscount && bd.customDiscount > 0)
+        ? { label: bd.customDiscountLabel || 'Custom Discount', type: 'fixed' }
+        : null
+      return {
+        name:              evt?.name || `Event ${idx + 1}`,
+        total:             evt?.total || 0,
+        deposit:           Math.round((evt?.total || 0) * 0.5),
+        balance:           (evt?.total || 0) - Math.round((evt?.total || 0) * 0.5),
+        guestCount:        evt?.guestCount,
+        hours:             evt?.hours,
+        isSmallGroup:      bd.base === 395,
+        packageType:       bd.package === 200 ? 'fullbar' : 'beerwine',
+        glassware:         glasswareMode,
+        cocktailCount:     bd.cocktails ? Math.round(bd.cocktails / 125) : 0,
+        drinkBigIce:       !!iceLabel,
+        iceCount:          iceMatch ? parseInt(iceMatch[1]) : 0,
+        promoCode:         null,
+        customPromo,
+        customPromoAmount: customPromo ? String(bd.customDiscount) : null,
+      }
+    }
+
+    const quotePayload = isMultiEventQuote
+      ? {
+          isMultiEvent: true,
+          numEvents: (bdRaw as LegacyEvt[]).length,
+          combinedTotal: total,
+          total, deposit, balance,
+          guestCount: quote.guest_count,
+          hours: quote.hours,
+          bartenders: quote.bartenders,
+          breakdown: quote.breakdown,
+          promoCode: quote.promo_code,
+          events: (bdRaw as LegacyEvt[]).map(eventFromQuoteBreakdown),
+        }
+      : {
+          total, deposit, balance,
+          guestCount: quote.guest_count,
+          hours: quote.hours,
+          bartenders: quote.bartenders,
+          breakdown: quote.breakdown,
+          promoCode: quote.promo_code,
+        }
     // Pass data via URL param — localStorage is domain-scoped so cross-origin writes don't work
     const booksData = encodeURIComponent(JSON.stringify({ contractData, quoteData: quotePayload }))
     // P2: auto-advance quote status to 'sent'
