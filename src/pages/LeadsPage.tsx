@@ -515,17 +515,38 @@ export default function LeadsPage() {
       if (!bd) return ''
       let rows = ''
       const base = typeof bd.base === 'number' ? bd.base : 650
+      // hours/bartenders are carried on the breakdown so quote lines can show the RATE, not
+      // just a total. Quotes saved before 2026-08-12 lack them — those lines degrade to a
+      // bare label rather than guessing. Rates are DERIVED from the saved amounts, never
+      // hardcoded, so a historical quote always prints the rate it was actually sold at.
+      const qHours = typeof bd.hours === 'number' ? bd.hours : null
+      const qStaff = typeof bd.bartenders === 'number' ? bd.bartenders : null
+      const qBaseHours = bd.base === 395 ? 2 : 3
+      const plural = (n: number, w: string) => `${n} ${w}${n === 1 ? '' : 's'}`
       rows += `<div class="brow"><span>${bd.base === 395 ? 'Base — Small Group (2 hrs, ≤20 guests)' : 'Base Package (3 hrs, ≤50 guests)'}</span><span>${fmt(base)}</span></div>`
       if (typeof bd.staffing === 'number' && bd.staffing > 0)
         rows += `<div class="brow"><span>Additional Bartenders</span><span>+${fmt(bd.staffing)}</span></div>`
       if (typeof bd.volume === 'number' && bd.volume > 0)
         rows += `<div class="brow"><span>High-Volume Event Adjustment</span><span>+${fmt(bd.volume)}</span></div>`
-      if (typeof bd.extraHours === 'number' && bd.extraHours > 0)
-        rows += `<div class="brow"><span>Extended Service Hours</span><span>+${fmt(bd.extraHours)}</span></div>`
+      if (typeof bd.extraHours === 'number' && bd.extraHours > 0) {
+        const extra = qHours !== null ? qHours - qBaseHours : 0
+        const rate = qStaff !== null && extra > 0 ? Math.round(bd.extraHours / (extra * qStaff)) : null
+        const detail = rate !== null && qStaff !== null
+          ? ` (+${plural(extra, 'hr')} × ${plural(qStaff, 'bartender')} @ $${rate}/hr)`
+          : ''
+        rows += `<div class="brow"><span>Extended Service Hours${detail}</span><span>+${fmt(bd.extraHours)}</span></div>`
+      }
       if (typeof bd.twoHrReduction === 'number' && bd.twoHrReduction > 0)
         rows += `<div class="brow green"><span>2-Hour Service Reduction</span><span>-${fmt(bd.twoHrReduction)}</span></div>`
-      if (typeof bd.package === 'number' && bd.package > 0)
-        rows += `<div class="brow"><span>Full Bar Upgrade</span><span>+${fmt(bd.package)}</span></div>`
+      if (typeof bd.package === 'number' && bd.package > 0) {
+        const rate = qHours !== null && qStaff !== null && qHours > 0 && qStaff > 0
+          ? Math.round(bd.package / (qHours * qStaff))
+          : null
+        const detail = rate !== null && qHours !== null && qStaff !== null
+          ? ` ($${rate}/hr × ${plural(qHours, 'hr')} × ${plural(qStaff, 'bartender')})`
+          : ''
+        rows += `<div class="brow"><span>Full Bar Service${detail}</span><span>+${fmt(bd.package)}</span></div>`
+      }
       if (typeof bd.glassware === 'number' && bd.glassware > 0)
         rows += `<div class="brow"><span>Premium Glassware</span><span>+${fmt(bd.glassware)}</span></div>`
       if (typeof bd.travel === 'number' && bd.travel > 0)
