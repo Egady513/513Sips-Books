@@ -515,10 +515,12 @@ export default function LeadsPage() {
       if (!bd) return ''
       let rows = ''
       const base = typeof bd.base === 'number' ? bd.base : 650
-      // hours/bartenders are carried on the breakdown so quote lines can show the RATE, not
-      // just a total. Quotes saved before 2026-08-12 lack them — those lines degrade to a
-      // bare label rather than guessing. Rates are DERIVED from the saved amounts, never
-      // hardcoded, so a historical quote always prints the rate it was actually sold at.
+      // hours/bartenders are carried on the breakdown so quote lines can show WHAT was
+      // bought — "4 hrs × 1 bartender". Deliberately NOT the rate: printing "$15/hr"
+      // invites the client to do arithmetic against the line. Same reasoning as the
+      // glassware line, where we stopped printing the unit count (Decision-Log 2026-08-07).
+      // Quotes saved before 2026-08-12 lack these fields — those lines degrade to a bare
+      // label rather than guessing.
       const qHours = typeof bd.hours === 'number' ? bd.hours : null
       const qStaff = typeof bd.bartenders === 'number' ? bd.bartenders : null
       const qBaseHours = bd.base === 395 ? 2 : 3
@@ -530,20 +532,16 @@ export default function LeadsPage() {
         rows += `<div class="brow"><span>High-Volume Event Adjustment</span><span>+${fmt(bd.volume)}</span></div>`
       if (typeof bd.extraHours === 'number' && bd.extraHours > 0) {
         const extra = qHours !== null ? qHours - qBaseHours : 0
-        const rate = qStaff !== null && extra > 0 ? Math.round(bd.extraHours / (extra * qStaff)) : null
-        const detail = rate !== null && qStaff !== null
-          ? ` (+${plural(extra, 'hr')} × ${plural(qStaff, 'bartender')} @ $${rate}/hr)`
+        const detail = qStaff !== null && extra > 0
+          ? ` (+${plural(extra, 'hr')} × ${plural(qStaff, 'bartender')})`
           : ''
         rows += `<div class="brow"><span>Extended Service Hours${detail}</span><span>+${fmt(bd.extraHours)}</span></div>`
       }
       if (typeof bd.twoHrReduction === 'number' && bd.twoHrReduction > 0)
         rows += `<div class="brow green"><span>2-Hour Service Reduction</span><span>-${fmt(bd.twoHrReduction)}</span></div>`
       if (typeof bd.package === 'number' && bd.package > 0) {
-        const rate = qHours !== null && qStaff !== null && qHours > 0 && qStaff > 0
-          ? Math.round(bd.package / (qHours * qStaff))
-          : null
-        const detail = rate !== null && qHours !== null && qStaff !== null
-          ? ` ($${rate}/hr × ${plural(qHours, 'hr')} × ${plural(qStaff, 'bartender')})`
+        const detail = qHours !== null && qStaff !== null && qHours > 0
+          ? ` (${plural(qHours, 'hr')} × ${plural(qStaff, 'bartender')})`
           : ''
         rows += `<div class="brow"><span>Full Bar Service${detail}</span><span>+${fmt(bd.package)}</span></div>`
       }
