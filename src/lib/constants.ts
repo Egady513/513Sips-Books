@@ -51,6 +51,15 @@ export const SCHEDULE_C_LINES = {
   '27a': 'Other expenses',
 } as const
 
+// Recurring expense frequencies
+export const RECURRING_FREQUENCIES = [
+  { value: 'monthly', label: 'Monthly' },
+  { value: 'quarterly', label: 'Quarterly' },
+  { value: 'annual', label: 'Annual' },
+] as const
+
+export type RecurringFrequency = typeof RECURRING_FREQUENCIES[number]['value']
+
 // Payment methods
 export const PAYMENT_METHODS = [
   { value: 'check', label: 'Check' },

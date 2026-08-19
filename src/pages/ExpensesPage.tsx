@@ -1,15 +1,17 @@
 import { useState, useRef } from 'react'
 import { useExpenses, useDeleteExpense, useUploadReceipt, useMileage, useDeleteMileage } from '../hooks/useExpenses'
+import { useRecurringTemplates, useDeleteRecurringTemplate, useLogRecurringExpense } from '../hooks/useRecurringExpenses'
 import { useEvents } from '../hooks/useEvents'
 import { Card, StatCard } from '../components/ui/Card'
 import Button from '../components/ui/Button'
 import ExpenseFormModal from '../components/ui/ExpenseFormModal'
 import MileageFormModal from '../components/ui/MileageFormModal'
+import RecurringExpenseModal from '../components/ui/RecurringExpenseModal'
 import FilterTabs from '../components/ui/FilterTabs'
-import { formatCurrency, formatDate, getCurrentYear } from '../utils/formatters'
+import { formatCurrency, formatDate, daysUntil, getCurrentYear } from '../utils/formatters'
 import { EXPENSE_CATEGORIES } from '../lib/constants'
-import { Plus, Car, Trash2, Paperclip, Edit2 } from 'lucide-react'
-import type { Expense } from '../lib/types'
+import { Plus, Car, Trash2, Paperclip, Edit2, Repeat, CheckCircle2 } from 'lucide-react'
+import type { Expense, RecurringExpenseTemplate } from '../lib/types'
 
 export default function ExpensesPage() {
   const [year] = useState(getCurrentYear())
@@ -18,14 +20,21 @@ export default function ExpensesPage() {
   const [showExpenseForm, setShowExpenseForm] = useState(false)
   const [editExpense, setEditExpense] = useState<Expense | null>(null)
   const [showMileageForm, setShowMileageForm] = useState(false)
+  const [showRecurringForm, setShowRecurringForm] = useState(false)
+  const [editTemplate, setEditTemplate] = useState<RecurringExpenseTemplate | null>(null)
   const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({})
 
   const { data: expenses, isLoading: loadingExpenses } = useExpenses(year)
   const { data: mileage, isLoading: loadingMileage } = useMileage(year)
+  const { data: recurringTemplates } = useRecurringTemplates()
   const { data: events } = useEvents()
   const deleteExpense = useDeleteExpense()
   const uploadReceipt = useUploadReceipt()
   const deleteMileage = useDeleteMileage()
+  const deleteTemplate = useDeleteRecurringTemplate()
+  const logRecurring = useLogRecurringExpense()
+
+  const activeTemplates = (recurringTemplates || []).filter(t => t.is_active)
 
   const totalExpenses = (expenses || []).reduce((s, e) => s + Number(e.amount), 0)
   const totalMiles = (mileage || []).reduce((s, m) => s + Number(m.miles), 0)
@@ -53,11 +62,67 @@ export default function ExpensesPage() {
           <Button variant="secondary" onClick={() => setShowMileageForm(true)}>
             <Car size={16} /> Log Mileage
           </Button>
+          <Button variant="secondary" onClick={() => { setEditTemplate(null); setShowRecurringForm(true) }}>
+            <Repeat size={16} /> New Recurring
+          </Button>
           <Button onClick={() => setShowExpenseForm(true)}>
             <Plus size={16} /> New Expense
           </Button>
         </div>
       </div>
+
+      {tab === 'expenses' && !!activeTemplates.length && (
+        <Card className="space-y-3">
+          <div className="flex items-center gap-2">
+            <Repeat size={15} className="text-gold" />
+            <h2 className="font-semibold text-cream">Recurring</h2>
+            <span className="text-xs text-cream/40">{activeTemplates.length} active</span>
+          </div>
+          <div className="space-y-2">
+            {activeTemplates.map(t => {
+              const due = daysUntil(t.next_due_date)
+              return (
+                <div key={t.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-3 bg-navy-lighter rounded-lg border border-gold-dim">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="font-medium text-cream text-sm">{t.description}</span>
+                      <span className="text-xs px-2 py-0.5 bg-white/5 text-cream/50 rounded capitalize">{t.frequency}</span>
+                      {t.occurrences_remaining != null && (
+                        <span className="text-xs px-2 py-0.5 bg-gold/10 text-gold/70 rounded">{t.occurrences_remaining} left</span>
+                      )}
+                    </div>
+                    <div className="text-xs text-cream/50 mt-0.5">
+                      Next due {formatDate(t.next_due_date)}
+                      {due <= 7 && due >= 0 && <span className="text-warning"> • due in {due}d</span>}
+                      {due < 0 && <span className="text-danger"> • {Math.abs(due)}d overdue</span>}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="font-semibold text-cream text-sm">{formatCurrency(t.amount)}</span>
+                    <Button size="sm" onClick={() => logRecurring.mutate(t)} disabled={logRecurring.isPending}>
+                      <CheckCircle2 size={13} /> Log now
+                    </Button>
+                    <button
+                      onClick={() => { setEditTemplate(t); setShowRecurringForm(true) }}
+                      className="text-cream/30 hover:text-gold transition-colors p-1.5 rounded"
+                      title="Edit template"
+                    >
+                      <Edit2 size={14} />
+                    </button>
+                    <button
+                      onClick={() => { if (confirm('Delete this recurring template? Past logged expenses stay untouched.')) deleteTemplate.mutate(t.id) }}
+                      className="text-cream/30 hover:text-red-400 transition-colors p-1.5 rounded"
+                      title="Delete template"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </Card>
+      )}
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard label="Total Expenses" value={formatCurrency(totalExpenses)} color="text-danger" />
@@ -237,6 +302,12 @@ export default function ExpensesPage() {
         onClose={() => setShowMileageForm(false)}
         events={events}
         year={year}
+      />
+
+      <RecurringExpenseModal
+        open={showRecurringForm}
+        onClose={() => { setShowRecurringForm(false); setEditTemplate(null) }}
+        editTemplate={editTemplate}
       />
     </div>
   )

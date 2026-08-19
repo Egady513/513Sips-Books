@@ -163,3 +163,30 @@ ALTER TABLE events ADD COLUMN IF NOT EXISTS lead_id UUID REFERENCES leads(id) ON
 
 -- Index for fast lookup of all events belonging to a lead
 CREATE INDEX IF NOT EXISTS events_lead_id_idx ON events(lead_id);
+
+-- ============================================
+-- 10. RECURRING EXPENSE TEMPLATES
+-- ============================================
+-- Templates for recurring costs (insurance, subscriptions, etc).
+-- "Log now" on a template creates a real row in `expenses` and advances next_due_date.
+
+CREATE TABLE IF NOT EXISTS recurring_expense_templates (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  description TEXT NOT NULL,
+  category TEXT NOT NULL,
+  amount NUMERIC NOT NULL,
+  frequency TEXT NOT NULL CHECK (frequency IN ('monthly', 'quarterly', 'annual')),
+  vendor TEXT,
+  is_tax_deductible BOOLEAN DEFAULT true,
+  next_due_date DATE NOT NULL,
+  is_active BOOLEAN DEFAULT true,
+  occurrences_remaining INTEGER,
+  notes TEXT,
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_recurring_templates_active ON recurring_expense_templates(is_active);
+CREATE INDEX IF NOT EXISTS idx_recurring_templates_due ON recurring_expense_templates(next_due_date);
+
+ALTER TABLE recurring_expense_templates ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Allow all" ON recurring_expense_templates FOR ALL USING (true) WITH CHECK (true);

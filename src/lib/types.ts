@@ -109,6 +109,21 @@ export interface Expense {
   events?: Event
 }
 
+export interface RecurringExpenseTemplate {
+  id: string
+  description: string
+  category: string
+  amount: number
+  frequency: 'monthly' | 'quarterly' | 'annual'
+  vendor?: string
+  is_tax_deductible: boolean
+  next_due_date: string
+  is_active: boolean
+  occurrences_remaining?: number
+  notes?: string
+  created_at: string
+}
+
 export interface MileageEntry {
   id: string
   event_id?: string
