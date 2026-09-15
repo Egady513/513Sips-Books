@@ -543,6 +543,13 @@ export default function LeadsPage() {
           : ''
         rows += `<div class="brow"><span>Extended Service Hours${detail}</span><span>+${fmt(bd.extraHours)}</span></div>`
       }
+      if (typeof bd.longEventPremium === 'number' && bd.longEventPremium > 0) {
+        const range = qHours === 5 ? 'hour 5' : qHours !== null && qHours > 5 ? `hours 5–${qHours}` : ''
+        const detail = qStaff !== null && range
+          ? ` (${range} × ${plural(qStaff, 'bartender')})`
+          : ''
+        rows += `<div class="brow"><span>Long-Event Premium${detail}</span><span>+${fmt(bd.longEventPremium)}</span></div>`
+      }
       if (typeof bd.twoHrReduction === 'number' && bd.twoHrReduction > 0)
         rows += `<div class="brow green"><span>2-Hour Service Reduction</span><span>-${fmt(bd.twoHrReduction)}</span></div>`
       if (typeof bd.package === 'number' && bd.package > 0) {
