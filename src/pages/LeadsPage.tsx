@@ -525,6 +525,12 @@ export default function LeadsPage() {
       const qStaff = typeof bd.bartenders === 'number' ? bd.bartenders : null
       const qBaseHours = bd.base === 395 ? 2 : 3
       const plural = (n: number, w: string) => `${n} ${w}${n === 1 ? '' : 's'}`
+      const escapeHtml = (value: string) => value
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#039;')
       rows += `<div class="brow"><span>${bd.base === 395 ? 'Base — Small Group (2 hrs, ≤20 guests)' : 'Base Package (3 hrs, ≤50 guests)'}</span><span>${fmt(base)}</span></div>`
       if (typeof bd.staffing === 'number' && bd.staffing > 0)
         rows += `<div class="brow"><span>Additional Bartenders</span><span>+${fmt(bd.staffing)}</span></div>`
@@ -557,8 +563,25 @@ export default function LeadsPage() {
           : ''
         rows += `<div class="brow gold"><span>Premium Add-Ons${detail}</span><span>+${fmt(bd.addons)}</span></div>`
       }
-      if (typeof bd.customItemsTotal === 'number' && bd.customItemsTotal > 0)
+      const customItems = Array.isArray(bd.customItems)
+        ? (bd.customItems as unknown[]).flatMap((item) => {
+            if (!item || typeof item !== 'object') return []
+            const candidate = item as Record<string, unknown>
+            const price = typeof candidate.price === 'number' ? candidate.price : 0
+            if (price <= 0) return []
+            const name = typeof candidate.name === 'string' && candidate.name.trim()
+              ? candidate.name.trim()
+              : 'Custom Add-On'
+            return [{ name, price }]
+          })
+        : []
+      if (customItems.length > 0) {
+        customItems.forEach((item) => {
+          rows += `<div class="brow gold"><span>${escapeHtml(item.name)}</span><span>+${fmt(item.price)}</span></div>`
+        })
+      } else if (typeof bd.customItemsTotal === 'number' && bd.customItemsTotal > 0) {
         rows += `<div class="brow gold"><span>Custom Add-Ons</span><span>+${fmt(bd.customItemsTotal)}</span></div>`
+      }
       if (typeof bd.discount === 'number' && bd.discount > 0)
         rows += `<div class="brow green"><span>${promoCode ?? 'Promo Discount'}</span><span>-${fmt(bd.discount)}</span></div>`
       if (typeof bd.customDiscount === 'number' && bd.customDiscount > 0)
