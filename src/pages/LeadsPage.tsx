@@ -505,13 +505,19 @@ export default function LeadsPage() {
   function handleDownloadQuotePDF(lead: Lead, quote: Quote) {
     const today = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
     const fmt = (n: number) => '$' + n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+    const escapeHtml = (value: string) => value
+      .replaceAll('&', '&amp;')
+      .replaceAll('<', '&lt;')
+      .replaceAll('>', '&gt;')
+      .replaceAll('"', '&quot;')
+      .replaceAll("'", '&#039;')
     const validUntilStr = quote.valid_until
       ? new Date(quote.valid_until + 'T12:00:00').toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
       : null
     const dateSubtitle = `Prepared ${today}${validUntilStr ? ` · Valid until ${validUntilStr}` : ''}`
 
     // Shared helper: convert a breakdown object into HTML rows
-    function buildBdRows(bd: Record<string, unknown> | null, promoCode?: string | null): string {
+    function buildBdRows(bd: Record<string, unknown> | null): string {
       if (!bd) return ''
       let rows = ''
       const base = typeof bd.base === 'number' ? bd.base : 650
@@ -526,12 +532,6 @@ export default function LeadsPage() {
       const qFullBarStaff = typeof bd.fullBarStaffCount === 'number' ? bd.fullBarStaffCount : qStaff
       const qBaseHours = bd.base === 395 ? 2 : 3
       const plural = (n: number, w: string) => `${n} ${w}${n === 1 ? '' : 's'}`
-      const escapeHtml = (value: string) => value
-        .replaceAll('&', '&amp;')
-        .replaceAll('<', '&lt;')
-        .replaceAll('>', '&gt;')
-        .replaceAll('"', '&quot;')
-        .replaceAll("'", '&#039;')
       rows += `<div class="brow"><span>${bd.base === 395 ? 'Base — Small Group (2 hrs, ≤20 guests)' : 'Base Package (3 hrs, ≤50 guests)'}</span><span>${fmt(base)}</span></div>`
       if (typeof bd.staffing === 'number' && bd.staffing > 0)
         rows += `<div class="brow"><span>Additional Bartenders</span><span>+${fmt(bd.staffing)}</span></div>`
@@ -539,19 +539,17 @@ export default function LeadsPage() {
         rows += `<div class="brow"><span>High-Volume Event Adjustment</span><span>+${fmt(bd.volume)}</span></div>`
       if (typeof bd.multiBarOperations === 'number' && bd.multiBarOperations > 0)
         rows += `<div class="brow"><span>Large Event &amp; Multi-Bar Operations</span><span>+${fmt(bd.multiBarOperations)}</span></div>`
-      if (typeof bd.extraHours === 'number' && bd.extraHours > 0) {
+      const extraHoursCharge = typeof bd.extraHours === 'number' && bd.extraHours > 0 ? bd.extraHours : 0
+      const longEventCharge = typeof bd.longEventPremium === 'number' && bd.longEventPremium > 0 ? bd.longEventPremium : 0
+      if (extraHoursCharge + longEventCharge > 0) {
         const extra = qHours !== null ? qHours - qBaseHours : 0
         const detail = qStaff !== null && extra > 0
           ? ` (+${plural(extra, 'hr')} × ${plural(qStaff, 'bartender')})`
           : ''
-        rows += `<div class="brow"><span>Extended Service Hours${detail}</span><span>+${fmt(bd.extraHours)}</span></div>`
-      }
-      if (typeof bd.longEventPremium === 'number' && bd.longEventPremium > 0) {
-        const range = qHours === 5 ? 'hour 5' : qHours !== null && qHours > 5 ? `hours 5–${qHours}` : ''
-        const detail = qStaff !== null && range
-          ? ` (${range} × ${plural(qStaff, 'bartender')})`
-          : ''
-        rows += `<div class="brow"><span>Long-Event Premium${detail}</span><span>+${fmt(bd.longEventPremium)}</span></div>`
+        const label = longEventCharge > 0
+          ? 'Extended Service Hours, including long-event premium'
+          : 'Extended Service Hours'
+        rows += `<div class="brow"><span>${label}${detail}</span><span>+${fmt(extraHoursCharge + longEventCharge)}</span></div>`
       }
       if (typeof bd.twoHrReduction === 'number' && bd.twoHrReduction > 0)
         rows += `<div class="brow green"><span>2-Hour Service Reduction</span><span>-${fmt(bd.twoHrReduction)}</span></div>`
@@ -561,36 +559,34 @@ export default function LeadsPage() {
           : ''
         rows += `<div class="brow"><span>Full Bar Service${detail}</span><span>+${fmt(bd.package)}</span></div>`
       }
-      if (typeof bd.glassware === 'number' && bd.glassware > 0)
-        rows += `<div class="brow"><span>Premium Glassware</span><span>+${fmt(bd.glassware)}</span></div>`
-      if (bd.glasswareAtCost === true)
-        rows += '<div class="brow"><span>Plastic Serviceware</span><span>Billed separately at cost</span></div>'
-      if (typeof bd.travel === 'number' && bd.travel > 0)
-        rows += `<div class="brow"><span>Travel Fee</span><span>+${fmt(bd.travel)}</span></div>`
       if (typeof bd.cocktails === 'number' && bd.cocktails > 0) {
-        const detail = typeof bd.signatureCocktailNames === 'string' && bd.signatureCocktailNames.trim()
-          ? ` (${escapeHtml(bd.signatureCocktailNames.trim())})`
-          : ''
-        rows += `<div class="brow gold"><span>Signature Cocktails${detail}</span><span>+${fmt(bd.cocktails)}</span></div>`
+        const count = typeof bd.signatureCocktailCount === 'number'
+          ? bd.signatureCocktailCount
+          : Math.round(bd.cocktails / 125)
+        rows += `<div class="brow accent"><span>Signature Cocktails (${count})</span><span>+${fmt(bd.cocktails)}</span></div>`
       }
       if (typeof bd.houseCocktails === 'number' && bd.houseCocktails > 0) {
-        const detail = typeof bd.houseCocktailNames === 'string' && bd.houseCocktailNames.trim()
-          ? ` (${escapeHtml(bd.houseCocktailNames.trim())})`
-          : ''
-        rows += `<div class="brow gold"><span>House Featured Cocktails${detail}</span><span>+${fmt(bd.houseCocktails)}</span></div>`
+        const count = typeof bd.houseCocktailCount === 'number'
+          ? bd.houseCocktailCount
+          : Math.round(bd.houseCocktails / 50)
+        rows += `<div class="brow accent"><span>House Featured Cocktails (${count})</span><span>+${fmt(bd.houseCocktails)}</span></div>`
       }
       if (typeof bd.cocktailProgram === 'number' && bd.cocktailProgram > 0) {
         const label = typeof bd.featuredCocktailCount === 'number' && bd.featuredCocktailCount >= 8
           ? 'Extensive Featured Cocktail Program'
           : 'Expanded Featured Cocktail Program'
-        rows += `<div class="brow gold"><span>${label}</span><span>+${fmt(bd.cocktailProgram)}</span></div>`
+        rows += `<div class="brow accent"><span>${label}</span><span>+${fmt(bd.cocktailProgram)}</span></div>`
       }
       if (typeof bd.addons === 'number' && bd.addons > 0) {
-        const detail = Array.isArray(bd.addonsList) && (bd.addonsList as string[]).length > 0
-          ? ` (${(bd.addonsList as string[]).join(', ')})`
-          : ''
-        rows += `<div class="brow gold"><span>Premium Add-Ons${detail}</span><span>+${fmt(bd.addons)}</span></div>`
+        const addOnLabels = Array.isArray(bd.addonsList) ? bd.addonsList as string[] : []
+        const label = addOnLabels.length === 1 ? escapeHtml(addOnLabels[0]) : 'Premium Add-Ons'
+        const detail = addOnLabels.length > 1 ? ` (${addOnLabels.map(escapeHtml).join(', ')})` : ''
+        rows += `<div class="brow accent"><span>${label}${detail}</span><span>+${fmt(bd.addons)}</span></div>`
       }
+      if (typeof bd.glassware === 'number' && bd.glassware > 0)
+        rows += `<div class="brow accent"><span>Premium Glassware</span><span>+${fmt(bd.glassware)}</span></div>`
+      if (typeof bd.travel === 'number' && bd.travel > 0)
+        rows += `<div class="brow"><span>Travel Fee</span><span>+${fmt(bd.travel)}</span></div>`
       const customItems = Array.isArray(bd.customItems)
         ? (bd.customItems as unknown[]).flatMap((item) => {
             if (!item || typeof item !== 'object') return []
@@ -605,16 +601,35 @@ export default function LeadsPage() {
         : []
       if (customItems.length > 0) {
         customItems.forEach((item) => {
-          rows += `<div class="brow gold"><span>${escapeHtml(item.name)}</span><span>+${fmt(item.price)}</span></div>`
+          rows += `<div class="brow accent"><span>${escapeHtml(item.name)}</span><span>+${fmt(item.price)}</span></div>`
         })
       } else if (typeof bd.customItemsTotal === 'number' && bd.customItemsTotal > 0) {
-        rows += `<div class="brow gold"><span>Custom Add-Ons</span><span>+${fmt(bd.customItemsTotal)}</span></div>`
+        rows += `<div class="brow accent"><span>Custom Add-Ons</span><span>+${fmt(bd.customItemsTotal)}</span></div>`
       }
-      if (typeof bd.discount === 'number' && bd.discount > 0)
-        rows += `<div class="brow green"><span>${promoCode ?? 'Promo Discount'}</span><span>-${fmt(bd.discount)}</span></div>`
-      if (typeof bd.customDiscount === 'number' && bd.customDiscount > 0)
-        rows += `<div class="brow green"><span>${(bd.customDiscountLabel as string) || 'Custom Discount'}</span><span>-${fmt(bd.customDiscount)}</span></div>`
       return rows
+    }
+
+    function buildCreditBox(bd: Record<string, unknown> | null, promoCode?: string | null): string {
+      if (!bd) return ''
+      const credits: Array<{ label: string; amount: number }> = []
+      if (typeof bd.discount === 'number' && bd.discount > 0) {
+        credits.push({ label: promoCode ?? 'Promo Discount', amount: bd.discount })
+      }
+      if (typeof bd.customDiscount === 'number' && bd.customDiscount > 0) {
+        credits.push({
+          label: typeof bd.customDiscountLabel === 'string' && bd.customDiscountLabel.trim()
+            ? bd.customDiscountLabel.trim()
+            : 'Custom Discount',
+          amount: bd.customDiscount,
+        })
+      }
+      if (credits.length === 0) return ''
+      const rows = credits.map(credit => `
+        <div class="credit-row">
+          <span><strong>${escapeHtml(credit.label)}</strong><small>Applied to this estimate</small></span>
+          <span>-${fmt(credit.amount)}</span>
+        </div>`).join('')
+      return `<div class="credit-box">${rows}</div>`
     }
 
     // Multi-event with per-event breakdowns (saved after 2026-05-04)
@@ -635,7 +650,8 @@ export default function LeadsPage() {
       type EvtEntry = { name: string; total: number; guestCount?: number; hours?: number; bartenders?: number; bd: Record<string, unknown> | null }
       const events = quote.breakdown as unknown as EvtEntry[]
       const eventSections = events.map(evt => {
-        const rows = buildBdRows(evt.bd, null)
+        const rows = buildBdRows(evt.bd)
+        const creditBox = buildCreditBox(evt.bd)
         const stats = [
           evt.guestCount ? `${evt.guestCount} Guests` : null,
           evt.hours ? `${evt.hours} Hrs` : null,
@@ -650,6 +666,7 @@ export default function LeadsPage() {
           <div class="evt-block-total-label">ESTIMATED TOTAL</div>
           <div class="evt-block-total-amt">${fmt(evt.total)}</div>
           ${rows ? `<div class="breakdown" style="border-radius:0;border-left:none;border-right:none;border-bottom:none">${rows}</div>` : ''}
+          ${creditBox}
         </div>`
       }).join('')
 
@@ -703,30 +720,22 @@ export default function LeadsPage() {
         <div class="evt-pkg">
           <div class="evt-pkg-header">📋 ${numEvents}-Event Package Breakdown</div>
           ${eventRows}
-          <div class="evt-subtotal"><span>${numEvents} events included</span><span style="font-weight:700;color:#5a4a00">${fmt(quote.total)} combined</span></div>
+          <div class="evt-subtotal"><span>${numEvents} events included</span><span style="font-weight:700;color:#b87333">${fmt(quote.total)} combined</span></div>
         </div>`
       }
 
       const bd = (!Array.isArray(quote.breakdown) && quote.breakdown && typeof quote.breakdown === 'object')
         ? quote.breakdown as Record<string, unknown>
         : null
-      const breakdownRows = buildBdRows(bd, quote.promo_code)
-      const escapeContext = (value: string) => value
-        .replaceAll('&', '&amp;')
-        .replaceAll('<', '&lt;')
-        .replaceAll('>', '&gt;')
-        .replaceAll('"', '&quot;')
-        .replaceAll("'", '&#039;')
-      const optionName = bd && typeof bd.quoteOptionName === 'string' ? bd.quoteOptionName.trim() : ''
+      const breakdownRows = buildBdRows(bd)
+      const creditBox = buildCreditBox(bd, quote.promo_code)
       const clientNotes = bd && typeof bd.clientNotes === 'string'
         ? bd.clientNotes.split(/\r?\n/).map(note => note.trim()).filter(Boolean)
         : []
-      const quoteContext = optionName || clientNotes.length > 0
+      const quoteContext = clientNotes.length > 0
         ? `<div class="quote-context">
-            ${optionName ? `<div class="quote-option">${escapeContext(optionName)}</div>` : ''}
-            ${clientNotes.length > 0
-              ? `<div class="assumption-title">Planning Assumptions</div><ul>${clientNotes.map(note => `<li>${escapeContext(note)}</li>`).join('')}</ul>`
-              : ''}
+            <div class="assumption-title">Service Plan &amp; Assumptions</div>
+            <ul>${clientNotes.map(note => `<li>${escapeHtml(note)}</li>`).join('')}</ul>
           </div>`
         : ''
 
@@ -757,7 +766,8 @@ export default function LeadsPage() {
   ${quoteContext}
   ${eventPkgBlock}
   ${breakdownRows ? `<div class="breakdown">${breakdownRows}</div>` : ''}
-  <div class="totals" style="${breakdownRows || eventPkgBlock ? 'margin-top:12px' : ''}">
+  ${creditBox}
+  <div class="totals" style="${breakdownRows || eventPkgBlock || creditBox ? 'margin-top:12px' : ''}">
     ${within14Days ? '' : `<div class="trow total"><span>Total Investment</span><span>${fmt(quote.total)}</span></div>`}
     ${paymentRows}
   </div>
@@ -766,58 +776,63 @@ export default function LeadsPage() {
 
     const html = `<!DOCTYPE html>
 <html><head><meta charset="UTF-8"><title>513 Sips Quote — ${lead.name}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&amp;family=Montserrat:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
 <style>
   *{margin:0;padding:0;box-sizing:border-box}
-  body{font-family:Georgia,'Times New Roman',serif;color:#111;background:#fff;padding:24px 40px;max-width:720px;margin:0 auto}
-  .header{text-align:center;border-bottom:3px solid #D4AF37;padding-bottom:12px;margin-bottom:4px}
-  .brand{font-size:28px;color:#D4AF37;font-weight:bold;letter-spacing:3px}
-  .tagline{font-size:10px;color:#777;margin-top:3px;letter-spacing:2px;text-transform:uppercase}
-  .doc-date{text-align:center;color:#999;font-size:10px;margin-bottom:12px}
+  body{font-family:Montserrat,Arial,sans-serif;color:#2d3748;background:#fff;padding:24px 40px;max-width:720px;margin:0 auto}
+  .header{text-align:center;border-bottom:3px solid #b87333;padding-bottom:10px;margin-bottom:4px}
+  .brand{font-family:'Cormorant Garamond',Georgia,serif;font-size:32px;color:#b87333;font-weight:700;letter-spacing:3px}
+  .doc-date{text-align:center;color:#6b7280;font-size:9px;margin-bottom:12px}
   .section{margin:10px 0}
-  .section-title{font-size:10px;text-transform:uppercase;letter-spacing:2px;color:#D4AF37;border-bottom:1px solid #D4AF37;padding-bottom:4px;margin-bottom:8px}
+  .section-title{font-size:9px;text-transform:uppercase;letter-spacing:2px;color:#b87333;border-bottom:1px solid #d4915a;padding-bottom:4px;margin-bottom:8px;font-weight:600}
   .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px 32px}
   .field{display:flex;flex-direction:column}
-  .label{font-size:10px;color:#999;text-transform:uppercase;letter-spacing:1px;margin-bottom:2px}
-  .value{font-size:14px;color:#111}
-  .breakdown{border:1px solid #e8e0c0;border-radius:8px;overflow:hidden;margin-top:8px}
-  .quote-context{background:#f8f4e8;border:1px solid #e8d9aa;border-radius:8px;padding:10px 14px;margin-bottom:10px}
-  .quote-option{font-size:16px;font-weight:700;color:#0A1628;margin-bottom:5px}
-  .assumption-title{font-size:9px;text-transform:uppercase;letter-spacing:1.5px;color:#8a6a00;font-weight:700;margin:4px 0}
-  .quote-context ul{margin:0 0 0 17px;padding:0;font-size:11px;line-height:1.45;color:#444}
+  .label{font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:1px;margin-bottom:2px}
+  .value{font-family:'Cormorant Garamond',Georgia,serif;font-size:15px;font-weight:600;color:#1a1a2e}
+  .breakdown{border:1px solid #e0c2a8;border-radius:8px;overflow:hidden;margin-top:8px}
+  .quote-context{background:#f5f2eb;border:1px solid #e0c2a8;border-radius:8px;padding:10px 14px;margin-bottom:10px}
+  .assumption-title{font-size:9px;text-transform:uppercase;letter-spacing:1.5px;color:#b87333;font-weight:700;margin:0 0 4px}
+  .quote-context ul{margin:0 0 0 17px;padding:0;font-size:10px;line-height:1.45;color:#2d3748}
   .brow{display:flex;justify-content:space-between;padding:5px 14px;border-bottom:1px solid #f0e8d0;font-size:12px}
   .brow:last-child{border-bottom:none}
-  .brow.gold{color:#8a6a00}
+  .brow.accent{color:#9a5728}
   .brow.green{color:#2e7d32}
-  .evt-pkg{background:#f8f4e8;border:2px solid #D4AF37;border-radius:8px;overflow:hidden;margin-bottom:16px}
-  .evt-pkg-header{background:#D4AF37;color:#0A1628;font-size:11px;text-transform:uppercase;letter-spacing:2px;font-weight:700;padding:8px 16px}
-  .evt-row{display:flex;justify-content:space-between;align-items:center;padding:11px 16px;border-bottom:1px solid #e8d880;font-size:14px}
+  .credit-box{background:#f5f2eb;border:1px solid #b87333;border-radius:8px;margin-top:10px;overflow:hidden}
+  .credit-row{display:flex;justify-content:space-between;align-items:center;padding:9px 14px;color:#1a1a2e;font-size:12px}
+  .credit-row+ .credit-row{border-top:1px solid #e0c2a8}
+  .credit-row small{display:block;color:#6b7280;font-size:8px;text-transform:uppercase;letter-spacing:.8px;margin-top:2px}
+  .credit-row>span:last-child{font-family:'Cormorant Garamond',Georgia,serif;color:#2e7d32;font-size:18px;font-weight:700}
+  .evt-pkg{background:#f5f2eb;border:2px solid #b87333;border-radius:8px;overflow:hidden;margin-bottom:16px}
+  .evt-pkg-header{background:#b87333;color:#f5f2eb;font-size:11px;text-transform:uppercase;letter-spacing:2px;font-weight:700;padding:8px 16px}
+  .evt-row{display:flex;justify-content:space-between;align-items:center;padding:11px 16px;border-bottom:1px solid #e0c2a8;font-size:14px}
   .evt-row:last-child{border-bottom:none}
-  .evt-row .evt-name{font-weight:600;color:#0A1628}
-  .evt-row .evt-amt{font-weight:700;color:#8a6a00;font-size:15px}
-  .evt-subtotal{display:flex;justify-content:space-between;padding:10px 16px;background:#ede8c8;font-size:13px;color:#555;border-top:1px solid #d4c870}
-  .evt-block{border:2px solid #D4AF37;border-radius:8px;overflow:hidden;margin-bottom:12px}
-  .evt-block-header{background:#D4AF37;display:flex;justify-content:space-between;align-items:center;padding:8px 14px}
-  .evt-block-name{color:#0A1628;font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase}
-  .evt-block-stats{color:#3a2800;font-size:10px;font-weight:600;letter-spacing:0.5px}
-  .evt-block-total-label{text-align:center;font-size:9px;letter-spacing:2px;color:#999;text-transform:uppercase;padding:6px 16px 0}
-  .evt-block-total-amt{text-align:center;font-size:18px;color:#0A1628;font-weight:bold;padding-bottom:6px}
-  .totals{border:1px solid #e8e0c0;border-radius:8px;overflow:hidden}
+  .evt-row .evt-name{font-weight:600;color:#1a1a2e}
+  .evt-row .evt-amt{font-weight:700;color:#9a5728;font-size:15px}
+  .evt-subtotal{display:flex;justify-content:space-between;padding:10px 16px;background:#eee5dc;font-size:13px;color:#2d3748;border-top:1px solid #e0c2a8}
+  .evt-block{border:2px solid #b87333;border-radius:8px;overflow:hidden;margin-bottom:12px}
+  .evt-block-header{background:#b87333;display:flex;justify-content:space-between;align-items:center;padding:8px 14px}
+  .evt-block-name{color:#f5f2eb;font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase}
+  .evt-block-stats{color:#f5f2eb;font-size:10px;font-weight:600;letter-spacing:0.5px}
+  .evt-block-total-label{text-align:center;font-size:9px;letter-spacing:2px;color:#6b7280;text-transform:uppercase;padding:6px 16px 0}
+  .evt-block-total-amt{text-align:center;font-family:'Cormorant Garamond',Georgia,serif;font-size:20px;color:#1a1a2e;font-weight:700;padding-bottom:6px}
+  .totals{border:1px solid #e0c2a8;border-radius:8px;overflow:hidden}
   .trow{display:flex;justify-content:space-between;align-items:center;padding:7px 14px;border-bottom:1px solid #f0e8d0;font-size:12px}
   .trow:last-child{border-bottom:none}
-  .trow.total{background:#0A1628;color:#FAF8F3;font-weight:600}
-  .trow.total span:last-child{font-size:20px;color:#D4AF37}
-  .footer{text-align:center;margin-top:16px;padding-top:10px;border-top:1px solid #eee;font-size:10px;color:#aaa}
+  .trow.total{background:#1a1a2e;color:#f5f2eb;font-weight:600}
+  .trow.total span:last-child{font-family:'Cormorant Garamond',Georgia,serif;font-size:22px;color:#d4915a;font-weight:700}
+  .footer{text-align:center;margin-top:16px;padding-top:10px;border-top:1px solid #eee;font-size:9px;color:#6b7280}
   @media print{body{padding:16px 32px}}
 </style></head>
 <body>
 <div class="header">
   <div class="brand">513 SIPS</div>
-  <div class="tagline">Mobile Craft Bartending · Cincinnati, OH</div>
 </div>
 <div class="doc-date">${dateSubtitle}</div>
 ${bodyHTML}
 <div class="footer">513 Sips LLC · Cincinnati, OH · 513sips.com · instagram.com/513sips</div>
-<script>window.onload=()=>{window.print()}</script>
+<script>window.onload=async()=>{if(document.fonts?.ready)await document.fonts.ready;window.print()}</script>
 </body></html>`
 
     const win = window.open('', '_blank')
