@@ -523,6 +523,7 @@ export default function LeadsPage() {
       // label rather than guessing.
       const qHours = typeof bd.hours === 'number' ? bd.hours : null
       const qStaff = typeof bd.bartenders === 'number' ? bd.bartenders : null
+      const qFullBarStaff = typeof bd.fullBarStaffCount === 'number' ? bd.fullBarStaffCount : qStaff
       const qBaseHours = bd.base === 395 ? 2 : 3
       const plural = (n: number, w: string) => `${n} ${w}${n === 1 ? '' : 's'}`
       const escapeHtml = (value: string) => value
@@ -536,6 +537,8 @@ export default function LeadsPage() {
         rows += `<div class="brow"><span>Additional Bartenders</span><span>+${fmt(bd.staffing)}</span></div>`
       if (typeof bd.volume === 'number' && bd.volume > 0)
         rows += `<div class="brow"><span>High-Volume Event Adjustment</span><span>+${fmt(bd.volume)}</span></div>`
+      if (typeof bd.multiBarOperations === 'number' && bd.multiBarOperations > 0)
+        rows += `<div class="brow"><span>Large Event &amp; Multi-Bar Operations</span><span>+${fmt(bd.multiBarOperations)}</span></div>`
       if (typeof bd.extraHours === 'number' && bd.extraHours > 0) {
         const extra = qHours !== null ? qHours - qBaseHours : 0
         const detail = qStaff !== null && extra > 0
@@ -553,17 +556,35 @@ export default function LeadsPage() {
       if (typeof bd.twoHrReduction === 'number' && bd.twoHrReduction > 0)
         rows += `<div class="brow green"><span>2-Hour Service Reduction</span><span>-${fmt(bd.twoHrReduction)}</span></div>`
       if (typeof bd.package === 'number' && bd.package > 0) {
-        const detail = qHours !== null && qStaff !== null && qHours > 0
-          ? ` (${plural(qHours, 'hr')} × ${plural(qStaff, 'bartender')})`
+        const detail = qHours !== null && qFullBarStaff !== null && qHours > 0
+          ? ` (${plural(qHours, 'hr')} × ${plural(qFullBarStaff, 'bartender')})`
           : ''
         rows += `<div class="brow"><span>Full Bar Service${detail}</span><span>+${fmt(bd.package)}</span></div>`
       }
       if (typeof bd.glassware === 'number' && bd.glassware > 0)
         rows += `<div class="brow"><span>Premium Glassware</span><span>+${fmt(bd.glassware)}</span></div>`
+      if (bd.glasswareAtCost === true)
+        rows += '<div class="brow"><span>Plastic Serviceware</span><span>Billed separately at cost</span></div>'
       if (typeof bd.travel === 'number' && bd.travel > 0)
         rows += `<div class="brow"><span>Travel Fee</span><span>+${fmt(bd.travel)}</span></div>`
-      if (typeof bd.cocktails === 'number' && bd.cocktails > 0)
-        rows += `<div class="brow gold"><span>Signature Cocktails</span><span>+${fmt(bd.cocktails)}</span></div>`
+      if (typeof bd.cocktails === 'number' && bd.cocktails > 0) {
+        const detail = typeof bd.signatureCocktailNames === 'string' && bd.signatureCocktailNames.trim()
+          ? ` (${escapeHtml(bd.signatureCocktailNames.trim())})`
+          : ''
+        rows += `<div class="brow gold"><span>Signature Cocktails${detail}</span><span>+${fmt(bd.cocktails)}</span></div>`
+      }
+      if (typeof bd.houseCocktails === 'number' && bd.houseCocktails > 0) {
+        const detail = typeof bd.houseCocktailNames === 'string' && bd.houseCocktailNames.trim()
+          ? ` (${escapeHtml(bd.houseCocktailNames.trim())})`
+          : ''
+        rows += `<div class="brow gold"><span>House Featured Cocktails${detail}</span><span>+${fmt(bd.houseCocktails)}</span></div>`
+      }
+      if (typeof bd.cocktailProgram === 'number' && bd.cocktailProgram > 0) {
+        const label = typeof bd.featuredCocktailCount === 'number' && bd.featuredCocktailCount >= 8
+          ? 'Extensive Featured Cocktail Program'
+          : 'Expanded Featured Cocktail Program'
+        rows += `<div class="brow gold"><span>${label}</span><span>+${fmt(bd.cocktailProgram)}</span></div>`
+      }
       if (typeof bd.addons === 'number' && bd.addons > 0) {
         const detail = Array.isArray(bd.addonsList) && (bd.addonsList as string[]).length > 0
           ? ` (${(bd.addonsList as string[]).join(', ')})`
@@ -690,6 +711,24 @@ export default function LeadsPage() {
         ? quote.breakdown as Record<string, unknown>
         : null
       const breakdownRows = buildBdRows(bd, quote.promo_code)
+      const escapeContext = (value: string) => value
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#039;')
+      const optionName = bd && typeof bd.quoteOptionName === 'string' ? bd.quoteOptionName.trim() : ''
+      const clientNotes = bd && typeof bd.clientNotes === 'string'
+        ? bd.clientNotes.split(/\r?\n/).map(note => note.trim()).filter(Boolean)
+        : []
+      const quoteContext = optionName || clientNotes.length > 0
+        ? `<div class="quote-context">
+            ${optionName ? `<div class="quote-option">${escapeContext(optionName)}</div>` : ''}
+            ${clientNotes.length > 0
+              ? `<div class="assumption-title">Planning Assumptions</div><ul>${clientNotes.map(note => `<li>${escapeContext(note)}</li>`).join('')}</ul>`
+              : ''}
+          </div>`
+        : ''
 
       bodyHTML = `
 <div class="section">
@@ -715,6 +754,7 @@ export default function LeadsPage() {
 </div>
 <div class="section">
   <div class="section-title">Pricing</div>
+  ${quoteContext}
   ${eventPkgBlock}
   ${breakdownRows ? `<div class="breakdown">${breakdownRows}</div>` : ''}
   <div class="totals" style="${breakdownRows || eventPkgBlock ? 'margin-top:12px' : ''}">
@@ -740,6 +780,10 @@ export default function LeadsPage() {
   .label{font-size:10px;color:#999;text-transform:uppercase;letter-spacing:1px;margin-bottom:2px}
   .value{font-size:14px;color:#111}
   .breakdown{border:1px solid #e8e0c0;border-radius:8px;overflow:hidden;margin-top:8px}
+  .quote-context{background:#f8f4e8;border:1px solid #e8d9aa;border-radius:8px;padding:10px 14px;margin-bottom:10px}
+  .quote-option{font-size:16px;font-weight:700;color:#0A1628;margin-bottom:5px}
+  .assumption-title{font-size:9px;text-transform:uppercase;letter-spacing:1.5px;color:#8a6a00;font-weight:700;margin:4px 0}
+  .quote-context ul{margin:0 0 0 17px;padding:0;font-size:11px;line-height:1.45;color:#444}
   .brow{display:flex;justify-content:space-between;padding:5px 14px;border-bottom:1px solid #f0e8d0;font-size:12px}
   .brow:last-child{border-bottom:none}
   .brow.gold{color:#8a6a00}
