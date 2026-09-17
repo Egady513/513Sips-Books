@@ -532,13 +532,14 @@ export default function LeadsPage() {
       const qFullBarStaff = typeof bd.fullBarStaffCount === 'number' ? bd.fullBarStaffCount : qStaff
       const qBaseHours = bd.base === 395 ? 2 : 3
       const plural = (n: number, w: string) => `${n} ${w}${n === 1 ? '' : 's'}`
-      rows += `<div class="brow"><span>${bd.base === 395 ? 'Base — Small Group (2 hrs, ≤20 guests)' : 'Base Package (3 hrs, ≤50 guests)'}</span><span>${fmt(base)}</span></div>`
-      if (typeof bd.staffing === 'number' && bd.staffing > 0)
-        rows += `<div class="brow"><span>Additional Bartenders</span><span>+${fmt(bd.staffing)}</span></div>`
-      if (typeof bd.volume === 'number' && bd.volume > 0)
-        rows += `<div class="brow"><span>High-Volume Event Adjustment</span><span>+${fmt(bd.volume)}</span></div>`
-      if (typeof bd.multiBarOperations === 'number' && bd.multiBarOperations > 0)
-        rows += `<div class="brow"><span>Large Event &amp; Multi-Bar Operations</span><span>+${fmt(bd.multiBarOperations)}</span></div>`
+      rows += `<div class="brow"><span>${bd.base === 395 ? 'Base: Small Group (1 bartender, first 2 hrs, ≤20 guests)' : 'Base Package (1 bartender, first 3 hrs, ≤50 guests)'}</span><span>${fmt(base)}</span></div>`
+      if (typeof bd.staffing === 'number' && bd.staffing > 0) {
+        const additionalStaff = qStaff !== null ? Math.max(0, qStaff - 1) : null
+        const detail = additionalStaff !== null
+          ? ` (${plural(additionalStaff, 'additional bartender')}, first ${qBaseHours} hrs)`
+          : ''
+        rows += `<div class="brow"><span>Additional Bartenders${detail}</span><span>+${fmt(bd.staffing)}</span></div>`
+      }
       const extraHoursCharge = typeof bd.extraHours === 'number' && bd.extraHours > 0 ? bd.extraHours : 0
       const longEventCharge = typeof bd.longEventPremium === 'number' && bd.longEventPremium > 0 ? bd.longEventPremium : 0
       if (extraHoursCharge + longEventCharge > 0) {
@@ -577,6 +578,10 @@ export default function LeadsPage() {
           : 'Expanded Featured Cocktail Program'
         rows += `<div class="brow accent"><span>${label}</span><span>+${fmt(bd.cocktailProgram)}</span></div>`
       }
+      if (typeof bd.volume === 'number' && bd.volume > 0)
+        rows += `<div class="brow"><span>High-Volume Event Adjustment</span><span>+${fmt(bd.volume)}</span></div>`
+      if (typeof bd.multiBarOperations === 'number' && bd.multiBarOperations > 0)
+        rows += `<div class="brow"><span>Large Event &amp; Multi-Bar Operations</span><span>+${fmt(bd.multiBarOperations)}</span></div>`
       if (typeof bd.addons === 'number' && bd.addons > 0) {
         const addOnLabels = Array.isArray(bd.addonsList) ? bd.addonsList as string[] : []
         const label = addOnLabels.length === 1 ? escapeHtml(addOnLabels[0]) : 'Premium Add-Ons'
