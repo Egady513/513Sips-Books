@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>513 Sips Quote</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{font-family:Montserrat,Arial,sans-serif;color:#2d3748;background:#fff;padding:24px 40px;max-width:720px;margin:0 auto}
+        .print-actions{position:fixed;right:20px;top:20px;display:flex;gap:8px;z-index:10}
+        .print-actions button{font-family:Montserrat,Arial,sans-serif;border:0;border-radius:7px;padding:9px 14px;cursor:pointer;font-weight:600}
+        .print-actions .primary{background:#b87333;color:#f5f2eb}
+        .print-actions .secondary{background:#f5f2eb;color:#1a1a2e;border:1px solid #e0c2a8}
+        .header{text-align:center;border-bottom:3px solid #b87333;padding-bottom:10px;margin-bottom:4px}
+        .brand{font-family:'Cormorant Garamond',Georgia,serif;font-size:32px;color:#b87333;font-weight:700;letter-spacing:3px}
+        .doc-date{text-align:center;color:#6b7280;font-size:9px;margin-bottom:12px}
+        .section{margin:10px 0}
+        .section-title{font-size:9px;text-transform:uppercase;letter-spacing:2px;color:#b87333;border-bottom:1px solid #d4915a;padding-bottom:4px;margin-bottom:8px;font-weight:600}
+        .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px 32px}
+        .field{display:flex;flex-direction:column}
+        .label{font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:1px;margin-bottom:2px}
+        .value{font-family:'Cormorant Garamond',Georgia,serif;font-size:15px;font-weight:600;color:#1a1a2e}
+        .breakdown{border:1px solid #e0c2a8;border-radius:8px;overflow:hidden;margin-top:8px}
+        .quote-context{background:#f5f2eb;border:1px solid #e0c2a8;border-radius:8px;padding:10px 14px;margin-bottom:10px}
+        .assumption-title{font-size:9px;text-transform:uppercase;letter-spacing:1.5px;color:#b87333;font-weight:700;margin:0 0 4px}
+        .quote-context ul{margin:0 0 0 17px;padding:0;font-size:10px;line-height:1.45;color:#2d3748}
+        .brow{display:flex;justify-content:space-between;gap:20px;padding:5px 14px;border-bottom:1px solid #f0e8d0;font-size:12px}
+        .brow:last-child{border-bottom:none}
+        .brow span:last-child{white-space:nowrap}
+        .brow.accent{color:#9a5728}
+        .brow.green{color:#2e7d32}
+        .credit-box{background:#f5f2eb;border:1px solid #b87333;border-radius:8px;margin-top:10px;overflow:hidden}
+        .credit-row{display:flex;justify-content:space-between;align-items:center;padding:9px 14px;color:#1a1a2e;font-size:12px}
+        .credit-row+.credit-row{border-top:1px solid #e0c2a8}
+        .credit-row small{display:block;color:#6b7280;font-size:8px;text-transform:uppercase;letter-spacing:.8px;margin-top:2px}
+        .credit-row>span:last-child{font-family:'Cormorant Garamond',Georgia,serif;color:#2e7d32;font-size:18px;font-weight:700}
+        .evt-block{border:2px solid #b87333;border-radius:8px;overflow:hidden;margin-bottom:12px}
+        .evt-block-header{background:#b87333;display:flex;justify-content:space-between;align-items:center;padding:8px 14px}
+        .evt-block-name{color:#f5f2eb;font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase}
+        .evt-block-stats{color:#f5f2eb;font-size:10px;font-weight:600;letter-spacing:.5px}
+        .evt-block-total-label{text-align:center;font-size:9px;letter-spacing:2px;color:#6b7280;text-transform:uppercase;padding:6px 16px 0}
+        .evt-block-total-amt{text-align:center;font-family:'Cormorant Garamond',Georgia,serif;font-size:20px;color:#1a1a2e;font-weight:700;padding-bottom:6px}
+        .totals{border:1px solid #e0c2a8;border-radius:8px;overflow:hidden}
+        .trow{display:flex;justify-content:space-between;align-items:center;padding:7px 14px;border-bottom:1px solid #f0e8d0;font-size:12px}
+        .trow:last-child{border-bottom:none}
+        .trow.total{background:#1a1a2e;color:#f5f2eb;font-weight:600}
+        .trow.total span:last-child{font-family:'Cormorant Garamond',Georgia,serif;font-size:22px;color:#d4915a;font-weight:700}
+        .footer{text-align:center;margin-top:16px;padding-top:10px;border-top:1px solid #eee;font-size:9px;color:#6b7280}
+        .error{margin:80px auto;padding:24px;border:1px solid #e0c2a8;border-radius:8px;text-align:center;color:#1a1a2e}
+        @media print{
+            body{padding:16px 32px}
+            .print-actions{display:none}
+        }
+    </style>
+</head>
+<body>
+    <div class="print-actions">
+        <button class="secondary" onclick="window.close()">Close</button>
+        <button class="primary" onclick="window.print()">Print / Save PDF</button>
+    </div>
+    <main id="quoteRoot"></main>
+
+    <script>
+        const SUPABASE_URL = 'https://bixyltkdymoqjipaiujk.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJpeHlsdGtkeW1vcWppcGFpdWprIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM3OTY0MTMsImV4cCI6MjA4OTM3MjQxM30.xqaK35aar9lSweeTA8ydeW8WT8ZiOrOl5NFa957MkjU';
+
+        const fmt = value => '$' + Number(value || 0).toLocaleString('en-US', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+        });
+        const escapeHtml = value => String(value ?? '')
+            .replaceAll('&', '&amp;')
+            .replaceAll('<', '&lt;')
+            .replaceAll('>', '&gt;')
+            .replaceAll('"', '&quot;')
+            .replaceAll("'", '&#039;');
+        const plural = (count, word) => `${count} ${word}${count === 1 ? '' : 's'}`;
+
+        function buildRows(bd) {
+            if (!bd) return '';
+            let rows = '';
+            const base = typeof bd.base === 'number' ? bd.base : 650;
+            const hours = typeof bd.hours === 'number' ? bd.hours : null;
+            const staff = typeof bd.bartenders === 'number' ? bd.bartenders : null;
+            const fullBarStaff = typeof bd.fullBarStaffCount === 'number' ? bd.fullBarStaffCount : staff;
+            const baseHours = bd.base === 395 ? 2 : 3;
+
+            rows += `<div class="brow"><span>${bd.base === 395 ? 'Base - Small Group (1 bartender, first 2 hrs, ≤20 guests)' : 'Base Package (1 bartender, first 3 hrs, ≤50 guests)'}</span><span>${fmt(base)}</span></div>`;
+            if (bd.staffing > 0) {
+                const additionalStaff = staff !== null ? Math.max(0, staff - 1) : null;
+                const detail = additionalStaff !== null ? ` (${plural(additionalStaff, 'additional bartender')}, first ${baseHours} hrs)` : '';
+                rows += `<div class="brow"><span>Additional Bartenders${detail}</span><span>+${fmt(bd.staffing)}</span></div>`;
+            }
+
+            const extraHoursCharge = bd.extraHours > 0 ? bd.extraHours : 0;
+            const longEventCharge = bd.longEventPremium > 0 ? bd.longEventPremium : 0;
+            if (extraHoursCharge + longEventCharge > 0) {
+                const extra = hours !== null ? hours - baseHours : 0;
+                const detail = staff !== null && extra > 0 ? ` (+${plural(extra, 'hr')} × ${plural(staff, 'bartender')})` : '';
+                const label = longEventCharge > 0 ? 'Extended Service Hours, including long-event premium' : 'Extended Service Hours';
+                rows += `<div class="brow"><span>${label}${detail}</span><span>+${fmt(extraHoursCharge + longEventCharge)}</span></div>`;
+            }
+            if (bd.twoHrReduction > 0) rows += `<div class="brow green"><span>2-Hour Service Reduction</span><span>-${fmt(bd.twoHrReduction)}</span></div>`;
+
+            if (bd.package > 0) {
+                const detail = hours !== null && fullBarStaff !== null && hours > 0
+                    ? ` (${plural(hours, 'hr')} × ${plural(fullBarStaff, 'bartender')})`
+                    : '';
+                rows += `<div class="brow"><span>Full Bar Service${detail}</span><span>+${fmt(bd.package)}</span></div>`;
+            }
+            if (bd.cocktails > 0) {
+                const count = typeof bd.signatureCocktailCount === 'number' ? bd.signatureCocktailCount : Math.round(bd.cocktails / 125);
+                rows += `<div class="brow accent"><span>Signature Cocktails (${count})</span><span>+${fmt(bd.cocktails)}</span></div>`;
+            }
+            if (bd.houseCocktails > 0) {
+                const count = typeof bd.houseCocktailCount === 'number' ? bd.houseCocktailCount : Math.round(bd.houseCocktails / 50);
+                rows += `<div class="brow accent"><span>House Featured Cocktails (${count})</span><span>+${fmt(bd.houseCocktails)}</span></div>`;
+            }
+            if (bd.cocktailProgram > 0) {
+                const label = bd.featuredCocktailCount >= 8 ? 'Extensive Featured Cocktail Program' : 'Expanded Featured Cocktail Program';
+                rows += `<div class="brow accent"><span>${label}</span><span>+${fmt(bd.cocktailProgram)}</span></div>`;
+            }
+            if (bd.volume > 0) rows += `<div class="brow"><span>High-Volume Event Adjustment</span><span>+${fmt(bd.volume)}</span></div>`;
+            if (bd.multiBarOperations > 0) rows += `<div class="brow"><span>Large Event &amp; Multi-Bar Operations</span><span>+${fmt(bd.multiBarOperations)}</span></div>`;
+            if (bd.addons > 0) {
+                const labels = Array.isArray(bd.addonsList) ? bd.addonsList : [];
+                const label = labels.length === 1 ? escapeHtml(labels[0]) : 'Premium Add-Ons';
+                const detail = labels.length > 1 ? ` (${labels.map(escapeHtml).join(', ')})` : '';
+                rows += `<div class="brow accent"><span>${label}${detail}</span><span>+${fmt(bd.addons)}</span></div>`;
+            }
+            if (bd.glassware > 0) rows += `<div class="brow accent"><span>Premium Glassware</span><span>+${fmt(bd.glassware)}</span></div>`;
+            if (bd.travel > 0) rows += `<div class="brow"><span>Travel Fee</span><span>+${fmt(bd.travel)}</span></div>`;
+
+            const customItems = Array.isArray(bd.customItems) ? bd.customItems.filter(item => item && item.price > 0) : [];
+            if (customItems.length > 0) {
+                customItems.forEach(item => {
+                    rows += `<div class="brow accent"><span>${escapeHtml(item.name || 'Custom Add-On')}</span><span>+${fmt(item.price)}</span></div>`;
+                });
+            } else if (bd.customItemsTotal > 0) {
+                rows += `<div class="brow accent"><span>Custom Add-Ons</span><span>+${fmt(bd.customItemsTotal)}</span></div>`;
+            }
+            return rows;
+        }
+
+        function buildCreditBox(bd, promoCode) {
+            if (!bd) return '';
+            const credits = [];
+            if (bd.discount > 0) credits.push({ label: promoCode || 'Promo Discount', amount: bd.discount });
+            if (bd.customDiscount > 0) credits.push({ label: bd.customDiscountLabel || 'Custom Discount', amount: bd.customDiscount });
+            if (!credits.length) return '';
+            return `<div class="credit-box">${credits.map(credit => `
+                <div class="credit-row">
+                    <span><strong>${escapeHtml(credit.label)}</strong><small>Applied to this estimate</small></span>
+                    <span>-${fmt(credit.amount)}</span>
+                </div>`).join('')}</div>`;
+        }
+
+        function buildAssumptions(bd) {
+            const notes = bd && typeof bd.clientNotes === 'string'
+                ? bd.clientNotes.split(/\r?\n/).map(note => note.trim()).filter(Boolean)
+                : [];
+            if (!notes.length) return '';
+            return `<div class="quote-context">
+                <div class="assumption-title">Service Plan &amp; Assumptions</div>
+                <ul>${notes.map(note => `<li>${escapeHtml(note)}</li>`).join('')}</ul>
+            </div>`;
+        }
+
+        function formatEventDate(value) {
+            if (!value) return 'TBD';
+            return new Date(value + 'T12:00:00').toLocaleDateString('en-US', {
+                weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
+            });
+        }
+
+        async function loadLead(leadId) {
+            if (!leadId) return null;
+            try {
+                const response = await fetch(`${SUPABASE_URL}/rest/v1/leads?id=eq.${encodeURIComponent(leadId)}&select=*`, {
+                    headers: { Authorization: `Bearer ${SUPABASE_ANON_KEY}`, apikey: SUPABASE_ANON_KEY },
+                });
+                if (!response.ok) return null;
+                const rows = await response.json();
+                return rows[0] || null;
+            } catch (error) {
+                return null;
+            }
+        }
+
+        function paymentRows(data, eventDate) {
+            const event = eventDate ? new Date(eventDate + 'T12:00:00') : null;
+            const today = new Date();
+            const todayUtc = Date.UTC(today.getFullYear(), today.getMonth(), today.getDate());
+            const eventUtc = eventDate ? Date.parse(eventDate + 'T00:00:00Z') : null;
+            const daysUntil = eventUtc !== null ? Math.round((eventUtc - todayUtc) / (24 * 60 * 60 * 1000)) : null;
+            const shortNotice = data.shortNotice === true || (daysUntil !== null && daysUntil < 14);
+            const balanceDate = event
+                ? new Date(event.getTime() - 14 * 24 * 60 * 60 * 1000).toLocaleDateString('en-US', {
+                    month: 'long', day: 'numeric', year: 'numeric',
+                })
+                : null;
+            if (shortNotice) {
+                return `<div class="trow total"><span>Total Investment</span><span>${fmt(data.total)}</span></div>
+                    <div class="trow"><span>Full Amount Due at Signing</span><span>${fmt(data.total)}</span></div>
+                    <div class="trow"><span>Remaining Balance</span><span>${fmt(0)}</span></div>`;
+            }
+            return `<div class="trow total"><span>Total Investment</span><span>${fmt(data.total)}</span></div>
+                <div class="trow"><span>Deposit (50% - due to secure date)</span><span>${fmt(data.deposit)}</span></div>
+                <div class="trow"><span>Balance Due${balanceDate ? ' by ' + balanceDate : ' (14 days prior to event)'}</span><span>${fmt(data.balance)}</span></div>`;
+        }
+
+        function renderSingle(data, lead) {
+            const bd = data.breakdown || {};
+            const eventDate = data.eventDate || lead?.event_date || '';
+            const rows = buildRows(bd);
+            const credit = buildCreditBox(bd, data.promoCode);
+            return `
+                <div class="section">
+                    <div class="section-title">Client Information</div>
+                    <div class="grid">
+                        <div class="field"><span class="label">Client Name</span><span class="value">${escapeHtml(lead?.name || data.leadName)}</span></div>
+                        <div class="field"><span class="label">Event Type</span><span class="value">${escapeHtml(lead?.event_type || '-')}</span></div>
+                        <div class="field"><span class="label">Email</span><span class="value">${escapeHtml(lead?.email || '-')}</span></div>
+                        <div class="field"><span class="label">Phone</span><span class="value">${escapeHtml(lead?.phone || '-')}</span></div>
+                    </div>
+                </div>
+                <div class="section">
+                    <div class="section-title">Event Details</div>
+                    <div class="grid">
+                        <div class="field"><span class="label">Event Date</span><span class="value">${formatEventDate(eventDate)}</span></div>
+                        <div class="field"><span class="label">Venue</span><span class="value">${escapeHtml(lead?.venue_name || lead?.venue_address || '-')}</span></div>
+                        <div class="field"><span class="label">Guest Count</span><span class="value">${data.guestCount}</span></div>
+                        <div class="field"><span class="label">Service Hours</span><span class="value">${data.hours} hours</span></div>
+                        <div class="field"><span class="label">Bar Staff</span><span class="value">${plural(data.bartenders, 'bartender')}</span></div>
+                    </div>
+                </div>
+                <div class="section">
+                    <div class="section-title">Pricing</div>
+                    ${buildAssumptions(bd)}
+                    ${rows ? `<div class="breakdown">${rows}</div>` : ''}
+                    ${credit}
+                    <div class="totals" style="margin-top:12px">${paymentRows(data, eventDate)}</div>
+                </div>`;
+        }
+
+        function renderMulti(data, lead) {
+            const eventSections = (data.events || []).map(event => {
+                const rows = buildRows(event.breakdown);
+                const credit = buildCreditBox(event.breakdown, null);
+                const stats = `${event.guestCount} Guests · ${event.hours} Hrs · ${plural(event.bartenders, 'Bartender')}`;
+                return `<div class="evt-block">
+                    <div class="evt-block-header"><span class="evt-block-name">${escapeHtml(event.name)}</span><span class="evt-block-stats">${stats}</span></div>
+                    <div class="evt-block-total-label">Estimated Total</div>
+                    <div class="evt-block-total-amt">${fmt(event.total)}</div>
+                    ${buildAssumptions(event.breakdown)}
+                    ${rows ? `<div class="breakdown" style="border-radius:0;border-left:0;border-right:0;border-bottom:0">${rows}</div>` : ''}
+                    ${credit}
+                </div>`;
+            }).join('');
+            return `<div class="section">
+                <div class="section-title">Client Information</div>
+                <div class="grid">
+                    <div class="field"><span class="label">Client Name</span><span class="value">${escapeHtml(lead?.name || data.leadName)}</span></div>
+                    <div class="field"><span class="label">Event Type</span><span class="value">${escapeHtml(lead?.event_type || '-')}</span></div>
+                    <div class="field"><span class="label">Email</span><span class="value">${escapeHtml(lead?.email || '-')}</span></div>
+                    <div class="field"><span class="label">Phone</span><span class="value">${escapeHtml(lead?.phone || '-')}</span></div>
+                </div>
+            </div>
+            <div class="section">
+                <div class="section-title">Quote Summary</div>
+                ${eventSections}
+                <div class="totals" style="margin-top:12px">${paymentRows(data, data.events?.[0]?.eventDate || '')}</div>
+            </div>`;
+        }
+
+        async function init() {
+            const root = document.getElementById('quoteRoot');
+            const raw = localStorage.getItem('513sips_quote_preview');
+            if (!raw) {
+                root.innerHTML = '<div class="error">No quote preview data was found. Return to the calculator and choose Generate Quote PDF again.</div>';
+                return;
+            }
+            const data = JSON.parse(raw);
+            const lead = await loadLead(data.leadId);
+            const prepared = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+            const valid = new Date();
+            valid.setMonth(valid.getMonth() + 3);
+            const validUntil = valid.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+
+            document.title = `513 Sips Quote - ${lead?.name || data.leadName || 'Client'}`;
+            root.innerHTML = `<div class="header"><div class="brand">513 SIPS</div></div>
+                <div class="doc-date">Prepared ${prepared} · Valid until ${validUntil} · Estimate does not hold the date</div>
+                ${data.isMultiEvent ? renderMulti(data, lead) : renderSingle(data, lead)}
+                <div class="footer">513 Sips LLC · Cincinnati, OH · 513sips.com · instagram.com/513sips</div>`;
+
+            if (document.fonts?.ready) await document.fonts.ready;
+            setTimeout(() => window.print(), 250);
+        }
+
+        init();
+    </script>
+</body>
+</html>

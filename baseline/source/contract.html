@@ -1,0 +1,1044 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>513Sips - Contract Generator</title>
+    <style>
+        * { box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+        body { background: #1a1a2e; color: #333; padding: 20px; }
+        .container { max-width: 800px; margin: 0 auto; background: white; padding: 40px; border-radius: 10px; }
+        h1 { color: #1a1a2e; text-align: center; border-bottom: 3px solid #d4af37; padding-bottom: 15px; }
+        .form-section { margin: 30px 0; }
+        h2 { color: #0f3460; border-bottom: 2px solid #eee; padding-bottom: 10px; }
+        label { display: block; margin: 15px 0 5px; font-weight: bold; color: #555; }
+        input, textarea { width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 5px; font-size: 16px; }
+        input:focus, textarea:focus { border-color: #d4af37; outline: none; }
+        .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .quote-summary { background: #f8f9fa; padding: 20px; border-radius: 10px; border-left: 4px solid #d4af37; margin: 20px 0; }
+        .quote-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #eee; }
+        .quote-row:last-child { border-bottom: none; }
+        .quote-row.total { font-weight: bold; font-size: 1.3em; color: #d4af37; border-top: 2px solid #ddd; margin-top: 10px; padding-top: 10px; }
+        .breakdown-section { background: #fff; padding: 15px; border-radius: 8px; margin: 15px 0; border: 1px solid #e0e0e0; }
+        .breakdown-title { font-weight: bold; color: #0f3460; margin-bottom: 10px; }
+        .breakdown-item { display: flex; justify-content: space-between; padding: 5px 0; font-size: 14px; }
+        .breakdown-item.addon { color: #2e7d32; }
+        button { background: #d4af37; color: #1a1a2e; border: none; padding: 15px 40px; font-size: 18px; border-radius: 5px; cursor: pointer; font-weight: bold; display: block; margin: 30px auto; }
+        button:hover { background: #c4a030; }
+        button.secondary { background: #6c757d; color: white; }
+        .contract-preview { display: none; background: white; padding: 40px; border: 1px solid #ddd; margin-top: 30px; }
+        .contract-preview h1 { color: #000; border-bottom: 2px solid #000; }
+        .no-quote-warning { background: #fff3cd; border: 1px solid #ffc107; color: #856404; padding: 15px; border-radius: 5px; margin: 20px 0; text-align: center; }
+        @media print { 
+            .no-print { display: none !important; } 
+            .contract-preview { display: block !important; border: none; }
+            body { background: white; }
+        }
+        @media (max-width: 600px) { .two-col { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+    <div class="container no-print">
+        <h1>📄 513Sips - Contract Generator</h1>
+        
+        <div id="noQuoteWarning" class="no-quote-warning" style="display: none;">
+            ⚠️ No quote data found. Please <a href="calculator.html">generate a quote first</a>.
+        </div>
+        
+        <div class="quote-summary" id="quoteSummary">
+            <h3>Quote Summary</h3>
+            <div id="breakdownContainer"></div>
+            <div class="quote-row total">
+                <span>Total Event Cost:</span>
+                <span id="displayTotal">$0</span>
+            </div>
+            <div class="quote-row">
+                <span>Deposit Due (50%):</span>
+                <span id="displayDeposit">$0</span>
+            </div>
+            <div class="quote-row">
+                <span>Balance Due (14 days prior):</span>
+                <span id="displayBalance">$0</span>
+            </div>
+        </div>
+        
+        <div class="form-section">
+            <h2>Client Information</h2>
+            <label>Client Full Name:</label>
+            <input type="text" id="clientName" placeholder="John and Jane Smith">
+            
+            <label>Client Email:</label>
+            <input type="email" id="clientEmail" placeholder="client@email.com">
+            
+            <label>Client Phone:</label>
+            <input type="tel" id="clientPhone" placeholder="(513) 555-0123">
+        </div>
+        
+        <div class="form-section">
+            <h2>Event Details</h2>
+            <div class="two-col">
+                <div>
+                    <label>Event Date:</label>
+                    <input type="date" id="eventDate">
+                </div>
+                <div>
+                    <label>Event Type:</label>
+                    <input type="text" id="eventType" placeholder="Wedding, Corporate, Birthday...">
+                </div>
+            </div>
+            
+            <label>Venue Name:</label>
+            <input type="text" id="venueName" placeholder="The Grand Ballroom">
+            
+            <label>Venue Contact Name:</label>
+            <input type="text" id="venueContact" placeholder="Venue Manager Name">
+            
+            <label>Venue Contact Phone:</label>
+            <input type="tel" id="venuePhone" placeholder="(513) 555-0199">
+            
+            <label>Venue Address:</label>
+            <textarea id="venueAddress" rows="2" placeholder="123 Main St, Cincinnati, OH 45202"></textarea>
+            
+            <div class="two-col">
+                <div>
+                    <label>Service Start Time:</label>
+                    <input type="time" id="startTime">
+                </div>
+                <div>
+                    <label>Service End Time:</label>
+                    <input type="time" id="endTime">
+                </div>
+            </div>
+            
+            <div class="two-col">
+                <div>
+                    <label>Expected Guest Count:</label>
+                    <input type="number" id="guestCount" min="1">
+                </div>
+                <div>
+                    <label>Service Hours:</label>
+                    <input type="number" id="serviceHours" min="1" value="3">
+                </div>
+            </div>
+            
+            <label>Package & Add-Ons Description:</label>
+            <textarea id="packageDetails" rows="4" placeholder="Full Bar Package, Signature Cocktail, Glassware..."></textarea>
+
+            <label>Contract Notes:</label>
+            <textarea id="contractNotes" rows="6" placeholder="Client-facing notes saved with the quote..."></textarea>
+        </div>
+        
+        <button onclick="generateContract()">Generate Contract</button>
+        <button class="secondary" onclick="window.location.href='calculator.html'">← Back to Calculator</button>
+    </div>
+    
+    <div class="contract-preview" id="contractPreview">
+        <div style="text-align: center; margin-bottom: 30px;">
+            <h1 style="margin-bottom: 5px;">513SIPS</h1>
+            <h2 style="margin-top: 0; color: #666;">MOBILE BAR SERVICE AGREEMENT</h2>
+            <p><em>A division of Elevated Ventures EG, LLC</em><br>
+            Cincinnati, Ohio | contact@513sips.com</p>
+        </div>
+        
+        <h3>1. AGREEMENT</h3>
+        <p>This Service Agreement ("Agreement") is entered into on this <strong id="contractDate">___</strong>, by and between <strong>Elevated Ventures EG, LLC d/b/a 513Sips</strong> ("Service Provider") and <strong id="contractClient">_______________________________</strong> ("Client").</p>
+        
+        <h3>2. EVENT DETAILS</h3>
+        <p>
+            <strong>Event Date:</strong> <span id="contractEventDate">____________________________</span><br>
+            <strong>Event Type:</strong> <span id="contractEventType">____________________________</span><br>
+            <strong>Venue:</strong> <span id="contractVenue">____________________________</span><br>
+            <strong>Venue Contact:</strong> <span id="contractVenueContact">____________________________</span><br>
+            <strong>Venue Contact Phone:</strong> <span id="contractVenuePhone">____________________________</span><br>
+            <strong>Venue Address:</strong> <span id="contractAddress">____________________________</span><br>
+            <strong>Service Start Time:</strong> <span id="contractStart">___________</span><br>
+            <strong>Service End Time:</strong> <span id="contractEnd">___________</span><br>
+            <strong>Expected Guest Count:</strong> <span id="contractGuests">___________</span><br>
+            <strong>Service Hours:</strong> <span id="contractHours">___________</span>
+        </p>
+        
+        <h3>3. SERVICES PROVIDED</h3>
+        <p>513Sips provides mobile bar services as outlined in the selected package. This includes professional bartending, setup, takedown, and agreed-upon mixers or décor.</p>
+        
+        <p><strong>Dry-Hire Service:</strong> 513Sips does not make any profit from alcohol sales. The Client maintains full control over alcohol selection, quantity, and budget. 513Sips is not responsible for purchasing too much or too little alcohol, and all alcohol remains Client's property before, during, and after the event.</p>
+        
+        <p>By default, Client is responsible for purchasing and transporting all alcoholic beverages in compliance with Ohio law. However, Client may purchase the Alcohol Procurement Add-On, in which case 513Sips will shop for alcohol on Client's behalf using Client's provided budget. Alcohol will be purchased at cost with receipts provided; 513Sips charges only a flat service fee for this convenience.</p>
+        
+        <p>All service packages include: insured and certified bartenders, complete bar setup and breakdown, bar tools, and equipment. Glassware may be included depending on package selected.</p>
+
+        <p>Ice, mixers, garnish, and syrup-making ingredients are billed to Client at cost, with receipts provided and no markup, as described in Section 12 below. 513Sips' service fee covers the labor of sourcing, preparing, and staging these items, not the cost of the products themselves.</p>
+        
+        <p>This dry-hire structure ensures full legal compliance with Ohio liquor laws while providing the convenience of professional bartending service.</p>
+        
+        <p><strong>Package Details:</strong> <span id="contractPackage">____________________________</span></p>
+        <p id="contractNotesRow" style="display: none;"><strong>Contract Notes:</strong><br><span id="contractNotesText" style="white-space: pre-line;"></span></p>
+        
+        <h3>4. PAYMENT TERMS</h3>
+        <ul>
+            <li><strong>Total Amount:</strong> <span id="contractTotal">$0</span></li>
+            <li><strong>50% non-refundable deposit:</strong> <span id="contractDeposit">$0</span> due at signing to secure the date.</li>
+            <li><strong>Remaining balance:</strong> <span id="contractBalance">$0</span> due 14 days prior to the event.</li>
+            <li><strong>Late Payments:</strong> Subject to a 15% late fee.</li>
+            <li><strong>Payment Methods:</strong> Check, Venmo, Zelle, or Cash. No credit cards accepted.</li>
+            <li><strong>Non-Payment:</strong> If balance is not paid by 7 days prior, 513Sips may cancel with no refund of deposit.</li>
+        </ul>
+        
+        <h3>5. PRICING BREAKDOWN</h3>
+        <div id="contractBreakdown"></div>
+        
+        <h3>6. SETUP & TAKEDOWN</h3>
+        <ul>
+            <li>Arrival is approximately 90 minutes before service for bar assembly and preparation.</li>
+            <li>Takedown occurs within 30–45 minutes after service ends.</li>
+            <li>Client must provide safe, unobstructed access, adequate lighting, and a clear load-in path.</li>
+            <li>Delays caused by venue or Client (locked doors, setup delays, etc.) incur a $50/hour waiting fee (billed in 15-minute increments).</li>
+            <li>Bartending hours begin when guest service starts.</li>
+        </ul>
+        
+        <h3>7. OVERTIME, EXTENSIONS & EARLY ARRIVAL</h3>
+        <p>Events extending past contracted hours are billed at 1.5x the standard rate ($112.50/hour per bartender), in full-hour increments. Overtime must be approved by Client onsite and paid before takedown or invoiced post-event.</p>
+        <p>Early arrival requested beyond the standard 90-minute setup window is billed at 1.3x the standard rate ($100/hour per bartender).</p>
+        
+        <h3>8. TRAVEL & MILEAGE</h3>
+        <p>Travel within 30 miles round-trip from downtown Cincinnati (45202) is included at no charge.</p>
+        <p>Additional mileage:</p>
+        <ul>
+            <li>31–60 miles round-trip: +$40</li>
+            <li>61–100 miles round-trip: +$75</li>
+            <li>100+ miles round-trip: Custom quote required</li>
+        </ul>
+        
+        <h3>9. DAMAGE & MISSING EQUIPMENT</h3>
+        <p>Client is responsible for any loss, theft, or damage to 513Sips property during the event. Replacement values:</p>
+        <ul>
+            <li>Glassware: $6 per item</li>
+            <li>Décor: $25–$150 per item</li>
+            <li>Bar Tools: $25 each</li>
+            <li>Tent: $400</li>
+            <li>Bar Cart: $1,800</li>
+        </ul>
+        <p>Damage will be documented with photos and invoiced within five (5) business days. Payment is due within seven (7) days.</p>
+        
+        <h3>10. CANCELLATION POLICY</h3>
+        <ul>
+            <li><strong>10+ days before event:</strong> 75% refund (less deposit)</li>
+            <li><strong>5–9 days before event:</strong> 50% refund (less deposit)</li>
+            <li><strong>Day of event or less than 5 days:</strong> No refund</li>
+        </ul>
+        <p>All cancellations must be submitted in writing. If 513Sips must cancel due to emergency, injury, illness, or force majeure, all payments (including deposit) will be refunded in full.</p>
+        
+        <h3>11. INCLEMENT WEATHER</h3>
+        <p>Client is responsible for providing weather protection (covered area or tent rental). If weather creates unsafe conditions and no covered area exists, 513Sips may pause or cancel service without refund.</p>
+        
+        <h3>12. ALCOHOL, MIXERS & PRODUCTS</h3>
+        <p><strong>Alcohol Procurement:</strong> Unless Client has purchased the Alcohol Procurement Add-On, Client is responsible for purchasing and transporting all alcohol. Quantity guidance provided by 513Sips is a good-faith estimate only. 513Sips is not liable for shortages or overages.</p>
+        <p>If Alcohol Procurement Add-On is selected, 513Sips will shop for alcohol on Client's behalf using Client's budget. All alcohol is purchased at cost with receipts provided. Unused alcohol remains Client's property.</p>
+        <p><strong>Ice, Mixers, Garnish & Syrup Materials:</strong> 513Sips sources ice, mixers, garnish, and syrup-making ingredients for every event. These are pass-through costs, billed to Client at cost with receipts provided, no markup. If Client has purchased the Alcohol Procurement Add-On, these costs are combined into the prepaid procurement budget alongside alcohol. If Client has not purchased the Add-On, these costs are billed separately at cost. Separate service fees (e.g. ice coordination, signature cocktail development) may apply and cover labor only, never the cost of the product itself.</p>
+        <p><strong>Mixers & Homemade Products:</strong> All mixers, syrups, and purees are prepared safely. Client must notify 513Sips of any allergies 14 days in advance. 513Sips is not liable for allergic reactions not disclosed in writing.</p>
+        <p><strong>Licensing:</strong> Client must confirm the venue permits outside bartending services. 513Sips reserves the right to cancel with full refund if venue restrictions prevent lawful service.</p>
+        
+        <h3>13. AGE VERIFICATION & GUEST CONDUCT</h3>
+        <p>513Sips will not serve anyone under 21 or visibly intoxicated. 513Sips may refuse service at its discretion. Client is responsible for guest conduct and any incidents arising from alcohol consumption.</p>
+        
+        <h3>14. INSURANCE</h3>
+        <p>Service Provider maintains general liability and liquor liability insurance per event. Certificate of Insurance available upon request.</p>
+        
+        <h3>15. INDEMNIFICATION (PROTECTION FOR 513SIPS)</h3>
+        <p>Client agrees to protect 513Sips from any claims, damages, or legal costs that arise from:</p>
+        <ul>
+            <li>Alcohol service or consumption at the event</li>
+            <li>Guest behavior or injuries</li>
+            <li>Property damage</li>
+            <li>Venue hazards or problems</li>
+            <li>Failure to follow laws or venue policies</li>
+        </ul>
+        <p>This means if someone gets hurt, damages property, or files a lawsuit related to the event, Client will cover 513Sips' legal costs and any settlements.</p>
+        
+        <h3>16. FORCE MAJEURE</h3>
+        <p>Neither party is liable for delay or failure to perform due to events beyond reasonable control (severe weather, natural disasters, illness, injury, government restrictions, etc.).</p>
+        
+        <h3>17. PHOTOGRAPHY & MARKETING RELEASE</h3>
+        <p>Client grants 513Sips permission to photograph or film the bar setup and service for marketing use. No identifiable guest images will be used without permission.</p>
+        
+        <h3>18. VENUE ACKNOWLEDGMENT</h3>
+        <p>Client must provide venue contact information and confirm the venue permits outside bartending services. The venue must acknowledge 513Sips as an approved vendor. 513Sips reserves the right to cancel with full refund if venue restrictions prevent lawful service.</p>
+        
+        <h3>19. SUBCONTRACTORS</h3>
+        <p>513Sips may utilize subcontracted bartenders. All subcontractors are trained, certified, and operate under 513Sips supervision.</p>
+        
+        <h3>20. DISPUTE RESOLUTION</h3>
+        <p>Any dispute shall first attempt mediation in Hamilton County, Ohio. If mediation fails, binding arbitration applies.</p>
+        
+        <h3>21. ENTIRE AGREEMENT</h3>
+        <p>This Agreement contains the entire understanding between the Parties. Any modification must be in writing and signed by both Parties.</p>
+        
+        <div style="margin-top: 50px; border-top: 2px solid #000; padding-top: 20px;">
+            <h3>22. SIGNATURES</h3>
+            <p>By signing below, both parties agree to the terms of this Agreement.</p>
+            
+            <div style="margin-top: 40px;">
+                <p><strong>Client:</strong></p>
+                <p>Name: <span id="sigClientName">_______________________________</span></p>
+                <p>Signature: ____________________________ Date: ___________</p>
+                <p>Email: <span id="sigClientEmail">_______________________________</span></p>
+                <p>Phone: <span id="sigClientPhone">_______________________________</span></p>
+            </div>
+            
+            <div style="margin-top: 40px;">
+                <p><strong>Elevated Ventures EG, LLC d/b/a 513Sips:</strong></p>
+                <p>Name: ____________________________</p>
+                <p>Signature: ____________________________ Date: ___________</p>
+                <p>Email: contact@513sips.com</p>
+                <p>Phone: (513) 555-0199</p>
+            </div>
+        </div>
+        
+        <div style="margin-top: 30px; text-align: center; font-size: 12px; color: #666;">
+            © 2025 Elevated Ventures EG, LLC — All Rights Reserved
+        </div>
+        
+        <div class="no-print" style="margin-top: 40px; text-align: center;">
+            <button onclick="window.print()">🖨️ Print / Save as PDF</button>
+            <button class="secondary" onclick="saveContractToBooks()">📚 Save to Books</button>
+            <button class="secondary" onclick="location.reload()">← Generate New Contract</button>
+            <div id="booksSaveStatus" style="display:none; margin-top: 10px; padding: 10px; border-radius: 6px; font-size: 0.85em; text-align: center;"></div>
+        </div>
+    </div>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script>
+        let quoteData = null;
+        let leadId = null;
+
+        // Reverse-engineer a per-event contract.html event shape from a saved quote
+        // breakdown entry. Used for multi-event quotes when fetching from Supabase.
+        // Prefers the newer _config snapshot, falls back to deriving from legacy bd.
+        // Quantity detail for quote lines — deliberately shows WHAT was bought, never the
+        // rate. Printing "$15/hr" invites the client to do arithmetic against the line;
+        // "4 hrs × 1 bartender" says the same thing without opening that door.
+        // Quotes saved before 2026-08-12 carry no hours/bartenders — those degrade to ''.
+        function qtyDetail(bd, hoursOverride) {
+            if (!bd || typeof bd.hours !== 'number' || typeof bd.bartenders !== 'number') return '';
+            const h = typeof hoursOverride === 'number' ? hoursOverride : bd.hours;
+            if (h <= 0) return '';
+            const s = (n, w) => n + ' ' + w + (n === 1 ? '' : 's');
+            return ' (' + s(h, 'hr') + ' × ' + s(bd.bartenders, 'bartender') + ')';
+        }
+
+        // Hours the base package already covers — small-group base ($395) covers 2, else 3.
+        function baseHoursOf(bd) { return (bd && bd.base === 395) ? 2 : 3; }
+
+        function longEventDetail(bd) {
+            if (!bd || typeof bd.hours !== 'number' || typeof bd.bartenders !== 'number' || bd.hours < 5) return '';
+            const range = bd.hours === 5 ? 'hour 5' : 'hours 5–' + bd.hours;
+            const bartenders = bd.bartenders + ' bartender' + (bd.bartenders === 1 ? '' : 's');
+            return ' (' + range + ' × ' + bartenders + ')';
+        }
+
+        function plural(count, word) {
+            return count + ' ' + word + (count === 1 ? '' : 's');
+        }
+
+        function signatureCocktailCount(bd) {
+            return typeof bd.signatureCocktailCount === 'number'
+                ? bd.signatureCocktailCount
+                : Math.round((bd.cocktails || 0) / 125);
+        }
+
+        function houseCocktailCount(bd) {
+            return typeof bd.houseCocktailCount === 'number'
+                ? bd.houseCocktailCount
+                : Math.round((bd.houseCocktails || 0) / 50);
+        }
+
+        function extendedServiceLine(bd) {
+            const extraHoursCharge = bd.extraHours > 0 ? bd.extraHours : 0;
+            const longEventCharge = bd.longEventPremium > 0 ? bd.longEventPremium : 0;
+            const amount = extraHoursCharge + longEventCharge;
+            if (amount <= 0) return null;
+
+            const baseHours = baseHoursOf(bd);
+            const extraHours = typeof bd.hours === 'number' ? bd.hours - baseHours : null;
+            const detail = extraHours > 0 && typeof bd.bartenders === 'number'
+                ? ' (+' + plural(extraHours, 'hr') + ' × ' + plural(bd.bartenders, 'bartender') + ')'
+                : '';
+            return {
+                label: longEventCharge > 0
+                    ? 'Extended Service Hours, including long-event premium'
+                    : 'Extended Service Hours',
+                detail,
+                amount,
+            };
+        }
+
+        function evtFromBreakdown(evt, idx) {
+            const cfg = evt && evt._config;
+            const total = (evt && evt.total) || 0;
+            if (cfg) {
+                return {
+                    name:              cfg.eventName || (evt && evt.name) || ('Event ' + (idx + 1)),
+                    total,
+                    deposit:           Math.round(total * 0.5),
+                    balance:           total - Math.round(total * 0.5),
+                    guestCount:        evt && evt.guestCount,
+                    hours:             evt && evt.hours,
+                    isSmallGroup:      !!cfg.smallGroup,
+                    packageType:       cfg.packageType || 'beerwine',
+                    glassware:         cfg.glassware || 'plastic',
+                    cocktailCount:     parseInt(cfg.cocktailCount || '0') || 0,
+                    drinkBigIce:       !!cfg.drinkBigIce,
+                    iceCount:          parseInt(cfg.iceCount || '0') || 0,
+                    promoCode:         cfg.promoCode || null,
+                    customPromo:       cfg.customPromo || null,
+                    customPromoAmount: cfg.customPromoAmount || null,
+                };
+            }
+            const bd = (evt && evt.bd) || {};
+            const addonsList = Array.isArray(bd.addonsList) ? bd.addonsList : [];
+            const iceLabel = addonsList.find(function(s) { return typeof s === 'string' && s.indexOf('Custom Logo Ice') === 0; });
+            const iceMatch = iceLabel ? iceLabel.match(/\((\d+)\s+cubes\)/) : null;
+            const guests = (evt && evt.guestCount) || 0;
+            const plasticEstimate = Math.round(guests * 2.50);
+            const glasswareMode = !bd.glassware ? 'none' : (bd.glassware <= plasticEstimate + 5 ? 'plastic' : 'glass');
+            const customPromo = (bd.customDiscount && bd.customDiscount > 0)
+                ? { label: bd.customDiscountLabel || 'Custom Discount', type: 'fixed' }
+                : null;
+            return {
+                name:              (evt && evt.name) || ('Event ' + (idx + 1)),
+                total,
+                deposit:           Math.round(total * 0.5),
+                balance:           total - Math.round(total * 0.5),
+                guestCount:        evt && evt.guestCount,
+                hours:             evt && evt.hours,
+                isSmallGroup:      bd.base === 395,
+                packageType:       bd.package > 0 ? 'fullbar' : 'beerwine',
+                glassware:         glasswareMode,
+                cocktailCount:     bd.cocktails ? Math.round(bd.cocktails / 125) : 0,
+                drinkBigIce:       !!iceLabel,
+                iceCount:          iceMatch ? parseInt(iceMatch[1]) : 0,
+                promoCode:         null,
+                customPromo:       customPromo,
+                customPromoAmount: customPromo ? String(bd.customDiscount) : null,
+            };
+        }
+
+        // Fetch lead + quote from Supabase and seed localStorage so the existing
+        // render flow works. Returns true on success.
+        async function loadFromSupabase(leadIdParam, quoteIdParam) {
+            const SUPABASE_URL      = 'https://bixyltkdymoqjipaiujk.supabase.co';
+            const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJpeHlsdGtkeW1vcWppcGFpdWprIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM3OTY0MTMsImV4cCI6MjA4OTM3MjQxM30.xqaK35aar9lSweeTA8ydeW8WT8ZiOrOl5NFa957MkjU';
+            const headers = { 'Authorization': 'Bearer ' + SUPABASE_ANON_KEY, 'apikey': SUPABASE_ANON_KEY };
+            try {
+                const [leadRes, quoteRes] = await Promise.all([
+                    fetch(SUPABASE_URL + '/rest/v1/leads?id=eq.' + encodeURIComponent(leadIdParam) + '&select=*', { headers }),
+                    fetch(SUPABASE_URL + '/rest/v1/quotes?id=eq.' + encodeURIComponent(quoteIdParam) + '&select=*', { headers }),
+                ]);
+                if (!leadRes.ok || !quoteRes.ok) return false;
+                const leadRows  = await leadRes.json();
+                const quoteRows = await quoteRes.json();
+                if (!Array.isArray(leadRows) || leadRows.length === 0) return false;
+                if (!Array.isArray(quoteRows) || quoteRows.length === 0) return false;
+                const lead  = leadRows[0];
+                const quote = quoteRows[0];
+                const bd = quote.breakdown;
+                const isMulti = Array.isArray(bd) && bd.length > 1;
+                const total   = quote.total   || 0;
+                const deposit = quote.deposit ?? Math.round(total * 0.5);
+                const balance = quote.balance ?? (total - deposit);
+
+                const quoteNotes = isMulti
+                    ? bd.map(function(evt) {
+                        const eventBreakdown = (evt && evt.bd) || {};
+                        return eventBreakdown.clientNotes || (evt && evt._config && evt._config.clientNotes) || '';
+                    }).filter(Boolean).join('\n\n')
+                    : ((bd && bd.clientNotes) || (bd && bd._config && bd._config.clientNotes) || '');
+
+                const contractData = {
+                    leadId:            lead.id,
+                    clientName:        lead.name || '',
+                    clientEmail:       lead.email || '',
+                    clientPhone:       lead.phone || '',
+                    eventDate:         lead.event_date || '',
+                    eventType:         lead.event_type || '',
+                    venueName:         lead.venue_name || '',
+                    venueContactName:  lead.venue_contact_name || '',
+                    venueContactPhone: lead.venue_contact_phone || '',
+                    venueAddress:      lead.venue_address || '',
+                    startTime:         lead.service_start_time || '',
+                    endTime:           lead.service_end_time || '',
+                    guestCount:        lead.guest_count ?? quote.guest_count ?? '',
+                    serviceHours:      quote.hours ?? 4,
+                    quoteNotes,
+                };
+
+                const quoteDataLocal = isMulti
+                    ? {
+                        isMultiEvent: true,
+                        numEvents: bd.length,
+                        combinedTotal: total,
+                        total, deposit, balance,
+                        guestCount: quote.guest_count,
+                        hours: quote.hours,
+                        promoCode: quote.promo_code,
+                        events: bd.map(evtFromBreakdown),
+                      }
+                    : {
+                        total, deposit, balance,
+                        guestCount: quote.guest_count,
+                        hours: quote.hours,
+                        breakdown: bd,
+                        promoCode: quote.promo_code,
+                      };
+
+                localStorage.setItem('513sips_contract_data', JSON.stringify(contractData));
+                localStorage.setItem('513sips_quote', JSON.stringify(quoteDataLocal));
+                leadId = lead.id;
+                return true;
+            } catch (err) {
+                console.error('Failed to load from Supabase', err);
+                return false;
+            }
+        }
+
+        // Load quote data from calculator
+        document.addEventListener('DOMContentLoaded', async function() {
+            const _params = new URLSearchParams(window.location.search);
+            // Preferred path (tiny URL, fresh data): ?lead_id=X&quote_id=Y
+            const _leadIdParam  = _params.get('lead_id');
+            const _quoteIdParam = _params.get('quote_id');
+            if (_leadIdParam && _quoteIdParam) {
+                // Clear stale localStorage so a prior session can't leak through
+                try {
+                    localStorage.removeItem('513sips_contract_data');
+                    localStorage.removeItem('513sips_quote');
+                } catch (e) { /* ignore */ }
+                await loadFromSupabase(_leadIdParam, _quoteIdParam);
+            }
+
+            // Cross-origin fix (legacy): Books app (egady513.github.io) can't write to our localStorage,
+            // so it passes data via URL param instead. Seed localStorage here so existing logic works.
+            const _booksParam = _params.get('booksData');
+            if (_booksParam) {
+                try {
+                    const _bd = JSON.parse(_booksParam);
+                    if (_bd.contractData) {
+                        localStorage.setItem('513sips_contract_data', JSON.stringify(_bd.contractData));
+                        leadId = _bd.contractData.leadId;
+                    }
+                    if (_bd.quoteData) localStorage.setItem('513sips_quote', JSON.stringify(_bd.quoteData));
+                } catch(e) { console.error('Error parsing booksData URL param', e); }
+            }
+
+            // Sprint 4: Check for 513sips_contract_data first (from Books app)
+            const contractDataRaw = localStorage.getItem('513sips_contract_data');
+            if (contractDataRaw) {
+                try {
+                    const cd = JSON.parse(contractDataRaw);
+                    if (cd.clientName) document.getElementById('clientName').value = cd.clientName;
+                    if (cd.clientEmail) document.getElementById('clientEmail').value = cd.clientEmail;
+                    if (cd.clientPhone) document.getElementById('clientPhone').value = cd.clientPhone;
+                    if (cd.eventDate) document.getElementById('eventDate').value = cd.eventDate;
+                    if (cd.eventType) document.getElementById('eventType').value = cd.eventType;
+                    if (cd.venueName) document.getElementById('venueName').value = cd.venueName;
+                    if (cd.venueContactName || cd.venueContactPhone) {
+                        document.getElementById('venueContact').value = cd.venueContactName || '';
+                        if (cd.venuePhone) document.getElementById('venuePhone').value = cd.venuePhone;
+                        else if (cd.venueContactPhone) document.getElementById('venuePhone').value = cd.venueContactPhone;
+                    }
+                    if (cd.venueAddress) document.getElementById('venueAddress').value = cd.venueAddress;
+                    if (cd.startTime) document.getElementById('startTime').value = cd.startTime;
+                    if (cd.endTime) document.getElementById('endTime').value = cd.endTime;
+                    if (cd.guestCount) document.getElementById('guestCount').value = cd.guestCount;
+                    if (cd.serviceHours) document.getElementById('serviceHours').value = cd.serviceHours;
+                    const quoteNotes = cd.quoteNotes || cd.addonNotes || '';
+                    if (quoteNotes) document.getElementById('contractNotes').value = quoteNotes;
+                } catch(e) { console.error('Error parsing contract data', e); }
+            }
+
+            const stored = localStorage.getItem('513sips_quote');
+
+            if (!stored) {
+                document.getElementById('noQuoteWarning').style.display = 'block';
+                document.getElementById('quoteSummary').style.display = 'none';
+                return;
+            }
+
+            try {
+                quoteData = JSON.parse(stored);
+                populateQuoteSummary();
+            } catch (e) {
+                console.error('Error parsing quote data:', e);
+                document.getElementById('noQuoteWarning').style.display = 'block';
+            }
+        });
+        
+        function populateQuoteSummary() {
+            if (!quoteData) return;
+
+            // Resolve totals — multi-event uses combinedTotal
+            const displayTotalAmt = quoteData.isMultiEvent ? (quoteData.combinedTotal || 0) : (quoteData.total || 0);
+
+            // Set main totals
+            document.getElementById('displayTotal').textContent = '$' + displayTotalAmt.toLocaleString();
+            document.getElementById('displayDeposit').textContent = '$' + (quoteData.deposit || 0).toLocaleString();
+            document.getElementById('displayBalance').textContent = '$' + (quoteData.balance || 0).toLocaleString();
+
+            // Multi-event: update label
+            if (quoteData.isMultiEvent) {
+                const totalLabel = document.querySelector('#quoteSummary .quote-row.total span:first-child');
+                if (totalLabel) totalLabel.textContent = `${quoteData.numEvents}-Event Package Total:`;
+            }
+
+            // Set form fields from quote data
+            if (!quoteData.isMultiEvent) {
+                if (quoteData.guestCount) document.getElementById('guestCount').value = quoteData.guestCount;
+                if (quoteData.hours) document.getElementById('serviceHours').value = quoteData.hours;
+            } else if (quoteData.events && quoteData.events.length > 0) {
+                // Use first event's data for the form fields
+                document.getElementById('guestCount').value = quoteData.events[0].guestCount || 50;
+                document.getElementById('serviceHours').value = quoteData.events[0].hours || 3;
+            }
+
+            // Build breakdown display
+            const container = document.getElementById('breakdownContainer');
+            let breakdownHTML = '';
+
+            // ── MULTI-EVENT BREAKDOWN ──────────────────────────────────────────
+            if (quoteData.isMultiEvent && quoteData.events) {
+                quoteData.events.forEach((evt) => {
+                    breakdownHTML += `<div class="breakdown-section" style="border-left: 3px solid #d4af37; margin-bottom: 12px;">`;
+                    breakdownHTML += `<div class="breakdown-title" style="color: #d4af37;">${evt.name}</div>`;
+
+                    // Services
+                    const baseLabel = evt.isSmallGroup ? 'Small Group Base (2 hrs)' : 'Base Package (3 hrs)';
+                    breakdownHTML += `<div class="breakdown-item"><span>${baseLabel}</span></div>`;
+                    if (evt.packageType === 'fullbar') breakdownHTML += `<div class="breakdown-item"><span>Full Bar Service</span></div>`;
+                    if (evt.glassware === 'glass') breakdownHTML += `<div class="breakdown-item"><span>Glassware Service</span></div>`;
+                    if (evt.cocktailCount > 0) breakdownHTML += `<div class="breakdown-item"><span>${evt.cocktailCount} Signature Cocktail${evt.cocktailCount > 1 ? 's' : ''}</span></div>`;
+                    if (evt.drinkBigIce && evt.iceCount > 0) breakdownHTML += `<div class="breakdown-item addon"><span>DrinkBigIce™ Custom Logo Ice (${evt.iceCount} cubes)</span></div>`;
+
+                    // Promos
+                    if (evt.promoCode) {
+                        breakdownHTML += `<div class="breakdown-item" style="color:#2e7d32;"><span>Promo: ${evt.promoCode}</span></div>`;
+                    }
+                    if (evt.customPromo) {
+                        const cpAmt = evt.customPromo.type === 'percent'
+                            ? `${evt.customPromoAmount}% off`
+                            : `$${parseFloat(evt.customPromoAmount).toLocaleString()} off`;
+                        breakdownHTML += `<div class="breakdown-item" style="color:#2e7d32;"><span>${evt.customPromo.label}</span><span>${cpAmt}</span></div>`;
+                    }
+
+                    breakdownHTML += `<div class="breakdown-item" style="font-weight:bold; border-top: 1px solid #ddd; margin-top: 6px; padding-top: 6px;"><span>Event Total</span><span>$${evt.total.toLocaleString()}</span></div>`;
+                    breakdownHTML += `</div>`;
+                });
+
+                // Auto-populate package details for contract
+                document.getElementById('packageDetails').value = quoteData.events
+                    .map(e => `${e.name}: $${e.total.toLocaleString()}`)
+                    .join('\n');
+
+                container.innerHTML = breakdownHTML;
+                return; // skip single-event breakdown below
+            }
+
+            // ── SINGLE-EVENT BREAKDOWN (existing logic) ───────────────────────
+            if (quoteData.breakdown) {
+                const bd = quoteData.breakdown;
+                
+                breakdownHTML += '<div class="breakdown-section">';
+                breakdownHTML += '<div class="breakdown-title">Base Package</div>';
+
+                // Base label: account for small group or 2hr standard
+                let baseLabel = 'Base Package (1 bartender, first 3 hrs, up to 50 guests)';
+                if (quoteData.isSmallGroup) {
+                    baseLabel = 'Base - Small Group (1 bartender, first 2 hrs, up to 20 guests)';
+                } else if (quoteData.hours && quoteData.hours < 3) {
+                    baseLabel = 'Base Package (1 bartender, first 3 hrs, up to 50 guests)';
+                }
+                breakdownHTML += `<div class="breakdown-item"><span>${baseLabel}</span><span>$${(bd.base || 650).toLocaleString()}</span></div>`;
+
+                if (bd.staffing > 0) {
+                    const count = typeof bd.bartenders === 'number' ? Math.max(0, bd.bartenders - 1) : null;
+                    const detail = count !== null ? ` (${plural(count, 'additional bartender')}, first ${baseHoursOf(bd)} hrs)` : '';
+                    breakdownHTML += `<div class="breakdown-item"><span>Additional Bartenders${detail}</span><span>+$${bd.staffing.toLocaleString()}</span></div>`;
+                }
+                if (bd.volume > 0) {
+                    breakdownHTML += `<div class="breakdown-item"><span>High-Volume Adjustment</span><span>+$${bd.volume.toLocaleString()}</span></div>`;
+                }
+                if (bd.multiBarOperations > 0) {
+                    breakdownHTML += `<div class="breakdown-item"><span>Large Event &amp; Multi-Bar Operations</span><span>+$${bd.multiBarOperations.toLocaleString()}</span></div>`;
+                }
+                const extendedService = extendedServiceLine(bd);
+                if (extendedService) breakdownHTML += `<div class="breakdown-item"><span>${extendedService.label}${extendedService.detail}</span><span>+$${extendedService.amount.toLocaleString()}</span></div>`;
+                if (bd.twoHrReduction > 0) {
+                    breakdownHTML += `<div class="breakdown-item" style="color: #2e7d32;"><span>2-Hour Service</span><span>-$${bd.twoHrReduction.toLocaleString()}</span></div>`;
+                }
+                if (bd.travel > 0) {
+                    breakdownHTML += `<div class="breakdown-item"><span>Travel/Mileage</span><span>+$${bd.travel.toLocaleString()}</span></div>`;
+                }
+                if (bd.package > 0) {
+                    const fullBarBd = { ...bd, bartenders: bd.fullBarStaffCount || bd.bartenders };
+                    breakdownHTML += `<div class="breakdown-item"><span>Full Bar Service${qtyDetail(fullBarBd)}</span><span>+$${bd.package.toLocaleString()}</span></div>`;
+                }
+                if (bd.glassware > 0) {
+                    breakdownHTML += `<div class="breakdown-item"><span>Glassware</span><span>+$${bd.glassware.toLocaleString()}</span></div>`;
+                }
+                if (bd.cocktails > 0) {
+                    breakdownHTML += `<div class="breakdown-item"><span>Signature Cocktails (${signatureCocktailCount(bd)})</span><span>+$${bd.cocktails.toLocaleString()}</span></div>`;
+                }
+                if (bd.houseCocktails > 0) {
+                    breakdownHTML += `<div class="breakdown-item"><span>House Featured Cocktails (${houseCocktailCount(bd)})</span><span>+$${bd.houseCocktails.toLocaleString()}</span></div>`;
+                }
+                if (bd.cocktailProgram > 0) {
+                    const label = bd.featuredCocktailCount >= 8 ? 'Extensive Featured Cocktail Program' : 'Expanded Featured Cocktail Program';
+                    breakdownHTML += `<div class="breakdown-item"><span>${label}</span><span>+$${bd.cocktailProgram.toLocaleString()}</span></div>`;
+                }
+                if (bd.addons > 0 && bd.addonsList && bd.addonsList.length > 0) {
+                    breakdownHTML += '<div class="breakdown-title" style="margin-top: 15px;">Add-Ons</div>';
+                    addonItemsFor(bd).forEach(addon => {
+                        breakdownHTML += `<div class="breakdown-item addon"><span>${addon.name}</span><span>${addonPriceLabel(addon.amount)}</span></div>`;
+                    });
+                }
+                if (bd.customItems && bd.customItems.length > 0) {
+                    if (!(bd.addons > 0 && bd.addonsList && bd.addonsList.length > 0)) {
+                        breakdownHTML += '<div class="breakdown-title" style="margin-top: 15px;">Add-Ons</div>';
+                    }
+                    bd.customItems.forEach(item => {
+                        breakdownHTML += `<div class="breakdown-item addon"><span>${item.name}</span><span>+$${item.price.toLocaleString()}</span></div>`;
+                    });
+                }
+
+                // Promo line items — individual rows (new system)
+                if (quoteData.promos && quoteData.promos.length > 0) {
+                    breakdownHTML += '<div class="breakdown-title" style="margin-top: 15px;">Adjustments</div>';
+                    const promoSubtotal = quoteData.subtotal || (quoteData.total + (bd.discount || 0));
+                    quoteData.promos.forEach(p => {
+                        const val = p.type === 'percent'
+                            ? Math.round(promoSubtotal * (p.amount / 100))
+                            : p.amount;
+                        const sign = p.dir === 'subtract' ? '-' : '+';
+                        breakdownHTML += `<div class="breakdown-item" style="color: #2e7d32;"><span>${p.label}</span><span>${sign}$${val.toLocaleString()}</span></div>`;
+                    });
+                } else if (bd.discount > 0) {
+                    // Fallback for legacy quotes
+                    breakdownHTML += `<div class="breakdown-item" style="color: #2e7d32;"><span>Discount</span><span>-$${bd.discount.toLocaleString()}</span></div>`;
+                }
+
+                breakdownHTML += '</div>';
+                
+                // Auto-populate package details
+                const packageDetails = buildPackageDescription(bd);
+                document.getElementById('packageDetails').value = packageDetails;
+            }
+            
+            container.innerHTML = breakdownHTML;
+        }
+        
+        function buildPackageDescription(breakdown) {
+            let parts = [];
+            
+            if (breakdown.package > 0) {
+                parts.push('Full Bar Package');
+            } else {
+                parts.push('Standard Bar Package');
+            }
+            
+            if (breakdown.cocktails > 0) {
+                const cocktailCount = signatureCocktailCount(breakdown);
+                parts.push(`${cocktailCount} Signature Cocktail${cocktailCount > 1 ? 's' : ''}`);
+            }
+
+            if (breakdown.houseCocktails > 0) {
+                const cocktailCount = houseCocktailCount(breakdown);
+                parts.push(`${cocktailCount} House Featured Cocktail${cocktailCount > 1 ? 's' : ''}`);
+            }
+
+            if (breakdown.cocktailProgram > 0) {
+                parts.push(breakdown.featuredCocktailCount >= 8
+                    ? 'Extensive Featured Cocktail Program'
+                    : 'Expanded Featured Cocktail Program');
+            }
+
+            if (breakdown.multiBarOperations > 0) {
+                parts.push('Large Event & Multi-Bar Operations');
+            }
+            
+            if (breakdown.glassware > 0) {
+                parts.push('Glassware Service');
+            }
+            
+            if (breakdown.addonsList && breakdown.addonsList.length > 0) {
+                parts.push(...breakdown.addonsList);
+            }
+            if (breakdown.customItems && breakdown.customItems.length > 0) {
+                breakdown.customItems.forEach(item => parts.push(item.name));
+            }
+
+            return parts.join(', ');
+        }
+
+        function procurementAmountForGuests(guests) {
+            if (guests <= 99) return 175;
+            if (guests <= 150) return 275;
+            if (guests <= 199) return 350;
+            if (guests <= 250) return 400;
+            return null;
+        }
+
+        function legacyAddonAmount(label, breakdown) {
+            if (label === 'Alcohol Procurement & Return Service') {
+                const guests = Number(quoteData && quoteData.guestCount) || Number(breakdown && breakdown._config && breakdown._config.guestCount) || 0;
+                return procurementAmountForGuests(guests);
+            }
+            if (label === 'Coffee Service') return 100;
+            if (label === 'Arch Backdrop') return 350;
+            if (label === 'Tent Rental') return 250;
+            if (label === 'Peak Season') return 100;
+            const iceMatch = typeof label === 'string' ? label.match(/^Custom Logo Ice \((\d+) cubes\)$/) : null;
+            if (iceMatch) return Number(iceMatch[1]) * 2.50;
+            return null;
+        }
+
+        function addonItemsFor(breakdown) {
+            if (Array.isArray(breakdown.addonItems) && breakdown.addonItems.length > 0) {
+                return breakdown.addonItems;
+            }
+            const labels = Array.isArray(breakdown.addonsList) ? breakdown.addonsList : [];
+            return labels.map(function(name) {
+                return { name, amount: legacyAddonAmount(name, breakdown) };
+            });
+        }
+
+        function addonPriceLabel(amount) {
+            return typeof amount === 'number' && Number.isFinite(amount)
+                ? '+$' + amount.toLocaleString(undefined, { minimumFractionDigits: amount % 1 ? 2 : 0, maximumFractionDigits: 2 })
+                : 'Price included in total';
+        }
+        
+        function generateContract() {
+            if (!quoteData) {
+                alert('Please generate a quote from the pricing calculator first.');
+                return;
+            }
+            
+            // Format date as mm/dd/yyyy
+            const today = new Date();
+            const formattedDate = (today.getMonth() + 1).toString().padStart(2, '0') + '/' + 
+                                  today.getDate().toString().padStart(2, '0') + '/' + 
+                                  today.getFullYear();
+            
+            // Fill in contract fields
+            document.getElementById('contractDate').textContent = formattedDate;
+            document.getElementById('contractClient').textContent = document.getElementById('clientName').value;
+            if (quoteData.isMultiEvent) {
+                document.getElementById('contractEventDate').textContent = document.getElementById('eventDate').value || 'See event breakdown below';
+                document.getElementById('contractEventType').textContent = `${quoteData.numEvents}-Event Package — ` + (document.getElementById('eventType').value || 'Multiple Events');
+            } else {
+                document.getElementById('contractEventDate').textContent = document.getElementById('eventDate').value;
+                document.getElementById('contractEventType').textContent = document.getElementById('eventType').value;
+            }
+            document.getElementById('contractVenue').textContent = document.getElementById('venueName').value;
+            document.getElementById('contractVenueContact').textContent = document.getElementById('venueContact').value;
+            document.getElementById('contractVenuePhone').textContent = document.getElementById('venuePhone').value || '___';
+            document.getElementById('contractAddress').textContent = document.getElementById('venueAddress').value;
+            document.getElementById('contractStart').textContent = document.getElementById('startTime').value;
+            document.getElementById('contractEnd').textContent = document.getElementById('endTime').value;
+            document.getElementById('contractGuests').textContent = document.getElementById('guestCount').value;
+            document.getElementById('contractHours').textContent = document.getElementById('serviceHours').value;
+            document.getElementById('contractPackage').textContent = document.getElementById('packageDetails').value;
+            const contractNotes = document.getElementById('contractNotes').value.trim();
+            document.getElementById('contractNotesText').textContent = contractNotes;
+            document.getElementById('contractNotesRow').style.display = contractNotes ? 'block' : 'none';
+            
+            // Fill in pricing — multi-event uses combinedTotal
+            const contractTotalAmt = quoteData.isMultiEvent ? (quoteData.combinedTotal || 0) : (quoteData.total || 0);
+            document.getElementById('contractTotal').textContent = '$' + contractTotalAmt.toLocaleString();
+            document.getElementById('contractDeposit').textContent = '$' + (quoteData.deposit || 0).toLocaleString();
+            document.getElementById('contractBalance').textContent = '$' + (quoteData.balance || 0).toLocaleString();
+
+            // Update payment section label for multi-event
+            if (quoteData.isMultiEvent) {
+                const totalLi = document.querySelector('#contractPreview h3:nth-of-type(4) + ul li:first-child strong');
+                if (totalLi) totalLi.textContent = `${quoteData.numEvents}-Event Package Total:`;
+            }
+
+            // Fill in signatures
+            document.getElementById('sigClientName').textContent = document.getElementById('clientName').value;
+            document.getElementById('sigClientEmail').textContent = document.getElementById('clientEmail').value;
+            document.getElementById('sigClientPhone').textContent = document.getElementById('clientPhone').value;
+
+            // ── MULTI-EVENT PRICING BREAKDOWN ─────────────────────────────────
+            if (quoteData.isMultiEvent && quoteData.events) {
+                let breakdownHTML = '';
+                quoteData.events.forEach((evt) => {
+                    breakdownHTML += `<div style="margin-bottom: 16px; padding: 12px; border: 2px solid #d4af37; border-radius: 6px;">`;
+                    breakdownHTML += `<p style="margin: 0 0 8px; font-weight: bold; color: #0f3460; font-size: 1.05em;">${evt.name}</p>`;
+                    breakdownHTML += `<ul style="margin: 0; padding-left: 20px;">`;
+
+                    const baseLabel = evt.isSmallGroup ? 'Base — Small Group (2 hrs, up to 20 guests)' : 'Base Package (3 hrs, up to 50 guests)';
+                    breakdownHTML += `<li>${baseLabel}</li>`;
+                    if (evt.packageType === 'fullbar') breakdownHTML += `<li>Full Bar Service</li>`;
+                    if (evt.glassware === 'glass') breakdownHTML += `<li>Glassware Service</li>`;
+                    if (evt.cocktailCount > 0) breakdownHTML += `<li>${evt.cocktailCount} Signature Cocktail${evt.cocktailCount > 1 ? 's' : ''}</li>`;
+                    if (evt.drinkBigIce && evt.iceCount > 0) breakdownHTML += `<li>DrinkBigIce™ Custom Logo Ice (${evt.iceCount} cubes)</li>`;
+                    if (evt.promoCode) breakdownHTML += `<li style="color:#2e7d32;">Promo Applied: ${evt.promoCode}</li>`;
+                    if (evt.customPromo) {
+                        const cpAmt = evt.customPromo.type === 'percent'
+                            ? `${evt.customPromoAmount}% off`
+                            : `$${parseFloat(evt.customPromoAmount).toLocaleString()} off`;
+                        breakdownHTML += `<li style="color:#2e7d32;">${evt.customPromo.label}: ${cpAmt}</li>`;
+                    }
+
+                    breakdownHTML += `</ul>`;
+                    breakdownHTML += `<p style="margin: 8px 0 0; font-weight: bold; text-align: right;">Event Total: $${evt.total.toLocaleString()}</p>`;
+                    breakdownHTML += `</div>`;
+                });
+
+                breakdownHTML += `<p style="font-weight: bold; font-size: 1.15em; text-align: right; border-top: 2px solid #000; padding-top: 10px; margin-top: 8px;">${quoteData.numEvents}-Event Package Total: $${contractTotalAmt.toLocaleString()}</p>`;
+                document.getElementById('contractBreakdown').innerHTML = breakdownHTML;
+            }
+            // ── SINGLE-EVENT PRICING BREAKDOWN (existing logic) ───────────────
+            else if (quoteData.breakdown) {
+                const bd = quoteData.breakdown;
+                let breakdownHTML = '<ul>';
+                let baseContractLabel = quoteData.isSmallGroup
+                    ? 'Base - Small Group (1 bartender, first 2 hrs, up to 20 guests)'
+                    : 'Base Package (1 bartender, first 3 hrs, up to 50 guests)';
+                breakdownHTML += `<li>${baseContractLabel}: $${(bd.base || 650).toLocaleString()}</li>`;
+
+                if (bd.staffing > 0) {
+                    const count = typeof bd.bartenders === 'number' ? Math.max(0, bd.bartenders - 1) : null;
+                    const detail = count !== null ? ` (${plural(count, 'additional bartender')}, first ${baseHoursOf(bd)} hrs)` : '';
+                    breakdownHTML += `<li>Additional Bartenders${detail}: $${bd.staffing.toLocaleString()}</li>`;
+                }
+                if (bd.volume > 0) breakdownHTML += `<li>High-Volume Adjustment: $${bd.volume.toLocaleString()}</li>`;
+                if (bd.multiBarOperations > 0) breakdownHTML += `<li>Large Event &amp; Multi-Bar Operations: $${bd.multiBarOperations.toLocaleString()}</li>`;
+                const extendedService = extendedServiceLine(bd);
+                if (extendedService) breakdownHTML += `<li>${extendedService.label}${extendedService.detail}: $${extendedService.amount.toLocaleString()}</li>`;
+                if (bd.twoHrReduction > 0) breakdownHTML += `<li style="color: #2e7d32;">2-Hour Service: -$${bd.twoHrReduction.toLocaleString()}</li>`;
+                if (bd.travel > 0) breakdownHTML += `<li>Travel/Mileage: $${bd.travel.toLocaleString()}</li>`;
+                if (bd.package > 0) breakdownHTML += `<li>Full Bar Service${qtyDetail({ ...bd, bartenders: bd.fullBarStaffCount || bd.bartenders })}: $${bd.package.toLocaleString()}</li>`;
+                if (bd.glassware > 0) breakdownHTML += `<li>Glassware: $${bd.glassware.toLocaleString()}</li>`;
+                if (bd.cocktails > 0) breakdownHTML += `<li>Signature Cocktails (${signatureCocktailCount(bd)}): $${bd.cocktails.toLocaleString()}</li>`;
+                if (bd.houseCocktails > 0) breakdownHTML += `<li>House Featured Cocktails (${houseCocktailCount(bd)}): $${bd.houseCocktails.toLocaleString()}</li>`;
+                if (bd.cocktailProgram > 0) breakdownHTML += `<li>${bd.featuredCocktailCount >= 8 ? 'Extensive' : 'Expanded'} Featured Cocktail Program: $${bd.cocktailProgram.toLocaleString()}</li>`;
+                if (bd.addons > 0 && bd.addonsList) {
+                    addonItemsFor(bd).forEach(addon => {
+                        breakdownHTML += `<li>${addon.name}: ${addonPriceLabel(addon.amount)}</li>`;
+                    });
+                }
+                if (bd.customItems && bd.customItems.length > 0) {
+                    bd.customItems.forEach(item => {
+                        breakdownHTML += `<li>${item.name}: $${item.price.toLocaleString()}</li>`;
+                    });
+                }
+                if (quoteData.promos && quoteData.promos.length > 0) {
+                    const promoSubtotal = quoteData.subtotal || (quoteData.total + (bd.discount || 0));
+                    quoteData.promos.forEach(p => {
+                        const val = p.type === 'percent'
+                            ? Math.round(promoSubtotal * (p.amount / 100))
+                            : p.amount;
+                        const sign = p.dir === 'subtract' ? '-' : '+';
+                        breakdownHTML += `<li style="color: #2e7d32;">${p.label}: ${sign}$${val.toLocaleString()}</li>`;
+                    });
+                } else if (bd.discount > 0) {
+                    breakdownHTML += `<li style="color: #2e7d32;">Discount: -$${bd.discount.toLocaleString()}</li>`;
+                }
+
+                breakdownHTML += '</ul>';
+                document.getElementById('contractBreakdown').innerHTML = breakdownHTML;
+            }
+            
+            // Show contract
+            document.querySelector('.container.no-print').style.display = 'none';
+            document.getElementById('contractPreview').style.display = 'block';
+            
+            // Scroll to top
+            window.scrollTo(0, 0);
+        }
+
+        async function saveContractToBooks() {
+            // Check if contract is generated
+            if (!quoteData) {
+                alert('Please generate a contract first.');
+                return;
+            }
+
+            if (!leadId) {
+                alert('Lead ID not found. Please navigate here from the Books app.');
+                return;
+            }
+
+            const btn = document.querySelector('button:contains("Save to Books")') ||
+                        Array.from(document.querySelectorAll('button')).find(b => b.textContent.includes('Save to Books'));
+            const statusEl = document.getElementById('booksSaveStatus');
+
+            if (btn) {
+                btn.disabled = true;
+                btn.textContent = '⏳ Saving...';
+            }
+
+            try {
+                // Generate PDF from contract preview
+                const contractElement = document.getElementById('contractPreview');
+                const opt = {
+                    margin: 10,
+                    filename: `contract_${document.getElementById('clientName').value.replace(/\s+/g, '_')}.pdf`,
+                    image: { type: 'jpeg', quality: 0.98 },
+                    html2canvas: { scale: 2 },
+                    jsPDF: { orientation: 'portrait', unit: 'mm', format: 'a4' }
+                };
+
+                // Generate PDF
+                const pdf = await html2pdf().set(opt).from(contractElement).outputPdf('datauristring');
+
+                // Extract base64 from data URI
+                const base64PDF = pdf.split(',')[1];
+
+                // Call Supabase Edge Function
+                const SUPABASE_URL = 'https://bixyltkdymoqjipaiujk.supabase.co';
+                const response = await fetch(`${SUPABASE_URL}/functions/v1/save-contract`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        leadId: leadId,
+                        contractPDF: base64PDF,
+                        isUnsigned: true,
+                    }),
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Save failed');
+                }
+
+                const result = await response.json();
+
+                // Show success message
+                statusEl.style.display = 'block';
+                statusEl.style.background = 'rgba(34,197,94,0.15)';
+                statusEl.style.border = '1px solid rgba(34,197,94,0.3)';
+                statusEl.style.color = '#86efac';
+                statusEl.innerHTML = `✅ Saved! <a href="https://egady513.github.io/513Sips-Books/leads" target="_blank" style="color:#D4AF37; font-weight:600;">Open Books →</a>`;
+
+                if (btn) {
+                    btn.textContent = '✅ Saved to Books';
+                }
+            } catch (err) {
+                console.error('Save error:', err);
+                statusEl.style.display = 'block';
+                statusEl.style.background = 'rgba(239,68,68,0.15)';
+                statusEl.style.border = '1px solid rgba(239,68,68,0.3)';
+                statusEl.style.color = '#fca5a5';
+                statusEl.textContent = `❌ Save failed: ${err.message}`;
+                if (btn) {
+                    btn.disabled = false;
+                    btn.textContent = '📚 Save to Books';
+                }
+            }
+        }
+    </script>
+</body>
+</html>
