@@ -3,11 +3,7 @@ import { Link, useParams } from 'react-router-dom'
 import { Card } from '../components/ui/Card'
 import StatusBadge from '../components/ui/StatusBadge'
 import { useQuote } from '../hooks/useQuotes'
-
-interface StoredLine {
-  label: string
-  amount: number
-}
+import { storedEventSections, storedLines } from '../lib/pricing'
 
 function money(value: number): string {
   return value.toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 })
@@ -17,62 +13,6 @@ function record(value: unknown): Record<string, unknown> | null {
   return value && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : null
 }
 
-function numberValue(source: Record<string, unknown>, key: string): number {
-  return typeof source[key] === 'number' ? source[key] : 0
-}
-
-function storedLines(breakdown: unknown): StoredLine[] {
-  const bd = record(breakdown)
-  if (!bd) return []
-  const engine = record(bd.engine)
-  const result = engine ? record(engine.result) : null
-  if (result && Array.isArray(result.lines)) {
-    return result.lines.flatMap((value) => {
-      const line = record(value)
-      return line && typeof line.label === 'string' && typeof line.amount === 'number'
-        ? [{ label: line.label, amount: line.amount }]
-        : []
-    })
-  }
-
-  const lines: StoredLine[] = []
-  const add = (label: string, key: string, negative = false) => {
-    const amount = numberValue(bd, key)
-    if (amount) lines.push({ label, amount: negative ? -amount : amount })
-  }
-  add('Base Package', 'base')
-  add('Additional Bartenders', 'staffing')
-  add('2-Hour Service Reduction', 'twoHrReduction', true)
-  add('Extended Service Hours', 'extraHours')
-  add('Long-Event Premium', 'longEventPremium')
-  add('Full Bar Service', 'package')
-  add('Signature Cocktails', 'cocktails')
-  add('House Featured Cocktails', 'houseCocktails')
-  add('Featured Cocktail Program', 'cocktailProgram')
-  add('High-Volume Event Adjustment', 'volume')
-  add('Large Event & Multi-Bar Operations', 'multiBarOperations')
-  const addonItems = Array.isArray(bd.addonItems) ? bd.addonItems : []
-  if (addonItems.length) {
-    for (const value of addonItems) {
-      const item = record(value)
-      if (item && typeof item.name === 'string' && typeof item.amount === 'number') lines.push({ label: item.name, amount: item.amount })
-    }
-  } else add('Premium Add-Ons', 'addons')
-  add('Premium Glassware', 'glassware')
-  if (bd.glasswareAtCost === true) lines.push({ label: 'Plastic Serviceware (at cost, confirmed later)', amount: 0 })
-  add('Travel Fee', 'travel')
-  const customItems = Array.isArray(bd.customItems) ? bd.customItems : []
-  if (customItems.length) {
-    for (const value of customItems) {
-      const item = record(value)
-      if (item && typeof item.name === 'string' && typeof item.price === 'number') lines.push({ label: item.name, amount: item.price })
-    }
-  } else add('Custom Items', 'customItemsTotal')
-  add('Promo Discount', 'discount', true)
-  const customDiscountLabel = typeof bd.customDiscountLabel === 'string' && bd.customDiscountLabel ? bd.customDiscountLabel : 'Custom Discount'
-  add(customDiscountLabel, 'customDiscount', true)
-  return lines
-}
 
 export default function SavedQuotePage() {
   const { id } = useParams()
@@ -85,6 +25,7 @@ export default function SavedQuotePage() {
 
   const quote = quoteQuery.data
   const lines = storedLines(quote.breakdown)
+  const eventSections = storedEventSections(quote.breakdown)
   const versions = Array.isArray(quote.version_history) ? quote.version_history : []
 
   return (
@@ -105,16 +46,25 @@ export default function SavedQuotePage() {
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
         <Card className="space-y-4">
-          <h2 className="text-lg font-semibold text-gold">Stored line items</h2>
-          {lines.length ? (
+          <h2 className="text-lg font-semibold text-gold">{eventSections.length ? 'Stored events' : 'Stored line items'}</h2>
+          {eventSections.length ? eventSections.map((event, eventIndex) => (
+            <section key={`${event.name}-${eventIndex}`} className="space-y-3 rounded-lg border border-white/10 p-3">
+              <div className="flex justify-between gap-4"><h3 className="font-semibold text-cream">{event.name}</h3><span className="font-semibold text-gold">{money(event.total)}</span></div>
+              {event.lines.length ? (
+                <div className="divide-y divide-white/5">
+                  {event.lines.map((line, index) => <div key={`${line.label}-${index}`} className="flex gap-4 py-2 text-sm"><span className="flex-1 text-cream/65">{line.label}</span><span className={line.amount < 0 ? 'text-success' : 'text-cream'}>{money(line.amount)}</span></div>)}
+                </div>
+              ) : <p className="text-sm text-cream/45">No stored line items are available for this event.</p>}
+            </section>
+          )) : lines.length ? (
             <div className="divide-y divide-white/5 rounded-lg border border-white/10">
               {lines.map((line, index) => <div key={`${line.label}-${index}`} className="flex gap-4 px-3 py-2.5 text-sm"><span className="flex-1 text-cream/65">{line.label}</span><span className={line.amount < 0 ? 'text-success' : 'text-cream'}>{money(line.amount)}</span></div>)}
             </div>
           ) : <p className="text-sm text-cream/45">No stored line-item breakdown is available for this quote.</p>}
           <div className="space-y-2 border-t border-gold-dim pt-4">
-            <div className="flex justify-between text-xl font-bold text-gold"><span>Total</span><span>{money(quote.total)}</span></div>
-            <div className="flex justify-between text-sm text-cream/70"><span>Deposit</span><span>{money(quote.deposit)}</span></div>
-            <div className="flex justify-between text-sm text-cream/70"><span>Balance</span><span>{money(quote.balance)}</span></div>
+            <div className="flex justify-between text-xl font-bold text-gold"><span>{eventSections.length ? 'Combined total' : 'Total'}</span><span>{money(quote.total)}</span></div>
+            <div className="flex justify-between text-sm text-cream/70"><span>{eventSections.length ? 'Combined deposit' : 'Deposit'}</span><span>{money(quote.deposit)}</span></div>
+            <div className="flex justify-between text-sm text-cream/70"><span>{eventSections.length ? 'Combined balance' : 'Balance'}</span><span>{money(quote.balance)}</span></div>
           </div>
         </Card>
 
@@ -127,7 +77,7 @@ export default function SavedQuotePage() {
               <div><dt className="text-xs text-cream/40">Event date</dt><dd className="mt-1 text-cream">{quote.event_date || 'Not set'}</dd></div>
               <div><dt className="text-xs text-cream/40">Guests</dt><dd className="mt-1 text-cream">{quote.guest_count ?? 'Not set'}</dd></div>
               <div><dt className="text-xs text-cream/40">Service</dt><dd className="mt-1 text-cream">{quote.hours ? `${quote.hours} hours` : 'Not set'}{quote.bartenders ? `, ${quote.bartenders} bar staff` : ''}</dd></div>
-              {quote.addon_notes && <div><dt className="text-xs text-cream/40">Quote option</dt><dd className="mt-1 text-cream">{quote.addon_notes}</dd></div>}
+              {quote.addon_notes && <div><dt className="text-xs text-cream/40">{eventSections.length ? 'Events' : 'Quote option'}</dt><dd className="mt-1 whitespace-pre-line text-cream">{quote.addon_notes}</dd></div>}
             </dl>
           </Card>
 
