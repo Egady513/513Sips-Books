@@ -187,10 +187,13 @@ const rows = selectedNames.map(name => {
 for (const row of rows) {
   test(`PDF golden: ${row.fixture.name}`, async () => {
     const actual = buildQuotePdfHtml({ lead: row.lead, quote: row.booksQuote, today })
-    const expected = await readFile(
+    // Git on Windows may check the golden files out with CRLF line endings; the builder always writes LF.
+    const expected = (await readFile(
       new URL(`../../baseline/pdf-golden/${slug(row.fixture.name)}.html`, import.meta.url),
       'utf8',
-    )
+    )).replace(/
+/g, '
+')
     assert.equal(actual, expected)
   })
 
