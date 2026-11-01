@@ -191,9 +191,7 @@ for (const row of rows) {
     const expected = (await readFile(
       new URL(`../../baseline/pdf-golden/${slug(row.fixture.name)}.html`, import.meta.url),
       'utf8',
-    )).replace(/
-/g, '
-')
+    )).replaceAll(String.fromCharCode(13), '')
     assert.equal(actual, expected)
   })
 
