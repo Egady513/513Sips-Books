@@ -94,7 +94,8 @@ function applyActions(window, actions = []) {
 }
 
 async function makeDom(input) {
-  let html = await fs.readFile(estimatorPath, 'utf8');
+  // Windows checkouts may use CRLF; the string markers below assume LF.
+  let html = (await fs.readFile(estimatorPath, 'utf8')).replaceAll(String.fromCharCode(13), '');
   const calculationMarker = "            budgetItems = orderedKeys.map(k => mergedByKey[k]).filter(i => !removedBudgetKeys.has(i.key));\n\n            renderBudget();\n        }";
   const calculationCapture = `            budgetItems = orderedKeys.map(k => mergedByKey[k]).filter(i => !removedBudgetKeys.has(i.key));
 
