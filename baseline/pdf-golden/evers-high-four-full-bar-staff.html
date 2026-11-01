@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><title>513 Sips Quote — PDF Compatibility Client</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&amp;family=Montserrat:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:Montserrat,Arial,sans-serif;color:#2d3748;background:#fff;padding:24px 40px;max-width:720px;margin:0 auto}
+.header{text-align:center;border-bottom:3px solid #b87333;padding-bottom:10px;margin-bottom:4px}
+.brand{font-family:'Cormorant Garamond',Georgia,serif;font-size:32px;color:#b87333;font-weight:700;letter-spacing:3px}
+.doc-date{text-align:center;color:#6b7280;font-size:9px;margin-bottom:12px}
+.section{margin:10px 0}
+.section-title{font-size:9px;text-transform:uppercase;letter-spacing:2px;color:#b87333;border-bottom:1px solid #d4915a;padding-bottom:4px;margin-bottom:8px;font-weight:600}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px 32px}
+.field{display:flex;flex-direction:column}
+.label{font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:1px;margin-bottom:2px}
+.value{font-family:'Cormorant Garamond',Georgia,serif;font-size:15px;font-weight:600;color:#1a1a2e}
+.breakdown{border:1px solid #e0c2a8;border-radius:8px;overflow:hidden;margin-top:8px}
+.quote-context{background:#f5f2eb;border:1px solid #e0c2a8;border-radius:8px;padding:10px 14px;margin-bottom:10px}
+.assumption-title{font-size:9px;text-transform:uppercase;letter-spacing:1.5px;color:#b87333;font-weight:700;margin:0 0 4px}
+.quote-context ul{margin:0 0 0 17px;padding:0;font-size:10px;line-height:1.45;color:#2d3748}
+.brow{display:flex;justify-content:space-between;padding:5px 14px;border-bottom:1px solid #f0e8d0;font-size:12px}
+.brow:last-child{border-bottom:none}
+.brow.accent{color:#9a5728}
+.brow.green{color:#2e7d32}
+.credit-box{background:#f5f2eb;border:1px solid #b87333;border-radius:8px;margin-top:10px;overflow:hidden}
+.credit-row{display:flex;justify-content:space-between;align-items:center;padding:9px 14px;color:#1a1a2e;font-size:12px}
+.credit-row+ .credit-row{border-top:1px solid #e0c2a8}
+.credit-row small{display:block;color:#6b7280;font-size:8px;text-transform:uppercase;letter-spacing:.8px;margin-top:2px}
+.credit-row>span:last-child{font-family:'Cormorant Garamond',Georgia,serif;color:#2e7d32;font-size:18px;font-weight:700}
+.evt-pkg{background:#f5f2eb;border:2px solid #b87333;border-radius:8px;overflow:hidden;margin-bottom:16px}
+.evt-pkg-header{background:#b87333;color:#f5f2eb;font-size:11px;text-transform:uppercase;letter-spacing:2px;font-weight:700;padding:8px 16px}
+.evt-row{display:flex;justify-content:space-between;align-items:center;padding:11px 16px;border-bottom:1px solid #e0c2a8;font-size:14px}
+.evt-row:last-child{border-bottom:none}
+.evt-row .evt-name{font-weight:600;color:#1a1a2e}
+.evt-row .evt-amt{font-weight:700;color:#9a5728;font-size:15px}
+.evt-subtotal{display:flex;justify-content:space-between;padding:10px 16px;background:#eee5dc;font-size:13px;color:#2d3748;border-top:1px solid #e0c2a8}
+.evt-block{border:2px solid #b87333;border-radius:8px;overflow:hidden;margin-bottom:12px}
+.evt-block-header{background:#b87333;display:flex;justify-content:space-between;align-items:center;padding:8px 14px}
+.evt-block-name{color:#f5f2eb;font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase}
+.evt-block-stats{color:#f5f2eb;font-size:10px;font-weight:600;letter-spacing:0.5px}
+.evt-block-total-label{text-align:center;font-size:9px;letter-spacing:2px;color:#6b7280;text-transform:uppercase;padding:6px 16px 0}
+.evt-block-total-amt{text-align:center;font-family:'Cormorant Garamond',Georgia,serif;font-size:20px;color:#1a1a2e;font-weight:700;padding-bottom:6px}
+.totals{border:1px solid #e0c2a8;border-radius:8px;overflow:hidden}
+.trow{display:flex;justify-content:space-between;align-items:center;padding:7px 14px;border-bottom:1px solid #f0e8d0;font-size:12px}
+.trow:last-child{border-bottom:none}
+.trow.total{background:#1a1a2e;color:#f5f2eb;font-weight:600}
+.trow.total span:last-child{font-family:'Cormorant Garamond',Georgia,serif;font-size:22px;color:#d4915a;font-weight:700}
+.footer{text-align:center;margin-top:16px;padding-top:10px;border-top:1px solid #eee;font-size:9px;color:#6b7280}
+@media print{body{padding:16px 32px}}
+</style></head>
+<body>
+<div class="header">
+<div class="brand">513 SIPS</div>
+</div>
+<div class="doc-date">Prepared October 31, 2026 · Valid until January 31, 2027</div>
+
+<div class="section">
+<div class="section-title">Client Information</div>
+<div class="grid">
+  <div class="field"><span class="label">Client Name</span><span class="value">PDF Compatibility Client</span></div>
+  <div class="field"><span class="label">Event Type</span><span class="value">Compatibility Event</span></div>
+  <div class="field"><span class="label">Email</span><span class="value">compat@example.invalid</span></div>
+  <div class="field"><span class="label">Phone</span><span class="value">513-555-0100</span></div>
+</div>
+</div>
+<div class="section">
+<div class="section-title">Event Details</div>
+<div class="grid">
+  <div class="field"><span class="label">Event Date</span><span class="value">Saturday, November 21, 2026</span></div>
+  <div class="field"><span class="label">Venue</span><span class="value">Compatibility Venue</span></div>
+  <div class="field"><span class="label">Guest Count</span><span class="value">200</span></div>
+  <div class="field"><span class="label">Service Hours</span><span class="value">5 hours</span></div>
+  <div class="field"><span class="label">Service Time</span><span class="value">18:00 – 22:00</span></div>
+  <div class="field"><span class="label">Bar Staff</span><span class="value">5 bartenders</span></div>
+  
+</div>
+</div>
+<div class="section">
+<div class="section-title">Pricing</div>
+
+
+<div class="breakdown"><div class="brow"><span>Base Package (1 bartender, first 3 hrs, ≤50 guests)</span><span>$650.00</span></div><div class="brow"><span>Additional Bartenders (4 additional bartenders, first 3 hrs)</span><span>+$900.00</span></div><div class="brow"><span>Extended Service Hours, including long-event premium (+2 hrs × 5 bartenders)</span><span>+$825.00</span></div><div class="brow"><span>Full Bar Service (5 hrs × 4 bartenders)</span><span>+$300.00</span></div><div class="brow accent"><span>Signature Cocktails (3)</span><span>+$375.00</span></div><div class="brow"><span>High-Volume Event Adjustment</span><span>+$250.00</span></div><div class="brow accent"><span>Premium Add-Ons (Alcohol Procurement &amp; Return Service, Custom Logo Ice (150 cubes))</span><span>+$775.00</span></div><div class="brow accent"><span>Premium Glassware</span><span>+$1,806.00</span></div><div class="brow accent"><span>Second Service Station</span><span>+$1,000.00</span></div><div class="brow accent"><span>Bar Equipment &amp; Accessories</span><span>+$250.00</span></div></div>
+
+<div class="totals" style="margin-top:12px">
+  <div class="trow total"><span>Total Investment</span><span>$7,131.00</span></div>
+  <div class="trow"><span>Deposit (50% — due to secure date)</span><span>$3,566.00</span></div>
+  <div class="trow"><span>Balance Due by November 7, 2026</span><span>$3,565.00</span></div>
+</div>
+</div>
+<div class="footer">513 Sips LLC · Cincinnati, OH · 513sips.com · instagram.com/513sips</div>
+<script>window.onload=async()=>{if(document.fonts?.ready)await document.fonts.ready;window.print()}</script>
+</body></html>
