@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '../lib/supabase'
+import type { QuoteRecord } from '../lib/pricing'
 
 export interface QuoteVersion {
   versionNum: number
@@ -20,7 +21,7 @@ export interface Quote {
   hours?: number
   bartenders?: number
   event_date?: string
-  breakdown?: any
+  breakdown?: unknown
   promo_code?: string
   addon_notes?: string
   valid_until?: string   // YYYY-MM-DD — quote expiration date
@@ -40,6 +41,43 @@ export function useRecentQuotes() {
         .limit(50)
       if (error) throw error
       return data as Quote[]
+    },
+  })
+}
+
+export function useQuote(id: string | undefined) {
+  return useQuery({
+    queryKey: ['quotes', id],
+    enabled: Boolean(id),
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('quotes')
+        .select('id, lead_id, total, deposit, balance, guest_count, hours, bartenders, event_date, breakdown, promo_code, addon_notes, valid_until, status, created_at, version_history')
+        .eq('id', id!)
+        .single()
+      if (error) throw error
+      return data as Quote
+    },
+  })
+}
+
+export function useCreatePricedQuote() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (record: QuoteRecord) => {
+      const { data, error } = await supabase
+        .from('quotes')
+        .insert([record])
+        .select()
+        .single()
+      if (error) throw error
+      if (!data) throw new Error('The quote was not returned after saving.')
+      return data as Quote
+    },
+    onSuccess: (quote) => {
+      qc.setQueryData(['quotes', quote.id], quote)
+      qc.invalidateQueries({ queryKey: ['quotes'] })
+      qc.invalidateQueries({ queryKey: ['leads'] })
     },
   })
 }
@@ -126,8 +164,10 @@ export function useUpdateQuote() {
 
       // Check if this is a meaningful update (one of the tracked fields changed)
       const trackedFields = ['total', 'deposit', 'balance', 'status']
+      const updateValues = updates as Record<string, unknown>
+      const currentValues = currentQuote as Record<string, unknown>
       const isSignificantChange = trackedFields.some(
-        field => field in updates && (updates as any)[field] !== (currentQuote as any)[field]
+        field => field in updates && updateValues[field] !== currentValues[field]
       )
 
       let newVersionHistory = currentQuote.version_history || []
