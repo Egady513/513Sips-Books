@@ -34,6 +34,7 @@ export default function App() {
             <Route path="/" element={<DashboardPage />} />
             <Route path="/leads" element={<LeadsPage />} />
             <Route path="/quotes/new" element={<QuotePage />} />
+            <Route path="/quotes/:id/edit" element={<QuotePage />} />
             <Route path="/quotes/:id" element={<SavedQuotePage />} />
             <Route path="/events" element={<EventsPage />} />
             <Route path="/events/:id" element={<EventDetailPage />} />

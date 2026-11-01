@@ -1,12 +1,15 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Plus, Save, Trash2 } from 'lucide-react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import Button from '../components/ui/Button'
 import { Card } from '../components/ui/Card'
-import { useCreatePricedQuote } from '../hooks/useQuotes'
+import { useCreatePricedQuote, useQuote, useUpdatePricedQuote } from '../hooks/useQuotes'
 import {
+  buildQuoteUpdate,
   buildQuoteRecord,
   calculateQuote,
+  inputsFromSavedQuote,
+  planQuoteChange,
   type CustomItem,
   type PromoCode,
   type QuoteInput,
@@ -54,11 +57,17 @@ function Check({ label, checked, onChange }: { label: string; checked: boolean; 
 }
 
 export default function QuotePage() {
+  const { id: editId } = useParams()
   const [params] = useSearchParams()
   const navigate = useNavigate()
   const createQuote = useCreatePricedQuote()
+  const updateQuote = useUpdatePricedQuote()
+  const quoteQuery = useQuote(editId)
+  const isEdit = Boolean(editId)
   const leadId = params.get('lead_id') ?? ''
   const [saveError, setSaveError] = useState('')
+  const [confirmReason, setConfirmReason] = useState<'edit' | 'requote' | null>(null)
+  const [inputReady, setInputReady] = useState(!isEdit)
   const [input, setInput] = useState<QuoteInput>(() => ({
     eventName: params.get('name') ?? '',
     eventDateIso: params.get('date') ?? '',
@@ -89,7 +98,23 @@ export default function QuotePage() {
     customItems: [],
   }))
   const today = localIsoDate()
+  const savedInputs = useMemo(
+    () => quoteQuery.data ? inputsFromSavedQuote(quoteQuery.data) : null,
+    [quoteQuery.data],
+  )
+  useEffect(() => {
+    if (!inputReady && savedInputs?.input) {
+      setInput(savedInputs.input)
+      setInputReady(true)
+    }
+  }, [inputReady, savedInputs])
   const result = useMemo(() => calculateQuote(input, { today }), [input, today])
+  const changePlan = useMemo(
+    () => isEdit && inputReady && quoteQuery.data
+      ? planQuoteChange({ row: quoteQuery.data, newInput: input, today })
+      : null,
+    [input, inputReady, isEdit, quoteQuery.data, today],
+  )
   const set = <Key extends keyof QuoteInput>(key: Key, value: QuoteInput[Key]) => {
     setInput((current) => ({ ...current, [key]: value }))
   }
@@ -115,15 +140,57 @@ export default function QuotePage() {
     }
   }
 
+  async function saveEdit(reason: 'edit' | 'requote') {
+    if (!editId || !quoteQuery.data || !changePlan) return
+    setSaveError('')
+    try {
+      const plan = reason === 'requote'
+        ? planQuoteChange({ row: quoteQuery.data, newInput: input, today, requote: true })
+        : changePlan
+      const updates = buildQuoteUpdate({ row: quoteQuery.data, plan, input, result, today, reason })
+      const saved = await updateQuote.mutateAsync({ id: editId, updates })
+      if (!saved?.id) throw new Error('The quote was not returned after updating.')
+      navigate(`/quotes/${saved.id}`)
+    } catch {
+      setConfirmReason(null)
+      setSaveError('The quote could not be updated. Check your connection and try again.')
+    }
+  }
+
+  if (isEdit && quoteQuery.isLoading) return <p className="text-sm text-cream/60">Loading saved quote...</p>
+  if (isEdit && (quoteQuery.isError || !quoteQuery.data)) {
+    return <Card><p className="text-danger">This quote could not be loaded. Check the link and try again.</p></Card>
+  }
+  if (isEdit && savedInputs && !savedInputs.input) {
+    return (
+      <Card className="space-y-3">
+        <p className="text-danger">{savedInputs.reason}</p>
+        <Link to={`/quotes/${editId}`} className="text-sm text-gold hover:text-gold-light">Back to the saved quote</Link>
+      </Card>
+    )
+  }
+
+  const savedQuote = isEdit ? quoteQuery.data : null
+  const activePlan = confirmReason === 'requote' && savedQuote
+    ? planQuoteChange({ row: savedQuote, newInput: input, today, requote: true })
+    : changePlan
+
   return (
     <div className="mx-auto max-w-7xl space-y-6">
       <div>
         <p className="text-xs uppercase tracking-widest text-gold/70">Books quote</p>
-        <h1 className="mt-1 text-2xl font-bold text-cream">Build a new quote</h1>
-        <p className="mt-1 text-sm text-cream/50">Price one event and save the complete calculator record to Books.</p>
+        <h1 className="mt-1 text-2xl font-bold text-cream">{isEdit ? 'Edit saved quote' : 'Build a new quote'}</h1>
+        <p className="mt-1 text-sm text-cream/50">{isEdit ? 'Change details or choose when to save a new price.' : 'Price one event and save the complete calculator record to Books.'}</p>
       </div>
 
-      {!leadId && (
+      {savedQuote && (
+        <div className="rounded-lg border border-gold/40 bg-gold/10 px-4 py-3">
+          <p className="font-semibold text-cream">Saved price: {money(savedQuote.total)} ({money(savedQuote.deposit)} deposit, {money(savedQuote.balance)} balance)</p>
+          <p className="mt-1 text-xs text-cream/55">This price stays stored until you confirm a new price.</p>
+        </div>
+      )}
+
+      {!isEdit && !leadId && (
         <div className="rounded-lg border border-warning/40 bg-warning/10 px-4 py-3 text-sm text-warning">
           A lead is required to save. Return to Leads and choose Quote in Books.
         </div>
@@ -263,7 +330,7 @@ export default function QuotePage() {
 
         <aside className="xl:sticky xl:top-6 xl:self-start">
           <Card className="space-y-4">
-            <div><p className="text-xs uppercase tracking-widest text-gold/70">Live breakdown</p><h2 className="mt-1 text-xl font-semibold text-cream">{input.quoteOptionName || input.eventName || 'New quote'}</h2></div>
+            <div><p className="text-xs uppercase tracking-widest text-gold/70">{isEdit ? 'Price with current rules' : 'Live breakdown'}</p><h2 className="mt-1 text-xl font-semibold text-cream">{input.quoteOptionName || input.eventName || 'New quote'}</h2></div>
             <div className="divide-y divide-white/5 rounded-lg border border-white/10">
               {result.lines.map((line) => <div key={line.code} className="flex gap-4 px-3 py-2.5 text-sm"><span className="flex-1 text-cream/65">{line.label}</span><span className={line.amount < 0 ? 'text-success' : 'text-cream'}>{money(line.amount)}</span></div>)}
             </div>
@@ -274,13 +341,46 @@ export default function QuotePage() {
               <div className="flex justify-between text-lg font-bold text-gold"><span>Total</span><span>{money(result.total)}</span></div>
               <div className="flex justify-between text-cream/70"><span>Deposit</span><span>{money(result.deposit)}</span></div>
               <div className="flex justify-between text-cream/70"><span>Balance</span><span>{money(result.balance)}</span></div>
+              {savedQuote && result.total !== savedQuote.total && (
+                <div className={`flex justify-between font-medium ${result.total > savedQuote.total ? 'text-warning' : 'text-success'}`}><span>Difference from saved price</span><span>{result.total > savedQuote.total ? '+' : ''}{money(result.total - savedQuote.total)}</span></div>
+              )}
               <p className="pt-1 text-xs text-cream/40">{result.paymentTerms.shortNotice ? 'Full amount due at signing.' : '50% deposit. Balance due 14 days before the event.'}</p>
             </div>
             {saveError && <p role="alert" className="rounded-lg border border-danger/30 bg-danger/10 px-3 py-2 text-sm text-danger">{saveError}</p>}
-            <Button className="w-full" size="lg" disabled={!leadId || createQuote.isPending} onClick={saveQuote}><Save size={17} />{createQuote.isPending ? 'Saving quote...' : 'Save quote to Books'}</Button>
+            {isEdit ? (
+              <div className="space-y-2">
+                <Button className="w-full" size="lg" disabled={changePlan?.kind !== 'details-only' || updateQuote.isPending} onClick={() => saveEdit('edit')}><Save size={17} />{updateQuote.isPending ? 'Saving...' : 'Save details'}</Button>
+                {changePlan?.kind === 'reprice' ? (
+                  <Button className="w-full" variant="secondary" size="lg" disabled={updateQuote.isPending} onClick={() => setConfirmReason('edit')}>Save new price</Button>
+                ) : (
+                  <Button className="w-full" variant="secondary" size="lg" disabled={updateQuote.isPending} onClick={() => setConfirmReason('requote')}>Re-quote with current prices</Button>
+                )}
+                <Link to={`/quotes/${editId}`} className="block pt-1 text-center text-sm text-cream/50 hover:text-gold">Cancel and return to saved quote</Link>
+              </div>
+            ) : (
+              <Button className="w-full" size="lg" disabled={!leadId || createQuote.isPending} onClick={saveQuote}><Save size={17} />{createQuote.isPending ? 'Saving quote...' : 'Save quote to Books'}</Button>
+            )}
           </Card>
         </aside>
       </div>
+
+      {confirmReason && activePlan && (
+        <div role="dialog" aria-modal="true" aria-labelledby="confirm-price-title" className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
+          <Card className="w-full max-w-md space-y-4 border border-gold/35">
+            <div><h2 id="confirm-price-title" className="text-xl font-semibold text-cream">Confirm the new quote price</h2><p className="mt-1 text-sm text-cream/55">This replaces the saved price and adds a version history entry.</p></div>
+            <dl className="space-y-2 text-sm">
+              <div className="flex justify-between"><dt className="text-cream/55">Saved total</dt><dd className="text-cream">{money(activePlan.storedTotal)}</dd></div>
+              <div className="flex justify-between"><dt className="text-cream/55">New total</dt><dd className="font-semibold text-gold">{money(activePlan.newTotal)}</dd></div>
+              <div className="flex justify-between"><dt className="text-cream/55">Difference</dt><dd className="text-cream">{activePlan.difference > 0 ? '+' : ''}{money(activePlan.difference)}</dd></div>
+              <div className="flex justify-between"><dt className="text-cream/55">Deposit change</dt><dd className="text-cream">{activePlan.newDeposit - activePlan.storedDeposit > 0 ? '+' : ''}{money(activePlan.newDeposit - activePlan.storedDeposit)}</dd></div>
+            </dl>
+            <div className="flex justify-end gap-3">
+              <Button autoFocus variant="ghost" onClick={() => setConfirmReason(null)}>Cancel</Button>
+              <Button disabled={updateQuote.isPending} onClick={() => saveEdit(confirmReason)}>{updateQuote.isPending ? 'Saving...' : 'Confirm new price'}</Button>
+            </div>
+          </Card>
+        </div>
+      )}
     </div>
   )
 }
