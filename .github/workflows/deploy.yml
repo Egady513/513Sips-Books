@@ -36,6 +36,8 @@ jobs:
           GITHUB_ACTIONS: true
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          VITE_REQUIRE_LOGIN: ${{ vars.VITE_REQUIRE_LOGIN }}
+          VITE_BOOKS_ALLOWED_EMAILS: ${{ vars.VITE_BOOKS_ALLOWED_EMAILS }}
 
       - uses: actions/configure-pages@v5
 

@@ -1,0 +1,286 @@
+import { useMemo, useState } from 'react'
+import { Plus, Save, Trash2 } from 'lucide-react'
+import { useNavigate, useSearchParams } from 'react-router-dom'
+import Button from '../components/ui/Button'
+import { Card } from '../components/ui/Card'
+import { useCreatePricedQuote } from '../hooks/useQuotes'
+import {
+  buildQuoteRecord,
+  calculateQuote,
+  type CustomItem,
+  type PromoCode,
+  type QuoteInput,
+} from '../lib/pricing'
+
+const promoCodes: Array<{ value: PromoCode; label: string }> = [
+  { value: 'FIRST10', label: 'FIRST10 (10%)' },
+  { value: 'WEDDING2024', label: 'WEDDING2024 (5%)' },
+  { value: 'REFERRAL', label: 'REFERRAL (5%)' },
+  { value: 'VENDOR50', label: 'VENDOR50 ($50)' },
+  { value: 'LAUNCH50', label: 'LAUNCH50 ($50)' },
+  { value: 'RECURRING1', label: 'RECURRING1 ($10, Small Group)' },
+  { value: 'RECURRING3', label: 'RECURRING3 ($20, Small Group)' },
+  { value: 'RECURRING6', label: 'RECURRING6 ($35, Small Group)' },
+]
+
+const inputClass = 'w-full rounded-lg border border-gold-dim bg-navy-dark px-3 py-2 text-sm text-cream outline-none focus:border-gold'
+const checkboxClass = 'h-4 w-4 rounded border-gold-dim bg-navy-dark text-gold focus:ring-gold'
+
+function localIsoDate(): string {
+  const date = new Date()
+  return [date.getFullYear(), String(date.getMonth() + 1).padStart(2, '0'), String(date.getDate()).padStart(2, '0')].join('-')
+}
+
+function money(value: number): string {
+  return value.toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 })
+}
+
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <label className="block space-y-1.5">
+      <span className="text-xs font-medium text-cream/60">{label}</span>
+      {children}
+    </label>
+  )
+}
+
+function Check({ label, checked, onChange }: { label: string; checked: boolean; onChange: (checked: boolean) => void }) {
+  return (
+    <label className="flex items-start gap-2 text-sm text-cream/75">
+      <input type="checkbox" className={checkboxClass} checked={checked} onChange={(event) => onChange(event.target.checked)} />
+      <span>{label}</span>
+    </label>
+  )
+}
+
+export default function QuotePage() {
+  const [params] = useSearchParams()
+  const navigate = useNavigate()
+  const createQuote = useCreatePricedQuote()
+  const leadId = params.get('lead_id') ?? ''
+  const [saveError, setSaveError] = useState('')
+  const [input, setInput] = useState<QuoteInput>(() => ({
+    eventName: params.get('name') ?? '',
+    eventDateIso: params.get('date') ?? '',
+    quoteOptionName: '',
+    clientNotes: '',
+    guestCount: Number.parseInt(params.get('guests') ?? '', 10) || 50,
+    isSmallGroup: false,
+    serviceHours: 3,
+    bartenderCount: 1,
+    packageType: 'beerwine',
+    fullBarStaffCount: 1,
+    glasswareType: 'plastic_at_cost',
+    glassCount: 0,
+    oneWayDistanceMiles: 0,
+    signatureCocktailCount: 0,
+    houseCocktailCount: 0,
+    signatureCocktailNames: '',
+    houseCocktailNames: '',
+    hasMultiBarOperations: false,
+    hasAlcoholProcurement: false,
+    hasCoffeeService: false,
+    hasArchBackdrop: false,
+    hasCustomLogoIce: false,
+    logoIceCubeCount: 100,
+    hasTentRental: false,
+    promoCode: null,
+    customDiscount: null,
+    customItems: [],
+  }))
+  const today = localIsoDate()
+  const result = useMemo(() => calculateQuote(input, { today }), [input, today])
+  const set = <Key extends keyof QuoteInput>(key: Key, value: QuoteInput[Key]) => {
+    setInput((current) => ({ ...current, [key]: value }))
+  }
+  const number = (value: string, fallback = 0) => Number.parseFloat(value) || fallback
+
+  const updateCustomItem = (index: number, patch: Partial<CustomItem>) => {
+    set('customItems', input.customItems.map((item, itemIndex) => itemIndex === index ? { ...item, ...patch } : item))
+  }
+
+  async function saveQuote() {
+    setSaveError('')
+    if (!leadId) {
+      setSaveError('Open this screen from a lead before saving the quote.')
+      return
+    }
+    try {
+      const record = buildQuoteRecord({ leadId, input, result, today, statusDefault: 'draft' })
+      const saved = await createQuote.mutateAsync(record)
+      if (!saved?.id) throw new Error('The quote was not returned after saving.')
+      navigate(`/quotes/${saved.id}`)
+    } catch {
+      setSaveError('The quote could not be saved. Check your connection and try again.')
+    }
+  }
+
+  return (
+    <div className="mx-auto max-w-7xl space-y-6">
+      <div>
+        <p className="text-xs uppercase tracking-widest text-gold/70">Books quote</p>
+        <h1 className="mt-1 text-2xl font-bold text-cream">Build a new quote</h1>
+        <p className="mt-1 text-sm text-cream/50">Price one event and save the complete calculator record to Books.</p>
+      </div>
+
+      {!leadId && (
+        <div className="rounded-lg border border-warning/40 bg-warning/10 px-4 py-3 text-sm text-warning">
+          A lead is required to save. Return to Leads and choose Quote in Books.
+        </div>
+      )}
+
+      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_420px]">
+        <div className="space-y-5">
+          <Card className="space-y-4">
+            <h2 className="text-lg font-semibold text-gold">Event basics</h2>
+            <div className="grid gap-4 md:grid-cols-2">
+              <Field label="Event Name"><input className={inputClass} value={input.eventName} onChange={(event) => set('eventName', event.target.value)} /></Field>
+              <Field label="Event Date"><input type="date" className={inputClass} value={input.eventDateIso} onChange={(event) => set('eventDateIso', event.target.value)} /></Field>
+              <Field label="Quote Option Name"><input className={inputClass} value={input.quoteOptionName} onChange={(event) => set('quoteOptionName', event.target.value)} /></Field>
+              <Field label="Number of Guests"><input type="number" min="1" max="500" className={inputClass} value={input.guestCount} onChange={(event) => set('guestCount', number(event.target.value, 50))} /></Field>
+            </div>
+            <Check label="Small Group Event" checked={input.isSmallGroup} onChange={(checked) => set('isSmallGroup', checked)} />
+            <Field label="Client-Facing Assumptions / Notes"><textarea rows={3} className={inputClass} value={input.clientNotes} onChange={(event) => set('clientNotes', event.target.value)} /></Field>
+          </Card>
+
+          <Card className="space-y-4">
+            <h2 className="text-lg font-semibold text-gold">Staffing and hours</h2>
+            <div className="grid gap-4 md:grid-cols-2">
+              <Field label="Service Duration">
+                <select className={inputClass} value={input.serviceHours} onChange={(event) => set('serviceHours', number(event.target.value, 3))}>
+                  {[2, 3, 4, 5, 6, 7, 8].map((hours) => <option key={hours} value={hours}>{hours} hours</option>)}
+                </select>
+              </Field>
+              <Field label="Number of Bartenders">
+                <select className={inputClass} value={input.bartenderCount} onChange={(event) => {
+                  const count = number(event.target.value, 1)
+                  setInput((current) => ({ ...current, bartenderCount: count, fullBarStaffCount: Math.min(current.fullBarStaffCount, count) }))
+                }}>
+                  {[1, 2, 3, 4, 5, 6].map((count) => <option key={count} value={count}>{count}</option>)}
+                </select>
+              </Field>
+            </div>
+            <Check label="Large Event & Multi-Bar Operations" checked={input.hasMultiBarOperations} onChange={(checked) => set('hasMultiBarOperations', checked)} />
+          </Card>
+
+          <Card className="space-y-4">
+            <h2 className="text-lg font-semibold text-gold">Package and Full Bar coverage</h2>
+            <div className="grid gap-4 md:grid-cols-2">
+              <Field label="Package Type">
+                <select className={inputClass} value={input.packageType} onChange={(event) => set('packageType', event.target.value === 'fullbar' ? 'fullbar' : 'beerwine')}>
+                  <option value="beerwine">Beer & Wine Service</option><option value="fullbar">Full Bar Service</option>
+                </select>
+              </Field>
+              {input.packageType === 'fullbar' && (
+                <Field label="Full Bar Coverage">
+                  <select className={inputClass} value={Math.min(input.fullBarStaffCount, input.bartenderCount)} onChange={(event) => set('fullBarStaffCount', number(event.target.value, 1))}>
+                    {Array.from({ length: input.bartenderCount }, (_, index) => index + 1).map((count) => <option key={count} value={count}>{count} bartender{count === 1 ? '' : 's'}</option>)}
+                  </select>
+                </Field>
+              )}
+            </div>
+          </Card>
+
+          <Card className="space-y-4">
+            <h2 className="text-lg font-semibold text-gold">Signature and house cocktails</h2>
+            <div className="grid gap-4 md:grid-cols-2">
+              <Field label="Signature Cocktails"><input type="number" min="0" max="8" className={inputClass} value={input.signatureCocktailCount} onChange={(event) => set('signatureCocktailCount', number(event.target.value))} /></Field>
+              <Field label="Signature cocktail names"><input className={inputClass} value={input.signatureCocktailNames} onChange={(event) => set('signatureCocktailNames', event.target.value)} /></Field>
+              <Field label="House Featured Cocktails"><input type="number" min="0" max="8" className={inputClass} value={input.houseCocktailCount} onChange={(event) => set('houseCocktailCount', number(event.target.value))} /></Field>
+              <Field label="House cocktail names"><input className={inputClass} value={input.houseCocktailNames} onChange={(event) => set('houseCocktailNames', event.target.value)} /></Field>
+            </div>
+          </Card>
+
+          <Card className="space-y-4">
+            <h2 className="text-lg font-semibold text-gold">Glassware</h2>
+            <div className="grid gap-4 md:grid-cols-2">
+              <Field label="Glassware Selection">
+                <select className={inputClass} value={input.glasswareType} onChange={(event) => set('glasswareType', event.target.value as QuoteInput['glasswareType'])}>
+                  <option value="plastic_at_cost">Plastic Serviceware (at cost, confirmed later)</option><option value="formal">Formal Glassware</option><option value="none">None</option>
+                </select>
+              </Field>
+              <Field label="Number of Glasses Needed"><input type="number" min="0" className={inputClass} value={input.glassCount} onChange={(event) => set('glassCount', number(event.target.value))} /></Field>
+            </div>
+          </Card>
+
+          <Card className="space-y-4">
+            <h2 className="text-lg font-semibold text-gold">Add-ons</h2>
+            <div className="grid gap-3 md:grid-cols-2">
+              <Check label="Alcohol Procurement & Return Service" checked={input.hasAlcoholProcurement} onChange={(checked) => set('hasAlcoholProcurement', checked)} />
+              <Check label="Coffee & Hot Chocolate Service" checked={input.hasCoffeeService} onChange={(checked) => set('hasCoffeeService', checked)} />
+              <Check label="Arch Backdrop (Photo Ready)" checked={input.hasArchBackdrop} onChange={(checked) => set('hasArchBackdrop', checked)} />
+              <Check label="Custom Logo Ice by DrinkBigIce" checked={input.hasCustomLogoIce} onChange={(checked) => set('hasCustomLogoIce', checked)} />
+              <Check label="Tent Rental" checked={input.hasTentRental} onChange={(checked) => set('hasTentRental', checked)} />
+            </div>
+            {input.hasCustomLogoIce && <Field label="Logo ice cubes"><input type="number" min="0" className={inputClass} value={input.logoIceCubeCount} onChange={(event) => set('logoIceCubeCount', number(event.target.value))} /></Field>}
+            {result.procurementRequiresCustomQuote && <p className="text-sm text-warning">Alcohol procurement for this guest count needs a custom price.</p>}
+          </Card>
+
+          <Card className="space-y-4">
+            <h2 className="text-lg font-semibold text-gold">Travel</h2>
+            <Field label="One-Way Driving Distance from 2851 Minto Avenue"><input type="number" min="0" className={inputClass} value={input.oneWayDistanceMiles} onChange={(event) => set('oneWayDistanceMiles', number(event.target.value))} /></Field>
+          </Card>
+
+          <Card className="space-y-4">
+            <h2 className="text-lg font-semibold text-gold">Promo code and custom discount</h2>
+            <div className="grid gap-4 md:grid-cols-2">
+              <Field label="Have a Promo Code?">
+                <select className={inputClass} value={input.promoCode ?? ''} onChange={(event) => set('promoCode', event.target.value ? event.target.value as PromoCode : null)}>
+                  <option value="">No promo code</option>{promoCodes.map((promo) => <option key={promo.value} value={promo.value}>{promo.label}</option>)}
+                </select>
+              </Field>
+              <Field label="Custom Discount label"><input className={inputClass} value={input.customDiscount?.label ?? ''} onChange={(event) => set('customDiscount', { label: event.target.value, type: input.customDiscount?.type ?? 'fixed', value: input.customDiscount?.value ?? 0 })} /></Field>
+              <Field label="Custom Discount amount"><input type="number" min="0" className={inputClass} value={input.customDiscount ? (input.customDiscount.type === 'percent' ? input.customDiscount.value * 100 : input.customDiscount.value) : ''} onChange={(event) => {
+                const type = input.customDiscount?.type ?? 'fixed'
+                const raw = number(event.target.value)
+                set('customDiscount', raw > 0 ? { label: input.customDiscount?.label || 'Custom Discount', type, value: type === 'percent' ? raw / 100 : raw } : null)
+              }} /></Field>
+              <Field label="Custom Discount type"><select className={inputClass} value={input.customDiscount?.type ?? 'fixed'} onChange={(event) => {
+                const nextType = event.target.value === 'percent' ? 'percent' : 'fixed'
+                const current = input.customDiscount
+                if (!current) return
+                const raw = current.type === 'percent' ? current.value * 100 : current.value
+                set('customDiscount', { ...current, type: nextType, value: nextType === 'percent' ? raw / 100 : raw })
+              }}><option value="fixed">Fixed dollars</option><option value="percent">Percent</option></select></Field>
+            </div>
+          </Card>
+
+          <Card className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-gold">Custom line items</h2>
+              <Button type="button" variant="secondary" size="sm" onClick={() => set('customItems', [...input.customItems, { name: '', price: 0 }])}><Plus size={14} /> Add item</Button>
+            </div>
+            {input.customItems.length === 0 && <p className="text-sm text-cream/40">No custom items.</p>}
+            {input.customItems.map((item, index) => (
+              <div key={index} className="grid grid-cols-[1fr_130px_auto] gap-2">
+                <input aria-label={`Custom item ${index + 1} description`} placeholder="Item description" className={inputClass} value={item.name} onChange={(event) => updateCustomItem(index, { name: event.target.value })} />
+                <input aria-label={`Custom item ${index + 1} price`} type="number" min="0" placeholder="Price" className={inputClass} value={item.price} onChange={(event) => updateCustomItem(index, { price: number(event.target.value) })} />
+                <button type="button" aria-label={`Remove custom item ${index + 1}`} className="rounded-lg px-2 text-cream/40 hover:bg-white/5 hover:text-danger" onClick={() => set('customItems', input.customItems.filter((_, itemIndex) => itemIndex !== index))}><Trash2 size={16} /></button>
+              </div>
+            ))}
+          </Card>
+        </div>
+
+        <aside className="xl:sticky xl:top-6 xl:self-start">
+          <Card className="space-y-4">
+            <div><p className="text-xs uppercase tracking-widest text-gold/70">Live breakdown</p><h2 className="mt-1 text-xl font-semibold text-cream">{input.quoteOptionName || input.eventName || 'New quote'}</h2></div>
+            <div className="divide-y divide-white/5 rounded-lg border border-white/10">
+              {result.lines.map((line) => <div key={line.code} className="flex gap-4 px-3 py-2.5 text-sm"><span className="flex-1 text-cream/65">{line.label}</span><span className={line.amount < 0 ? 'text-success' : 'text-cream'}>{money(line.amount)}</span></div>)}
+            </div>
+            <div className="space-y-2 border-t border-gold-dim pt-4 text-sm">
+              <div className="flex justify-between text-cream/60"><span>Subtotal</span><span>{money(result.subtotal)}</span></div>
+              {result.discounts.promo > 0 && <div className="flex justify-between text-success"><span>Promo discount</span><span>-{money(result.discounts.promo)}</span></div>}
+              {result.discounts.custom > 0 && <div className="flex justify-between text-success"><span>Custom discount</span><span>-{money(result.discounts.custom)}</span></div>}
+              <div className="flex justify-between text-lg font-bold text-gold"><span>Total</span><span>{money(result.total)}</span></div>
+              <div className="flex justify-between text-cream/70"><span>Deposit</span><span>{money(result.deposit)}</span></div>
+              <div className="flex justify-between text-cream/70"><span>Balance</span><span>{money(result.balance)}</span></div>
+              <p className="pt-1 text-xs text-cream/40">{result.paymentTerms.shortNotice ? 'Full amount due at signing.' : '50% deposit. Balance due 14 days before the event.'}</p>
+            </div>
+            {saveError && <p role="alert" className="rounded-lg border border-danger/30 bg-danger/10 px-3 py-2 text-sm text-danger">{saveError}</p>}
+            <Button className="w-full" size="lg" disabled={!leadId || createQuote.isPending} onClick={saveQuote}><Save size={17} />{createQuote.isPending ? 'Saving quote...' : 'Save quote to Books'}</Button>
+          </Card>
+        </aside>
+      </div>
+    </div>
+  )
+}
