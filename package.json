@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "test": "node --test src/lib/pricing/*.test.ts src/lib/estimator/*.test.ts",
+    "test": "node --test src/lib/pricing/*.test.ts src/lib/auth/*.test.ts src/lib/estimator/*.test.ts",
     "preview": "vite preview"
   },
   "dependencies": {

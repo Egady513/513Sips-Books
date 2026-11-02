@@ -14,7 +14,7 @@ import { formatCurrency, formatDate } from '../utils/formatters'
 import {
   Plus, Instagram, Users, Phone, Mail, Calendar, DollarSign,
   Trash2, Edit2, Download, ExternalLink, FileSignature, CheckCircle2, FileText, Pencil, FileDown,
-  AlertCircle, Clock, ChevronDown, LayoutGrid, List, History, CalendarPlus,
+  AlertCircle, Clock, ChevronDown, LayoutGrid, List, History, CalendarPlus, BookOpen,
 } from 'lucide-react'
 import type { Lead } from '../lib/types'
 import toast from 'react-hot-toast'
@@ -440,6 +440,20 @@ export default function LeadsPage() {
     const quoteParam = existingQuote ? `&quote_id=${existingQuote.id}` : ''
     const url = `https://www.513sips.com/tools/calculator.html?lead_id=${lead.id}&name=${encodeURIComponent(lead.name)}&guests=${lead.guest_count || ''}&date=${lead.event_date || ''}${eventsParam}${quoteParam}`
     window.open(url, '_blank')
+  }
+
+  function handleQuoteInBooks(lead: Lead, existingQuote?: Quote) {
+    if (existingQuote) {
+      navigate(`/quotes/${existingQuote.id}`)
+      return
+    }
+    const query = new URLSearchParams({
+      lead_id: lead.id,
+      name: lead.name,
+      guests: String(lead.guest_count || ''),
+      date: lead.event_date || '',
+    })
+    navigate(`/quotes/new?${query.toString()}`)
   }
 
   async function handleDeleteQuote(quoteId: string, leadId: string) {
@@ -969,6 +983,7 @@ ${bodyHTML}
                 </div>
                 <div className="shrink-0 flex items-center gap-0.5">
                   <button onClick={() => handleCreateQuote(lead)} className="text-cream/40 hover:text-gold p-1.5 rounded" title="Open Calculator"><FileText size={13}/></button>
+                  <button onClick={() => handleQuoteInBooks(lead, linkedQuote)} className="text-cream/40 hover:text-gold p-1.5 rounded" title="Quote in Books"><BookOpen size={13}/></button>
                   <button onClick={() => handleGenerateContract(lead)} className="text-cream/40 hover:text-gold p-1.5 rounded" title="Generate Contract"><FileSignature size={13}/></button>
                   <button onClick={() => openEdit(lead)} className="text-cream/40 hover:text-gold p-1.5 rounded" title="Edit lead"><Edit2 size={13}/></button>
                   <button onClick={() => handleDelete(lead.id)} className="text-cream/40 hover:text-red-400 p-1.5 rounded" title="Delete"><Trash2 size={13}/></button>
@@ -1135,6 +1150,7 @@ ${bodyHTML}
                                 <button onClick={() => { setVersionHistoryQuote(linkedQuote); setShowVersionHistory(true) }} className="text-cream/25 hover:text-gold transition-colors" title="View version history"><History size={11} /></button>
                                 <button onClick={() => handleDownloadQuotePDF(lead, linkedQuote)} className="text-cream/25 hover:text-gold transition-colors" title="Download PDF"><FileDown size={11} /></button>
                                 <button onClick={() => handleCreateQuote(lead, linkedQuote)} className="text-cream/25 hover:text-gold transition-colors" title="Revise in calculator"><Pencil size={11} /></button>
+                                <button onClick={() => handleQuoteInBooks(lead, linkedQuote)} className="text-cream/25 hover:text-gold transition-colors" title="Quote in Books"><BookOpen size={11} /></button>
                                 <button onClick={() => handleDeleteQuote(linkedQuote.id, lead.id)} className="text-cream/25 hover:text-red-400 transition-colors" title="Delete quote"><Trash2 size={11} /></button>
                               </div>
                             </div>
@@ -1314,6 +1330,7 @@ ${bodyHTML}
                         )}
                         <button onClick={() => { setImportTargetLead(lead); setShowQuoteImport(true) }} className="text-cream/40 hover:text-gold transition-colors p-1.5 rounded" title="Link quote from Calculator"><Download size={15} /></button>
                         <button onClick={() => handleCreateQuote(lead)} className="text-cream/40 hover:text-gold transition-colors p-1.5 rounded" title="Create Quote in Calculator"><FileText size={15} /></button>
+                        <button onClick={() => handleQuoteInBooks(lead, linkedQuote)} className="text-cream/40 hover:text-gold transition-colors p-1.5 rounded" title="Quote in Books"><BookOpen size={15} /></button>
                         <button onClick={() => handleGenerateContract(lead)} className="text-cream/40 hover:text-gold transition-colors p-1.5 rounded" title="Generate contract"><FileSignature size={15} /></button>
                         <button onClick={() => openEdit(lead)} className="text-cream/40 hover:text-gold transition-colors p-1.5 rounded"><Edit2 size={15} /></button>
                         <button onClick={() => handleDelete(lead.id)} className="text-cream/40 hover:text-red-400 transition-colors p-1.5 rounded"><Trash2 size={15} /></button>
@@ -1458,7 +1475,7 @@ ${bodyHTML}
                   </button>
 
                   {/* Sprint 3: Pricing breakdown */}
-                  {quote.breakdown && typeof quote.breakdown === 'object' && !Array.isArray(quote.breakdown) && (
+                  {quote.breakdown != null && typeof quote.breakdown === 'object' && !Array.isArray(quote.breakdown) && (
                     <div className="px-4 pb-2 pt-1 border-t border-white/5">
                       <div className="space-y-0.5">
                         {(Object.entries(quote.breakdown as Record<string, unknown>) as [string, unknown][])
