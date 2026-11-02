@@ -1,10 +1,35 @@
 import { Card } from '../components/ui/Card'
 import { MILEAGE_RATES, EXPENSE_CATEGORIES, SCHEDULE_C_LINES } from '../lib/constants'
+import Button from '../components/ui/Button'
+import SignInForm from '../components/auth/SignInForm'
+import { booksAllowedEmails, requireBooksLogin } from '../lib/auth/config'
+import { useAuth } from '../lib/auth/useAuth'
 
 export default function SettingsPage() {
+  const { status, email, signOut } = useAuth()
+
   return (
     <div className="space-y-6 max-w-4xl">
       <h1 className="text-2xl font-bold text-gold">Settings</h1>
+
+      <Card>
+        <h3 className="text-sm text-cream/50 uppercase tracking-wider mb-4">Account</h3>
+        {status === 'signed-in' ? (
+          <div className="flex flex-wrap items-center justify-between gap-3 text-sm">
+            <span className="text-cream">Signed in as {email}</span>
+            <Button type="button" size="sm" variant="secondary" onClick={() => void signOut()}>
+              Sign out
+            </Button>
+          </div>
+        ) : status === 'loading' ? (
+          <p className="text-sm text-cream/60">Checking sign-in...</p>
+        ) : (
+          <SignInForm allowed={booksAllowedEmails} />
+        )}
+        <p className="mt-4 text-sm text-cream/60">
+          Sign-in requirement is currently {requireBooksLogin ? 'on' : 'off'}.
+        </p>
+      </Card>
 
       <Card>
         <h3 className="text-sm text-cream/50 uppercase tracking-wider mb-4">Business Info</h3>

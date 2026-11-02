@@ -15,6 +15,8 @@ import SettingsPage from './pages/SettingsPage'
 import LeadsPage from './pages/LeadsPage'
 import QuotePage from './pages/QuotePage'
 import SavedQuotePage from './pages/SavedQuotePage'
+import { AuthProvider } from './lib/auth/AuthProvider'
+import AuthGate from './components/auth/AuthGate'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -28,25 +30,29 @@ const queryClient = new QueryClient({
 export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <BrowserRouter basename="/513Sips-Books">
-        <Routes>
-          <Route element={<AppShell />}>
-            <Route path="/" element={<DashboardPage />} />
-            <Route path="/leads" element={<LeadsPage />} />
-            <Route path="/quotes/new" element={<QuotePage />} />
-            <Route path="/quotes/:id" element={<SavedQuotePage />} />
-            <Route path="/events" element={<EventsPage />} />
-            <Route path="/events/:id" element={<EventDetailPage />} />
-            <Route path="/calendar" element={<CalendarPage />} />
-            <Route path="/ar" element={<ARPage />} />
-            <Route path="/ap" element={<APPage />} />
-            <Route path="/expenses" element={<ExpensesPage />} />
-            <Route path="/tax" element={<TaxPage />} />
-            <Route path="/bank" element={<BankPage />} />
-            <Route path="/settings" element={<SettingsPage />} />
-          </Route>
-        </Routes>
-      </BrowserRouter>
+      <AuthProvider>
+        <BrowserRouter basename="/513Sips-Books">
+          <AuthGate>
+            <Routes>
+              <Route element={<AppShell />}>
+                <Route path="/" element={<DashboardPage />} />
+                <Route path="/leads" element={<LeadsPage />} />
+                <Route path="/quotes/new" element={<QuotePage />} />
+                <Route path="/quotes/:id" element={<SavedQuotePage />} />
+                <Route path="/events" element={<EventsPage />} />
+                <Route path="/events/:id" element={<EventDetailPage />} />
+                <Route path="/calendar" element={<CalendarPage />} />
+                <Route path="/ar" element={<ARPage />} />
+                <Route path="/ap" element={<APPage />} />
+                <Route path="/expenses" element={<ExpensesPage />} />
+                <Route path="/tax" element={<TaxPage />} />
+                <Route path="/bank" element={<BankPage />} />
+                <Route path="/settings" element={<SettingsPage />} />
+              </Route>
+            </Routes>
+          </AuthGate>
+        </BrowserRouter>
+      </AuthProvider>
       <Toaster
         position="top-right"
         toastOptions={{
