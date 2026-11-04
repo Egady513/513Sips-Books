@@ -215,3 +215,31 @@ for (const row of rows) {
     assert.doesNotMatch(html, /\$\d+(?:\.\d+)?\/(?:hr|hour|glass|guest|cube)/i)
   })
 }
+
+function guestCountOnPdf(lead: QuotePdfLead, quote: QuotePdfQuote): string | undefined {
+  const html = buildQuotePdfHtml({ lead, quote, today })
+  return /<span class="label">Guest Count<\/span><span class="value">([^<]*)<\/span>/.exec(html)?.[1]
+}
+
+const singleEventRows = rows.filter(row => !Array.isArray(row.booksQuote.breakdown))
+
+test('PDF guest count is the quote\'s, not the lead\'s: 100-guest quote on a 200-guest lead prints 100', () => {
+  const { lead, booksQuote } = singleEventRows[0]
+  assert.equal(guestCountOnPdf({ ...lead, guest_count: 200 }, { ...booksQuote, guest_count: 100 }), '100')
+})
+
+test('PDF guest count falls back to the lead\'s when the quote has none', () => {
+  const { lead, booksQuote } = singleEventRows[0]
+  const { guest_count: _omitted, ...withoutCount } = booksQuote
+  void _omitted
+  assert.equal(guestCountOnPdf({ ...lead, guest_count: 200 }, withoutCount), '200')
+})
+
+test('PDF guest count shows a dash when neither the quote nor the lead has one', () => {
+  const { lead, booksQuote } = singleEventRows[0]
+  const { guest_count: _omittedLead, ...leadWithoutCount } = lead
+  const { guest_count: _omittedQuote, ...quoteWithoutCount } = booksQuote
+  void _omittedLead
+  void _omittedQuote
+  assert.equal(guestCountOnPdf(leadWithoutCount, quoteWithoutCount), '—')
+})

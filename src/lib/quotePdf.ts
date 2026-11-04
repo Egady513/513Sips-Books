@@ -288,7 +288,7 @@ ${eventSections}
 <div class="grid">
   <div class="field"><span class="label">Event Date</span><span class="value">${eventDate}</span></div>
   <div class="field"><span class="label">Venue</span><span class="value">${lead.venue_name || lead.venue_address || '—'}</span></div>
-  <div class="field"><span class="label">Guest Count</span><span class="value">${lead.guest_count ?? quote.guest_count ?? '—'}</span></div>
+  <div class="field"><span class="label">Guest Count</span><span class="value">${quote.guest_count ?? lead.guest_count ?? '—'}</span></div>
   <div class="field"><span class="label">Service Hours</span><span class="value">${quote.hours ?? 3} hours</span></div>
   ${lead.service_start_time ? `<div class="field"><span class="label">Service Time</span><span class="value">${lead.service_start_time}${lead.service_end_time ? ' – ' + lead.service_end_time : ''}</span></div>` : ''}
   ${quote.bartenders ? `<div class="field"><span class="label">Bar Staff</span><span class="value">${quote.bartenders} bartender${(quote.bartenders as number) > 1 ? 's' : ''}</span></div>` : ''}
