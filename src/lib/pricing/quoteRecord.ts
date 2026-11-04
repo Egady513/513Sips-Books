@@ -106,7 +106,7 @@ export interface QuoteRecord {
   guest_count: number
   hours: number
   bartenders: number
-  event_date: string
+  event_date: string | null
   breakdown: LegacyBreakdown & {
     _config: FormConfig
     engine: { schemaVersion: 1; rulesChecked: string; inputs: QuoteInput; result: QuoteResult }
@@ -271,7 +271,7 @@ export function buildQuoteRecord({
     guest_count: input.guestCount,
     hours: input.serviceHours,
     bartenders: input.bartenderCount,
-    event_date: input.eventDateIso,
+    event_date: input.eventDateIso || null,
     breakdown: {
       ...toLegacyBreakdown(result, input),
       _config: toFormConfig(input),
