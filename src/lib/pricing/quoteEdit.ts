@@ -106,6 +106,16 @@ function sameValue(left: unknown, right: unknown): boolean {
   return JSON.stringify(left) === JSON.stringify(right)
 }
 
+// Older website saves have no fullBarStaffCount. The website restores such a record with
+// `cfg.fullBarStaffCount || cfg.bartenderCount`, so a rebuilt quote must do the same or Full Bar
+// is priced for one bartender. A fresh page (fromFormInputs alone) still defaults to 1.
+function inputsFromSavedConfig(config: Record<string, unknown>): QuoteInput {
+  return fromFormInputs({
+    ...config,
+    fullBarStaffCount: config.fullBarStaffCount || config.bartenderCount,
+  })
+}
+
 export function inputsFromSavedQuote(row: SavedQuoteRow): SavedQuoteInputs {
   const breakdown = object(row.breakdown)
   const engine = breakdown ? object(breakdown.engine) : null
@@ -122,7 +132,7 @@ export function inputsFromSavedQuote(row: SavedQuoteRow): SavedQuoteInputs {
 
   const config = breakdown ? breakdown._config : null
   if (isUsableConfig(config)) {
-    return { input: fromFormInputs(config), reason: null }
+    return { input: inputsFromSavedConfig(config), reason: null }
   }
 
   return {
