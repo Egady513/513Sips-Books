@@ -73,3 +73,18 @@ test('buildQuoteRecord refuses multi-event input', () => {
     /Multi-event quotes are not supported/,
   )
 })
+
+test('buildQuoteRecord saves an empty event date as null, not an empty string', () => {
+  const input = fromFormInputs({ ...singleEventFixtures[0].input, eventDate: '' })
+  const result = calculateQuote(input, { today })
+  const record = buildQuoteRecord({ leadId: 'lead-123', input, result, today, statusDefault: 'draft' })
+  assert.equal(record.event_date, null)
+  assert.equal(record.breakdown._config.eventDate, '')
+})
+
+test('buildQuoteRecord keeps a real event date as YYYY-MM-DD', () => {
+  const input = fromFormInputs({ ...singleEventFixtures[0].input, eventDate: '2027-03-06' })
+  const result = calculateQuote(input, { today })
+  const record = buildQuoteRecord({ leadId: 'lead-123', input, result, today, statusDefault: 'draft' })
+  assert.equal(record.event_date, '2027-03-06')
+})
