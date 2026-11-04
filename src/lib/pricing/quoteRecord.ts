@@ -21,7 +21,7 @@ import {
   VOLUME_ADJUSTMENT_101_PLUS,
   VOLUME_ADJUSTMENT_51_TO_100,
 } from './rates.ts'
-import type { QuoteInput, QuoteResult } from './types.ts'
+import type { MultiEventQuoteResult, NamedQuoteInput, QuoteInput, QuoteResult } from './types.ts'
 
 export interface LegacyAddonItem {
   name: string
@@ -123,6 +123,38 @@ export interface QuoteRecord {
     status: 'draft'
     created_at: string
   }>
+}
+
+export interface MultiEventBreakdownEntry {
+  name: string
+  total: number
+  guestCount: number
+  hours: number
+  bartenders: number
+  bd: LegacyBreakdown
+  _config: FormConfig
+  engine?: {
+    schemaVersion: 1
+    rulesChecked: string
+    events: NamedQuoteInput[]
+    result: MultiEventQuoteResult
+  }
+}
+
+export interface MultiEventQuoteRecord {
+  lead_id: string
+  total: number
+  deposit: number
+  balance: number
+  guest_count: number
+  hours: number
+  bartenders: number
+  breakdown: MultiEventBreakdownEntry[]
+  promo_code: null
+  addon_notes: string | null
+  valid_until: string
+  status: 'draft'
+  version_history: QuoteRecord['version_history']
 }
 
 function lineAmount(result: QuoteResult, code: QuoteResult['lines'][number]['code']): number {
@@ -287,6 +319,73 @@ export function buildQuoteRecord({
       deposit: result.deposit,
       balance: result.balance,
       status: statusDefault,
+      created_at: createdAt,
+    }],
+  }
+}
+
+interface BuildMultiEventQuoteRecordOptions {
+  leadId: string
+  events: NamedQuoteInput[]
+  result: MultiEventQuoteResult
+  today: string
+}
+
+export function buildMultiEventQuoteRecord({
+  leadId,
+  events,
+  result,
+  today,
+}: BuildMultiEventQuoteRecordOptions): MultiEventQuoteRecord {
+  if (!leadId) throw new Error('A lead is required before this quote can be saved.')
+  if (events.length < 2) throw new Error('A multi-event quote requires at least two events.')
+  if (events.length !== result.events.length) throw new Error('The event inputs and calculated results do not match.')
+
+  const firstInput = events[0].input
+  const breakdown = events.map((event, index): MultiEventBreakdownEntry => {
+    const calculated = result.events[index]
+    const entry: MultiEventBreakdownEntry = {
+      name: event.name || `Event ${index + 1}`,
+      total: calculated.result.total,
+      guestCount: event.input.guestCount,
+      hours: event.input.serviceHours,
+      bartenders: event.input.bartenderCount,
+      bd: toLegacyBreakdown(calculated.result, event.input),
+      _config: toFormConfig(event.input),
+    }
+    if (index === 0) {
+      entry.engine = {
+        schemaVersion: 1,
+        rulesChecked: today,
+        events: structuredClone(events),
+        result: structuredClone(result),
+      }
+    }
+    return entry
+  })
+  const createdAt = `${today}T00:00:00.000Z`
+
+  return {
+    lead_id: leadId,
+    total: result.total,
+    deposit: result.deposit,
+    balance: result.balance,
+    guest_count: firstInput.guestCount,
+    hours: firstInput.serviceHours,
+    bartenders: firstInput.bartenderCount,
+    breakdown,
+    promo_code: null,
+    addon_notes: breakdown
+      .map((event, index) => `Event ${index + 1} — ${event.name}: $${event.total}`)
+      .join('\n'),
+    valid_until: result.quoteValidityDate,
+    status: 'draft',
+    version_history: [{
+      versionNum: 1,
+      total: result.total,
+      deposit: result.deposit,
+      balance: result.balance,
+      status: 'draft',
       created_at: createdAt,
     }],
   }

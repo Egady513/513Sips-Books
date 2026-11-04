@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '../lib/supabase'
-import type { QuoteRecord } from '../lib/pricing'
+import type { MultiEventQuoteRecord, QuoteRecord } from '../lib/pricing'
 
 export interface QuoteVersion {
   versionNum: number
@@ -66,7 +66,7 @@ export function useQuote(id: string | undefined) {
 export function useCreatePricedQuote() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: async (record: QuoteRecord) => {
+    mutationFn: async (record: QuoteRecord | MultiEventQuoteRecord) => {
       const { data, error } = await supabase
         .from('quotes')
         .insert([record])

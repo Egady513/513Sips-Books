@@ -5,8 +5,10 @@ import Button from '../components/ui/Button'
 import { Card } from '../components/ui/Card'
 import { useCreatePricedQuote, useQuote, useUpdatePricedQuote } from '../hooks/useQuotes'
 import {
+  buildMultiEventQuoteRecord,
   buildQuoteUpdate,
   buildQuoteRecord,
+  calculateMultiEventQuote,
   calculateQuote,
   inputsFromSavedQuote,
   planQuoteChangeIfEditable,
@@ -56,6 +58,23 @@ function Check({ label, checked, onChange }: { label: string; checked: boolean; 
   )
 }
 
+function defaultQuoteInput(overrides: Partial<QuoteInput> = {}): QuoteInput {
+  return {
+    eventName: '', eventDateIso: '', quoteOptionName: '', clientNotes: '', guestCount: 50,
+    isSmallGroup: false, serviceHours: 3, bartenderCount: 1, packageType: 'beerwine',
+    fullBarStaffCount: 1, glasswareType: 'plastic_at_cost', glassCount: 0,
+    oneWayDistanceMiles: 0, signatureCocktailCount: 0, houseCocktailCount: 0,
+    signatureCocktailNames: '', houseCocktailNames: '', hasMultiBarOperations: false,
+    hasAlcoholProcurement: false, hasCoffeeService: false, hasArchBackdrop: false,
+    hasCustomLogoIce: false, logoIceCubeCount: 100, hasTentRental: false,
+    promoCode: null, customDiscount: null, customItems: [], ...overrides,
+  }
+}
+
+function QuoteEventForm({ children }: { children: React.ReactNode }) {
+  return <div className="space-y-5">{children}</div>
+}
+
 export default function QuotePage() {
   const { id: editId } = useParams()
   const [params] = useSearchParams()
@@ -68,52 +87,46 @@ export default function QuotePage() {
   const [saveError, setSaveError] = useState('')
   const [confirmReason, setConfirmReason] = useState<'edit' | 'requote' | null>(null)
   const [inputReady, setInputReady] = useState(!isEdit)
-  const [input, setInput] = useState<QuoteInput>(() => ({
+  const [activeEventIndex, setActiveEventIndex] = useState(0)
+  const [inputs, setInputs] = useState<QuoteInput[]>(() => [defaultQuoteInput({
     eventName: params.get('name') ?? '',
     eventDateIso: params.get('date') ?? '',
-    quoteOptionName: '',
-    clientNotes: '',
     guestCount: Number.parseInt(params.get('guests') ?? '', 10) || 50,
-    isSmallGroup: false,
-    serviceHours: 3,
-    bartenderCount: 1,
-    packageType: 'beerwine',
-    fullBarStaffCount: 1,
-    glasswareType: 'plastic_at_cost',
-    glassCount: 0,
-    oneWayDistanceMiles: 0,
-    signatureCocktailCount: 0,
-    houseCocktailCount: 0,
-    signatureCocktailNames: '',
-    houseCocktailNames: '',
-    hasMultiBarOperations: false,
-    hasAlcoholProcurement: false,
-    hasCoffeeService: false,
-    hasArchBackdrop: false,
-    hasCustomLogoIce: false,
-    logoIceCubeCount: 100,
-    hasTentRental: false,
-    promoCode: null,
-    customDiscount: null,
-    customItems: [],
-  }))
+  })])
+  const input = inputs[activeEventIndex] ?? inputs[0]
+  const setInput = (value: QuoteInput | ((current: QuoteInput) => QuoteInput)) => {
+    setInputs((current) => current.map((eventInput, index) => index === activeEventIndex
+      ? typeof value === 'function' ? value(eventInput) : value
+      : eventInput))
+  }
   const today = localIsoDate()
   const savedInputs = useMemo(
     () => quoteQuery.data ? inputsFromSavedQuote(quoteQuery.data) : null,
     [quoteQuery.data],
   )
   useEffect(() => {
-    if (!inputReady && savedInputs?.input) {
-      setInput(savedInputs.input)
+    if (!inputReady && savedInputs?.events) {
+      setInputs(savedInputs.events)
+      setActiveEventIndex(0)
+      setInputReady(true)
+    } else if (!inputReady && savedInputs && 'input' in savedInputs && savedInputs.input) {
+      setInputs([savedInputs.input])
       setInputReady(true)
     }
   }, [inputReady, savedInputs])
-  const result = useMemo(() => calculateQuote(input, { today }), [input, today])
+  const multiResult = useMemo(() => calculateMultiEventQuote(
+    inputs.map((eventInput, index) => ({ name: eventInput.eventName || `Event ${index + 1}`, input: eventInput })),
+    { today },
+  ), [inputs, today])
+  const result = multiResult.events[activeEventIndex]?.result ?? calculateQuote(input, { today })
+  const quotedResult = inputs.length > 1 ? multiResult : result
+  const editInput = savedInputs?.events ? inputs : inputs.length > 1 ? inputs : input
+  const editResult = inputs.length > 1 ? multiResult : result
   const changePlan = useMemo(
     () => isEdit && inputReady && quoteQuery.data
-      ? planQuoteChangeIfEditable({ row: quoteQuery.data, newInput: input, today })
+      ? planQuoteChangeIfEditable({ row: quoteQuery.data, newInput: editInput, today })
       : null,
-    [input, inputReady, isEdit, quoteQuery.data, today],
+    [editInput, inputReady, isEdit, quoteQuery.data, today],
   )
   const set = <Key extends keyof QuoteInput>(key: Key, value: QuoteInput[Key]) => {
     setInput((current) => ({ ...current, [key]: value }))
@@ -131,7 +144,14 @@ export default function QuotePage() {
       return
     }
     try {
-      const record = buildQuoteRecord({ leadId, input, result, today, statusDefault: 'draft' })
+      const record = inputs.length > 1
+        ? buildMultiEventQuoteRecord({
+            leadId,
+            events: inputs.map((eventInput, index) => ({ name: eventInput.eventName || `Event ${index + 1}`, input: eventInput })),
+            result: multiResult,
+            today,
+          })
+        : buildQuoteRecord({ leadId, input, result, today, statusDefault: 'draft' })
       const saved = await createQuote.mutateAsync(record)
       if (!saved?.id) throw new Error('The quote was not returned after saving.')
       navigate(`/quotes/${saved.id}`)
@@ -145,10 +165,10 @@ export default function QuotePage() {
     setSaveError('')
     try {
       const plan = reason === 'requote'
-        ? planQuoteChangeIfEditable({ row: quoteQuery.data, newInput: input, today, requote: true })
+        ? planQuoteChangeIfEditable({ row: quoteQuery.data, newInput: editInput, today, requote: true })
         : changePlan
       if (!plan) throw new Error('This quote cannot be edited.')
-      const updates = buildQuoteUpdate({ row: quoteQuery.data, plan, input, result, today, reason })
+      const updates = buildQuoteUpdate({ row: quoteQuery.data, plan, input: editInput, result: editResult, today, reason })
       const saved = await updateQuote.mutateAsync({ id: editId, updates })
       if (!saved?.id) throw new Error('The quote was not returned after updating.')
       navigate(`/quotes/${saved.id}`)
@@ -162,7 +182,7 @@ export default function QuotePage() {
   if (isEdit && (quoteQuery.isError || !quoteQuery.data)) {
     return <Card><p className="text-danger">This quote could not be loaded. Check the link and try again.</p></Card>
   }
-  if (isEdit && savedInputs && !savedInputs.input) {
+  if (isEdit && savedInputs && 'input' in savedInputs && !savedInputs.input) {
     return (
       <Card className="space-y-3">
         <p className="text-danger">{savedInputs.reason}</p>
@@ -173,15 +193,27 @@ export default function QuotePage() {
 
   const savedQuote = isEdit ? quoteQuery.data : null
   const activePlan = confirmReason === 'requote' && savedQuote
-    ? planQuoteChangeIfEditable({ row: savedQuote, newInput: input, today, requote: true })
+    ? planQuoteChangeIfEditable({ row: savedQuote, newInput: editInput, today, requote: true })
     : changePlan
+
+  const addEvent = () => {
+    const nextIndex = inputs.length
+    setInputs((current) => [...current, defaultQuoteInput({ eventName: `Event ${nextIndex + 1}` })])
+    setActiveEventIndex(nextIndex)
+  }
+
+  const removeEvent = (index: number) => {
+    if (inputs.length === 1) return
+    setInputs((current) => current.filter((_, eventIndex) => eventIndex !== index))
+    setActiveEventIndex((current) => Math.max(0, Math.min(current > index ? current - 1 : current, inputs.length - 2)))
+  }
 
   return (
     <div className="mx-auto max-w-7xl space-y-6">
       <div>
         <p className="text-xs uppercase tracking-widest text-gold/70">Books quote</p>
         <h1 className="mt-1 text-2xl font-bold text-cream">{isEdit ? 'Edit saved quote' : 'Build a new quote'}</h1>
-        <p className="mt-1 text-sm text-cream/50">{isEdit ? 'Change details or choose when to save a new price.' : 'Price one event and save the complete calculator record to Books.'}</p>
+        <p className="mt-1 text-sm text-cream/50">{isEdit ? 'Change details or choose when to save a new price.' : 'Price one or more events and save the complete calculator record to Books.'}</p>
       </div>
 
       {savedQuote && (
@@ -197,8 +229,25 @@ export default function QuotePage() {
         </div>
       )}
 
+      <Card className="flex flex-wrap items-center gap-2">
+        {inputs.map((eventInput, index) => (
+          <button
+            key={index}
+            type="button"
+            className={`rounded-lg border px-3 py-2 text-sm transition-colors ${index === activeEventIndex ? 'border-gold bg-gold/15 text-gold' : 'border-white/10 text-cream/60 hover:border-gold/50'}`}
+            onClick={() => setActiveEventIndex(index)}
+          >
+            {eventInput.eventName || `Event ${index + 1}`}
+          </button>
+        ))}
+        <Button type="button" variant="secondary" size="sm" onClick={addEvent}><Plus size={14} /> Add event</Button>
+        {inputs.length > 1 && (
+          <Button type="button" variant="ghost" size="sm" onClick={() => removeEvent(activeEventIndex)}><Trash2 size={14} /> Remove active event</Button>
+        )}
+      </Card>
+
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_420px]">
-        <div className="space-y-5">
+        <QuoteEventForm>
           <Card className="space-y-4">
             <h2 className="text-lg font-semibold text-gold">Event basics</h2>
             <div className="grid gap-4 md:grid-cols-2">
@@ -327,7 +376,7 @@ export default function QuotePage() {
               </div>
             ))}
           </Card>
-        </div>
+        </QuoteEventForm>
 
         <aside className="xl:sticky xl:top-6 xl:self-start">
           <Card className="space-y-4">
@@ -342,11 +391,23 @@ export default function QuotePage() {
               <div className="flex justify-between text-lg font-bold text-gold"><span>Total</span><span>{money(result.total)}</span></div>
               <div className="flex justify-between text-cream/70"><span>Deposit</span><span>{money(result.deposit)}</span></div>
               <div className="flex justify-between text-cream/70"><span>Balance</span><span>{money(result.balance)}</span></div>
-              {savedQuote && result.total !== savedQuote.total && (
-                <div className={`flex justify-between font-medium ${result.total > savedQuote.total ? 'text-warning' : 'text-success'}`}><span>Difference from saved price</span><span>{result.total > savedQuote.total ? '+' : ''}{money(result.total - savedQuote.total)}</span></div>
+              {savedQuote && quotedResult.total !== savedQuote.total && (
+                <div className={`flex justify-between font-medium ${quotedResult.total > savedQuote.total ? 'text-warning' : 'text-success'}`}><span>Difference from saved price</span><span>{quotedResult.total > savedQuote.total ? '+' : ''}{money(quotedResult.total - savedQuote.total)}</span></div>
               )}
               <p className="pt-1 text-xs text-cream/40">{result.paymentTerms.shortNotice ? 'Full amount due at signing.' : '50% deposit. Balance due 14 days before the event.'}</p>
             </div>
+            {inputs.length > 1 && (
+              <div className="space-y-2 rounded-lg border border-gold/25 bg-gold/5 p-3 text-sm">
+                <p className="text-xs font-semibold uppercase tracking-widest text-gold/70">Combined package</p>
+                {multiResult.events.map((event, index) => (
+                  <div key={index} className="flex justify-between text-cream/60"><span>{event.name}</span><span>{money(event.result.total)}</span></div>
+                ))}
+                <div className="flex justify-between border-t border-gold/20 pt-2 text-lg font-bold text-gold"><span>Combined total</span><span>{money(multiResult.total)}</span></div>
+                <div className="flex justify-between text-cream/70"><span>{multiResult.paymentTerms.shortNotice ? 'Full amount due at signing' : 'Combined deposit'}</span><span>{money(multiResult.deposit)}</span></div>
+                <div className="flex justify-between text-cream/70"><span>Combined balance</span><span>{money(multiResult.balance)}</span></div>
+                <p className="pt-1 text-xs text-cream/40">Payment timing uses the earliest event date that is filled in.</p>
+              </div>
+            )}
             {saveError && <p role="alert" className="rounded-lg border border-danger/30 bg-danger/10 px-3 py-2 text-sm text-danger">{saveError}</p>}
             {isEdit ? (
               <div className="space-y-2">
