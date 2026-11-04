@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, useParams } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { Toaster } from 'react-hot-toast'
 import AppShell from './components/layout/AppShell'
@@ -17,6 +17,13 @@ import QuotePage from './pages/QuotePage'
 import SavedQuotePage from './pages/SavedQuotePage'
 import { AuthProvider } from './lib/auth/AuthProvider'
 import AuthGate from './components/auth/AuthGate'
+
+// QuotePage keeps its form in state. Keying it by the quote id rebuilds the screen when the address
+// moves from one quote to another (or between new and edit), so one quote never shows another's inputs.
+function EditQuoteRoute() {
+  const { id } = useParams()
+  return <QuotePage key={id} />
+}
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -37,8 +44,8 @@ export default function App() {
               <Route element={<AppShell />}>
                 <Route path="/" element={<DashboardPage />} />
                 <Route path="/leads" element={<LeadsPage />} />
-                <Route path="/quotes/new" element={<QuotePage />} />
-                <Route path="/quotes/:id/edit" element={<QuotePage />} />
+                <Route path="/quotes/new" element={<QuotePage key="new" />} />
+                <Route path="/quotes/:id/edit" element={<EditQuoteRoute />} />
                 <Route path="/quotes/:id" element={<SavedQuotePage />} />
                 <Route path="/events" element={<EventsPage />} />
                 <Route path="/events/:id" element={<EventDetailPage />} />

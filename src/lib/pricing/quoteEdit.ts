@@ -161,6 +161,13 @@ export function planQuoteChange({ row, newInput, today, requote = false }: PlanQ
   }
 }
 
+// The edit screen calls this instead of planQuoteChange: a quote that cannot be edited returns
+// null (the screen shows "View the stored quote instead") rather than throwing and blanking the page.
+export function planQuoteChangeIfEditable(options: PlanQuoteChangeOptions): QuoteChangePlan | null {
+  if (!inputsFromSavedQuote(options.row).input) return null
+  return planQuoteChange(options)
+}
+
 export function buildQuoteUpdate({ row, plan, input, result, today, reason }: BuildQuoteUpdateOptions): Record<string, unknown> {
   const breakdown = object(row.breakdown)
   if (!breakdown) throw new Error('The saved quote breakdown is missing.')

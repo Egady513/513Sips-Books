@@ -3,7 +3,7 @@ import { readFile } from 'node:fs/promises'
 import test from 'node:test'
 import { calculateQuote } from './calculateQuote.ts'
 import { fromFormInputs } from './fromFormInputs.ts'
-import { buildQuoteUpdate, inputsFromSavedQuote, planQuoteChange } from './quoteEdit.ts'
+import { buildQuoteUpdate, inputsFromSavedQuote, planQuoteChange, planQuoteChangeIfEditable } from './quoteEdit.ts'
 import { buildQuoteRecord } from './quoteRecord.ts'
 
 interface Fixture {
@@ -200,4 +200,24 @@ test('an explicit fullBarStaffCount of 2 with 4 bartenders stays 2', () => {
   const fullBarLine = calculateQuote(rebuilt.input, { today }).lines.find((line) => line.label.startsWith('Full Bar Service'))
   assert.equal(fullBarLine?.label, 'Full Bar Service (4 hrs × 2 bartenders)')
   assert.equal(fullBarLine?.amount, 120)
+})
+
+test('a quote that cannot be edited returns no price change instead of throwing', () => {
+  const row = { total: 100, deposit: 50, balance: 50, breakdown: { base: 100 } }
+  const newInput = fromFormInputs({})
+  assert.throws(() => planQuoteChange({ row, newInput, today }), /does not contain the saved calculator inputs/)
+  assert.equal(planQuoteChangeIfEditable({ row, newInput, today }), null)
+  assert.equal(planQuoteChangeIfEditable({ row, newInput, today, requote: true }), null)
+  assert.equal(planQuoteChangeIfEditable({ row: { total: 100, deposit: 50, balance: 50 }, newInput, today }), null)
+})
+
+test('an editable quote gets the same price change from the safe wrapper', () => {
+  const row = savedEversRow()
+  const rebuilt = inputsFromSavedQuote(row)
+  assert.ok(rebuilt.input)
+  const edited = { ...rebuilt.input, guestCount: 201 }
+  assert.deepEqual(
+    planQuoteChangeIfEditable({ row, newInput: edited, today }),
+    planQuoteChange({ row, newInput: edited, today }),
+  )
 })
