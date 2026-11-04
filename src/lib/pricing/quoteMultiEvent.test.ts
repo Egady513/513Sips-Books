@@ -4,9 +4,10 @@ import test from 'node:test'
 // @ts-expect-error The pinned JavaScript harness does not ship TypeScript declarations.
 import { runCalculator } from '../../../baseline/run-calculator.mjs'
 import { calculateMultiEventQuote } from './calculateMultiEventQuote.ts'
+import { calculateQuote } from './calculateQuote.ts'
 import { fromFormInputs } from './fromFormInputs.ts'
 import { buildQuoteUpdate, inputsFromSavedQuote, planQuoteChange } from './quoteEdit.ts'
-import { buildMultiEventQuoteRecord, toFormConfig } from './quoteRecord.ts'
+import { buildMultiEventQuoteRecord, buildQuoteRecord, toFormConfig } from './quoteRecord.ts'
 import type { NamedQuoteInput, QuoteInput } from './types.ts'
 
 interface Fixture {
@@ -149,4 +150,63 @@ test('multi-event detail saves preserve stored values and repricing appends one 
   const update = buildQuoteUpdate({ row, plan: repricePlan, input: repricedInputs, result: repriced, today, reason: 'edit' })
   assert.equal((update.version_history as unknown[]).length, row.version_history.length + 1)
   assert.equal('status' in update, false)
+})
+
+test('legacy multi-event rows without fullBarStaffCount cover every bartender, as the website does', () => {
+  const events = typedEvents(cases[1].events)
+  const result = calculateMultiEventQuote(events, { today })
+  const built = buildMultiEventQuoteRecord({ leadId: 'website', events, result, today })
+  const websiteRow = {
+    ...built,
+    breakdown: built.breakdown.map((value) => {
+      const { engine: _engine, _config, ...rest } = value
+      void _engine
+      const { fullBarStaffCount: _omitted, ...config } = _config
+      void _omitted
+      return { ...rest, _config: config }
+    }),
+  }
+  const rebuilt = inputsFromSavedQuote(websiteRow)
+  assert.ok('events' in rebuilt && rebuilt.events)
+  const wedding = rebuilt.events[1]
+  assert.equal(wedding.packageType, 'fullbar')
+  assert.equal(wedding.bartenderCount, 3)
+  assert.equal(wedding.fullBarStaffCount, 3)
+  assert.deepEqual(rebuilt.events.map((event) => event.fullBarStaffCount), [1, 3, 2])
+  assert.equal(planQuoteChange({ row: websiteRow, newInput: rebuilt.events, today }).newTotal, result.total)
+})
+
+test('a single-event re-price update with an empty date carries a null event_date', () => {
+  const emptyDate = typedEvents([{ eventName: 'No date yet', guestCount: 80, hours: 4 }])[0].input
+  assert.equal(emptyDate.eventDateIso, '')
+  const stored = calculateQuote(emptyDate, { today })
+  const row = { ...buildQuoteRecord({ leadId: 'single', input: emptyDate, result: stored, today }), status: 'sent' }
+  const changed = { ...emptyDate, guestCount: 81 }
+  const result = calculateQuote(changed, { today })
+  const plan = planQuoteChange({ row, newInput: changed, today })
+  assert.equal(plan.kind, 'reprice')
+  const update = buildQuoteUpdate({ row, plan, input: changed, result, today, reason: 'edit' })
+  assert.equal(update.event_date, null)
+})
+
+test('a re-price update with a real date keeps it as typed', () => {
+  const dated = typedEvents([{ eventName: 'Dated', eventDate: '2027-05-08', guestCount: 80, hours: 4 }])[0].input
+  const row = { ...buildQuoteRecord({ leadId: 'single', input: dated, result: calculateQuote(dated, { today }), today }), status: 'sent' }
+  const changed = { ...dated, guestCount: 90 }
+  const plan = planQuoteChange({ row, newInput: changed, today })
+  const update = buildQuoteUpdate({ row, plan, input: changed, result: calculateQuote(changed, { today }), today, reason: 'edit' })
+  assert.equal(update.event_date, '2027-05-08')
+})
+
+test('removing an event from a multi-event quote with no dates re-prices with a null event_date', () => {
+  const events = typedEvents([
+    { eventName: 'Welcome', guestCount: 40 },
+    { eventName: 'Wedding', guestCount: 140, hours: 5 },
+  ])
+  const row = buildMultiEventQuoteRecord({ leadId: 'multi', events, result: calculateMultiEventQuote(events, { today }), today })
+  const remaining = events.slice(0, 1).map((event) => event.input)
+  const plan = planQuoteChange({ row, newInput: remaining, today })
+  assert.equal(plan.kind, 'reprice')
+  const update = buildQuoteUpdate({ row, plan, input: remaining, result: calculateQuote(remaining[0], { today }), today, reason: 'edit' })
+  assert.equal(update.event_date, null)
 })

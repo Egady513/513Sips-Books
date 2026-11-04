@@ -352,7 +352,7 @@ export function buildQuoteUpdate({ row, plan, input, result, today, reason }: Bu
     guest_count: singleInput.guestCount,
     hours: singleInput.serviceHours,
     bartenders: singleInput.bartenderCount,
-    event_date: singleInput.eventDateIso,
+    event_date: singleInput.eventDateIso || null,
     breakdown: {
       ...toLegacyBreakdown(result, singleInput),
       _config: toFormConfig(singleInput),
