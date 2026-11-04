@@ -9,6 +9,8 @@ export interface QuoteVersion {
   balance: number
   status: 'draft' | 'sent' | 'accepted' | 'declined'
   created_at: string
+  edited_at?: string
+  reason?: 'edit' | 'requote'
 }
 
 export interface Quote {
@@ -78,6 +80,27 @@ export function useCreatePricedQuote() {
       qc.setQueryData(['quotes', quote.id], quote)
       qc.invalidateQueries({ queryKey: ['quotes'] })
       qc.invalidateQueries({ queryKey: ['leads'] })
+    },
+  })
+}
+
+export function useUpdatePricedQuote() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ id, updates }: { id: string; updates: Record<string, unknown> }) => {
+      const { data, error } = await supabase
+        .from('quotes')
+        .update(updates)
+        .eq('id', id)
+        .select()
+        .single()
+      if (error) throw error
+      if (!data) throw new Error('The quote was not returned after updating.')
+      return data as Quote
+    },
+    onSuccess: (quote) => {
+      qc.setQueryData(['quotes', quote.id], quote)
+      qc.invalidateQueries({ queryKey: ['quotes'] })
     },
   })
 }
