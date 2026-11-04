@@ -3,7 +3,7 @@ import { readFile } from 'node:fs/promises'
 import test from 'node:test'
 import { calculateQuote } from './calculateQuote.ts'
 import { fromFormInputs } from './fromFormInputs.ts'
-import { buildQuoteUpdate, inputsFromSavedQuote, planQuoteChange } from './quoteEdit.ts'
+import { buildQuoteUpdate, inputsFromSavedQuote, planQuoteChange, planQuoteChangeIfEditable } from './quoteEdit.ts'
 import { buildQuoteRecord } from './quoteRecord.ts'
 
 interface Fixture {
@@ -141,5 +141,83 @@ test('option-name-only edits keep the stored price', () => {
     (update.breakdown as typeof row.breakdown).engine,
     row.breakdown.engine,
     'detail saves must not replace the stored pricing snapshot',
+  )
+})
+
+const eversLow = fixtureDocument.fixtures.find((fixture) => fixture.name === 'Evers LOW, full bar for all staff')!
+
+// An older website save: the stored _config has no fullBarStaffCount. The website restores it
+// from the bartender count, so a rebuilt quote must price the same way.
+function legacyRowWithoutFullBarStaffCount(fixture: Fixture, total: number) {
+  const input = fromFormInputs(fixture.input)
+  const result = calculateQuote(input, { today })
+  const built = buildQuoteRecord({ leadId: 'website-legacy', input, result, today })
+  const { fullBarStaffCount: _omitted, ...config } = built.breakdown._config
+  void _omitted
+  return {
+    ...built,
+    total,
+    deposit: Math.round(total / 2),
+    balance: total - Math.round(total / 2),
+    breakdown: { ...built.breakdown, engine: undefined, _config: config },
+  }
+}
+
+test('legacy _config with Full Bar and no fullBarStaffCount covers every bartender', () => {
+  const row = legacyRowWithoutFullBarStaffCount(eversLow, 4321)
+  assert.equal('fullBarStaffCount' in row.breakdown._config, false)
+  const rebuilt = inputsFromSavedQuote(row)
+  assert.ok(rebuilt.input)
+  assert.equal(rebuilt.input.packageType, 'fullbar')
+  assert.equal(rebuilt.input.serviceHours, 4)
+  assert.equal(rebuilt.input.bartenderCount, 4)
+  assert.equal(rebuilt.input.fullBarStaffCount, 4)
+  const result = calculateQuote(rebuilt.input, { today })
+  const fullBarLine = result.lines.find((line) => line.label.startsWith('Full Bar Service'))
+  assert.equal(fullBarLine?.label, 'Full Bar Service (4 hrs × 4 bartenders)')
+  assert.equal(fullBarLine?.amount, 240)
+})
+
+test('Evers LOW shape stored without fullBarStaffCount reprices to $4,321 with no difference', () => {
+  const row = legacyRowWithoutFullBarStaffCount(eversLow, 4321)
+  const rebuilt = inputsFromSavedQuote(row)
+  assert.ok(rebuilt.input)
+  assert.equal(calculateQuote(rebuilt.input, { today }).total, 4321)
+  const plan = planQuoteChange({ row, newInput: rebuilt.input, today })
+  assert.equal(plan.newTotal, 4321)
+  assert.equal(plan.difference, 0)
+  assert.deepEqual(plan.changedFields, [])
+})
+
+test('an explicit fullBarStaffCount of 2 with 4 bartenders stays 2', () => {
+  const input = fromFormInputs({ ...eversLow.input, bartenderCount: 4, fullBarStaffCount: '2' })
+  const result = calculateQuote(input, { today })
+  const row = buildQuoteRecord({ leadId: 'website-explicit', input, result, today })
+  const websiteRow = { ...row, breakdown: { ...row.breakdown, engine: undefined } }
+  const rebuilt = inputsFromSavedQuote(websiteRow)
+  assert.ok(rebuilt.input)
+  assert.equal(rebuilt.input.fullBarStaffCount, 2)
+  const fullBarLine = calculateQuote(rebuilt.input, { today }).lines.find((line) => line.label.startsWith('Full Bar Service'))
+  assert.equal(fullBarLine?.label, 'Full Bar Service (4 hrs × 2 bartenders)')
+  assert.equal(fullBarLine?.amount, 120)
+})
+
+test('a quote that cannot be edited returns no price change instead of throwing', () => {
+  const row = { total: 100, deposit: 50, balance: 50, breakdown: { base: 100 } }
+  const newInput = fromFormInputs({})
+  assert.throws(() => planQuoteChange({ row, newInput, today }), /does not contain the saved calculator inputs/)
+  assert.equal(planQuoteChangeIfEditable({ row, newInput, today }), null)
+  assert.equal(planQuoteChangeIfEditable({ row, newInput, today, requote: true }), null)
+  assert.equal(planQuoteChangeIfEditable({ row: { total: 100, deposit: 50, balance: 50 }, newInput, today }), null)
+})
+
+test('an editable quote gets the same price change from the safe wrapper', () => {
+  const row = savedEversRow()
+  const rebuilt = inputsFromSavedQuote(row)
+  assert.ok(rebuilt.input)
+  const edited = { ...rebuilt.input, guestCount: 201 }
+  assert.deepEqual(
+    planQuoteChangeIfEditable({ row, newInput: edited, today }),
+    planQuoteChange({ row, newInput: edited, today }),
   )
 })

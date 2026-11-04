@@ -2,7 +2,7 @@ export { calculateQuote, getPaymentTerms, getQuoteValidityDate } from './calcula
 export { calculateMultiEventQuote } from './calculateMultiEventQuote.ts'
 export { fromFormInputs } from './fromFormInputs.ts'
 export { storedEventSections, storedLines } from './savedQuoteView.ts'
-export { buildQuoteUpdate, inputsFromSavedQuote, planQuoteChange } from './quoteEdit.ts'
+export { buildQuoteUpdate, inputsFromSavedQuote, planQuoteChange, planQuoteChangeIfEditable } from './quoteEdit.ts'
 export { buildMultiEventQuoteRecord, buildQuoteRecord, toFormConfig, toLegacyBreakdown } from './quoteRecord.ts'
 export * from './rates.ts'
 export type * from './types.ts'

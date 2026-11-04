@@ -11,7 +11,7 @@ import {
   calculateMultiEventQuote,
   calculateQuote,
   inputsFromSavedQuote,
-  planQuoteChange,
+  planQuoteChangeIfEditable,
   type CustomItem,
   type PromoCode,
   type QuoteInput,
@@ -124,7 +124,7 @@ export default function QuotePage() {
   const editResult = inputs.length > 1 ? multiResult : result
   const changePlan = useMemo(
     () => isEdit && inputReady && quoteQuery.data
-      ? planQuoteChange({ row: quoteQuery.data, newInput: editInput, today })
+      ? planQuoteChangeIfEditable({ row: quoteQuery.data, newInput: editInput, today })
       : null,
     [editInput, inputReady, isEdit, quoteQuery.data, today],
   )
@@ -165,8 +165,9 @@ export default function QuotePage() {
     setSaveError('')
     try {
       const plan = reason === 'requote'
-        ? planQuoteChange({ row: quoteQuery.data, newInput: editInput, today, requote: true })
+        ? planQuoteChangeIfEditable({ row: quoteQuery.data, newInput: editInput, today, requote: true })
         : changePlan
+      if (!plan) throw new Error('This quote cannot be edited.')
       const updates = buildQuoteUpdate({ row: quoteQuery.data, plan, input: editInput, result: editResult, today, reason })
       const saved = await updateQuote.mutateAsync({ id: editId, updates })
       if (!saved?.id) throw new Error('The quote was not returned after updating.')
@@ -192,7 +193,7 @@ export default function QuotePage() {
 
   const savedQuote = isEdit ? quoteQuery.data : null
   const activePlan = confirmReason === 'requote' && savedQuote
-    ? planQuoteChange({ row: savedQuote, newInput: editInput, today, requote: true })
+    ? planQuoteChangeIfEditable({ row: savedQuote, newInput: editInput, today, requote: true })
     : changePlan
 
   const addEvent = () => {

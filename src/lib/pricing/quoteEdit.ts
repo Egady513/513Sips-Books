@@ -108,6 +108,16 @@ function sameValue(left: unknown, right: unknown): boolean {
   return JSON.stringify(left) === JSON.stringify(right)
 }
 
+// Older website saves have no fullBarStaffCount. The website restores such a record with
+// `cfg.fullBarStaffCount || cfg.bartenderCount`, so a rebuilt quote must do the same or Full Bar
+// is priced for one bartender. A fresh page (fromFormInputs alone) still defaults to 1.
+function inputsFromSavedConfig(config: Record<string, unknown>): QuoteInput {
+  return fromFormInputs({
+    ...config,
+    fullBarStaffCount: config.fullBarStaffCount || config.bartenderCount,
+  })
+}
+
 export function inputsFromSavedQuote(row: SavedQuoteRow): SavedQuoteInputs {
   if (Array.isArray(row.breakdown) && row.breakdown.length > 1) {
     const entries = row.breakdown.map(object)
@@ -137,7 +147,7 @@ export function inputsFromSavedQuote(row: SavedQuoteRow): SavedQuoteInputs {
 
     const configs = entries.map((entry) => entry?._config)
     if (configs.every(isUsableConfig)) {
-      return { events: configs.map((config) => fromFormInputs(config)), reason: null }
+      return { events: configs.map((config) => inputsFromSavedConfig(config)), reason: null }
     }
     return {
       input: null,
@@ -160,7 +170,7 @@ export function inputsFromSavedQuote(row: SavedQuoteRow): SavedQuoteInputs {
 
   const config = breakdown ? breakdown._config : null
   if (isUsableConfig(config)) {
-    return { input: fromFormInputs(config), reason: null }
+    return { input: inputsFromSavedConfig(config), reason: null }
   }
 
   return {
@@ -237,6 +247,14 @@ export function planQuoteChange({ row, newInput, today, requote = false }: PlanQ
     difference: result.total - row.total,
     changedFields,
   }
+}
+
+// The edit screen calls this instead of planQuoteChange: a quote that cannot be edited returns
+// null (the screen shows "View the stored quote instead") rather than throwing and blanking the page.
+export function planQuoteChangeIfEditable(options: PlanQuoteChangeOptions): QuoteChangePlan | null {
+  const saved = inputsFromSavedQuote(options.row)
+  if (!saved.events && !saved.input) return null
+  return planQuoteChange(options)
 }
 
 export function buildQuoteUpdate({ row, plan, input, result, today, reason }: BuildQuoteUpdateOptions): Record<string, unknown> {
