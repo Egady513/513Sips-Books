@@ -77,7 +77,7 @@ export default function QuotePage() {
     houseCocktailCount: 0,
     signatureCocktailNames: '',
     houseCocktailNames: '',
-    hasMultiBarOperations: false,
+    barCount: 1,
     hasAlcoholProcurement: false,
     hasCoffeeService: false,
     hasArchBackdrop: false,
@@ -160,7 +160,7 @@ export default function QuotePage() {
                 </select>
               </Field>
             </div>
-            <Check label="Large Event & Multi-Bar Operations" checked={input.hasMultiBarOperations} onChange={(checked) => set('hasMultiBarOperations', checked)} />
+            <Field label="Number of bars"><input type="number" min="1" step="1" className={inputClass} value={input.barCount} onChange={(event) => set('barCount', Math.max(1, Math.floor(number(event.target.value, 1))))} /></Field>
           </Card>
 
           <Card className="space-y-4">

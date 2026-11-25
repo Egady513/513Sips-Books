@@ -594,8 +594,12 @@ export default function LeadsPage() {
       }
       if (typeof bd.volume === 'number' && bd.volume > 0)
         rows += `<div class="brow"><span>High-Volume Event Adjustment</span><span>+${fmt(bd.volume)}</span></div>`
-      if (typeof bd.multiBarOperations === 'number' && bd.multiBarOperations > 0)
-        rows += `<div class="brow"><span>Large Event &amp; Multi-Bar Operations</span><span>+${fmt(bd.multiBarOperations)}</span></div>`
+      if (typeof bd.multiBarOperations === 'number' && bd.multiBarOperations > 0) {
+        const label = typeof bd.barCount === 'number' && bd.barCount > 1
+          ? `Additional bars (${bd.barCount})`
+          : 'Large Event &amp; Multi-Bar Operations'
+        rows += `<div class="brow"><span>${label}</span><span>+${fmt(bd.multiBarOperations)}</span></div>`
+      }
       if (typeof bd.addons === 'number' && bd.addons > 0) {
         const addOnLabels = Array.isArray(bd.addonsList) ? bd.addonsList as string[] : []
         const label = addOnLabels.length === 1 ? escapeHtml(addOnLabels[0]) : 'Premium Add-Ons'

@@ -14,6 +14,7 @@ const { JSDOM, VirtualConsole } = require(JSDOM_PATH);
 const BASELINE_NOW = '2026-10-31T12:00:00-04:00';
 const here = path.dirname(fileURLToPath(import.meta.url));
 const calculatorPath = path.join(here, 'source', 'calculator.html');
+const calculatorPricingPath = path.join(here, 'source', 'calculator-pricing.js');
 
 function money(text) {
   const negative = /^\s*-/.test(text);
@@ -29,18 +30,25 @@ function setElement(document, id, value) {
 }
 
 function normalizeInput(input = {}) {
-  return {
+  const normalized = {
     eventName: '', quoteOptionName: '', clientNotes: '', eventDate: '',
     guestCount: 50, smallGroup: false, hours: 3, bartenderCount: 1,
     packageType: 'beerwine', fullBarStaffCount: 1,
     glassware: 'plastic_at_cost', glassCount: 0, distance: 0,
     cocktailCount: 0, houseCocktailCount: 0,
     signatureCocktailNames: '', houseCocktailNames: '',
-    multiBarOperations: false, alcoholProcurement: false,
+    barCount: 1, alcoholProcurement: false,
     coffeeService: false, archBackdrop: false, drinkBigIce: false,
     iceCount: 100, tentRental: false, promoCode: '', customItems: [],
     ...input,
   };
+  if (input.barCount === undefined || input.barCount === null || input.barCount === '') {
+    normalized.barCount = input.multiBarOperations === true
+      || (typeof input.multiBarOperations === 'number' && input.multiBarOperations > 0)
+      ? 2
+      : 1;
+  }
+  return normalized;
 }
 
 function applyInputs(window, rawInput) {
@@ -55,7 +63,7 @@ function applyInputs(window, rawInput) {
   const direct = [
     'eventName', 'quoteOptionName', 'clientNotes', 'eventDate', 'guestCount',
     'hours', 'packageType', 'glassware', 'glassCount', 'distance',
-    'signatureCocktailNames', 'houseCocktailNames', 'multiBarOperations',
+    'signatureCocktailNames', 'houseCocktailNames', 'barCount',
     'alcoholProcurement', 'coffeeService', 'archBackdrop', 'drinkBigIce',
     'iceCount', 'tentRental',
   ];
@@ -117,7 +125,14 @@ function captureEvent(window, appliedInput) {
 }
 
 async function makeDom(eventCount = 1) {
-  const html = await fs.readFile(calculatorPath, 'utf8');
+  const [calculatorHtml, calculatorPricing] = await Promise.all([
+    fs.readFile(calculatorPath, 'utf8'),
+    fs.readFile(calculatorPricingPath, 'utf8'),
+  ]);
+  const html = calculatorHtml.replace(
+    '<script src="calculator-pricing.js"></script>',
+    `<script>${calculatorPricing}</script>`,
+  );
   const virtualConsole = new VirtualConsole();
   virtualConsole.on('jsdomError', (error) => {
     if (!/Could not load img/.test(error.message)) throw error;

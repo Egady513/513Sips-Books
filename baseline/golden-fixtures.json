@@ -25,18 +25,18 @@
       "target": {
         "value": 4321,
         "source": "Eddie's 2026-09-02 record",
-        "matches": true
+        "matches": false
       },
       "expected": {
-        "total": 4321,
-        "deposit": 2161,
-        "balance": 2160,
+        "total": 4671,
+        "deposit": 2336,
+        "balance": 2335,
         "depositLabel": "Deposit Due Now (50%)",
         "balanceLabel": "Balance Due (14 days prior)",
         "lines": [
           {
             "label": "Base Package (1 bartender, first 3 hrs, ≤50 guests)",
-            "amount": 650
+            "amount": 750
           },
           {
             "label": "Additional Bartenders (3 additional bartenders, first 3 hrs)",
@@ -51,12 +51,12 @@
             "amount": 240
           },
           {
-            "label": "Signature Cocktails (2 @ $125)",
-            "amount": 250
+            "label": "Signature Cocktails (2 @ $175)",
+            "amount": 350
           },
           {
-            "label": "High-Volume Event Adjustment (101+ guests)",
-            "amount": 250
+            "label": "High-Volume Event Adjustment (151+ guests)",
+            "amount": 400
           },
           {
             "label": "Premium Glassware (516 glasses)",
@@ -80,15 +80,21 @@
           "oneWayMiles": 0
         },
         "breakdown": {
-          "base": 650,
           "hours": 4,
           "bartenders": 4,
           "fullBarStaffCount": 4,
           "quoteOptionName": "",
           "clientNotes": "",
+          "signatureCocktailCount": 2,
+          "signatureCocktailNames": "",
+          "houseCocktailCount": 0,
+          "houseCocktailNames": "",
+          "featuredCocktailCount": 2,
+          "base": 750,
           "staffing": 675,
-          "volume": 250,
+          "volume": 400,
           "multiBarOperations": 0,
+          "barCount": 1,
           "twoHrReduction": 0,
           "extraHours": 300,
           "longEventPremium": 0,
@@ -96,29 +102,26 @@
           "package": 240,
           "glassware": 1806,
           "glasswareAtCost": false,
-          "cocktails": 250,
-          "signatureCocktailCount": 2,
-          "signatureCocktailNames": "",
+          "cocktails": 350,
+          "signatureRate": 175,
           "houseCocktails": 0,
-          "houseCocktailCount": 0,
-          "houseCocktailNames": "",
           "cocktailProgram": 0,
-          "featuredCocktailCount": 2,
           "addons": 0,
           "addonsList": [],
           "addonItems": [],
+          "procurementCustom": false,
           "discount": 0,
+          "customDiscount": 0,
+          "customItemsTotal": 150,
           "customItems": [
             {
               "name": "Bar Equipment & Accessories",
               "price": 150
             }
           ],
-          "customItemsTotal": 150,
           "customItemsList": [
             "Bar Equipment & Accessories"
           ],
-          "customDiscount": 0,
           "customDiscountLabel": ""
         }
       }
@@ -148,15 +151,15 @@
         "matches": false
       },
       "expected": {
-        "total": 4081,
-        "deposit": 2041,
-        "balance": 2040,
+        "total": 4431,
+        "deposit": 2216,
+        "balance": 2215,
         "depositLabel": "Deposit Due Now (50%)",
         "balanceLabel": "Balance Due (14 days prior)",
         "lines": [
           {
             "label": "Base Package (1 bartender, first 3 hrs, ≤50 guests)",
-            "amount": 650
+            "amount": 750
           },
           {
             "label": "Additional Bartenders (3 additional bartenders, first 3 hrs)",
@@ -167,12 +170,12 @@
             "amount": 300
           },
           {
-            "label": "Signature Cocktails (2 @ $125)",
-            "amount": 250
+            "label": "Signature Cocktails (2 @ $175)",
+            "amount": 350
           },
           {
-            "label": "High-Volume Event Adjustment (101+ guests)",
-            "amount": 250
+            "label": "High-Volume Event Adjustment (151+ guests)",
+            "amount": 400
           },
           {
             "label": "Premium Glassware (516 glasses)",
@@ -196,15 +199,21 @@
           "oneWayMiles": 0
         },
         "breakdown": {
-          "base": 650,
           "hours": 4,
           "bartenders": 4,
           "fullBarStaffCount": 1,
           "quoteOptionName": "",
           "clientNotes": "",
+          "signatureCocktailCount": 2,
+          "signatureCocktailNames": "",
+          "houseCocktailCount": 0,
+          "houseCocktailNames": "",
+          "featuredCocktailCount": 2,
+          "base": 750,
           "staffing": 675,
-          "volume": 250,
+          "volume": 400,
           "multiBarOperations": 0,
+          "barCount": 1,
           "twoHrReduction": 0,
           "extraHours": 300,
           "longEventPremium": 0,
@@ -212,29 +221,26 @@
           "package": 0,
           "glassware": 1806,
           "glasswareAtCost": false,
-          "cocktails": 250,
-          "signatureCocktailCount": 2,
-          "signatureCocktailNames": "",
+          "cocktails": 350,
+          "signatureRate": 175,
           "houseCocktails": 0,
-          "houseCocktailCount": 0,
-          "houseCocktailNames": "",
           "cocktailProgram": 0,
-          "featuredCocktailCount": 2,
           "addons": 0,
           "addonsList": [],
           "addonItems": [],
+          "procurementCustom": false,
           "discount": 0,
+          "customDiscount": 0,
+          "customItemsTotal": 150,
           "customItems": [
             {
               "name": "Bar Equipment & Accessories",
               "price": 150
             }
           ],
-          "customItemsTotal": 150,
           "customItemsList": [
             "Bar Equipment & Accessories"
           ],
-          "customDiscount": 0,
           "customDiscountLabel": ""
         }
       }
@@ -269,18 +275,18 @@
       "target": {
         "value": 7131,
         "source": "Eddie's 2026-09-02 record",
-        "matches": true
+        "matches": false
       },
       "expected": {
-        "total": 7131,
-        "deposit": 3566,
-        "balance": 3565,
+        "total": 7606,
+        "deposit": 3803,
+        "balance": 3803,
         "depositLabel": "Deposit Due Now (50%)",
         "balanceLabel": "Balance Due (14 days prior)",
         "lines": [
           {
             "label": "Base Package (1 bartender, first 3 hrs, ≤50 guests)",
-            "amount": 650
+            "amount": 750
           },
           {
             "label": "Additional Bartenders (4 additional bartenders, first 3 hrs)",
@@ -295,16 +301,16 @@
             "amount": 300
           },
           {
-            "label": "Signature Cocktails (3 @ $125)",
-            "amount": 375
+            "label": "Signature Cocktails (3 @ $175)",
+            "amount": 525
           },
           {
-            "label": "High-Volume Event Adjustment (101+ guests)",
-            "amount": 250
+            "label": "High-Volume Event Adjustment (151+ guests)",
+            "amount": 400
           },
           {
             "label": "Premium Add-Ons (Alcohol Procurement & Return Service, Custom Logo Ice (150 cubes))",
-            "amount": 775
+            "amount": 850
           },
           {
             "label": "Premium Glassware (516 glasses)",
@@ -328,15 +334,21 @@
           "oneWayMiles": 0
         },
         "breakdown": {
-          "base": 650,
           "hours": 5,
           "bartenders": 5,
           "fullBarStaffCount": 4,
           "quoteOptionName": "",
           "clientNotes": "",
+          "signatureCocktailCount": 3,
+          "signatureCocktailNames": "",
+          "houseCocktailCount": 0,
+          "houseCocktailNames": "",
+          "featuredCocktailCount": 3,
+          "base": 750,
           "staffing": 900,
-          "volume": 250,
+          "volume": 400,
           "multiBarOperations": 0,
+          "barCount": 1,
           "twoHrReduction": 0,
           "extraHours": 750,
           "longEventPremium": 75,
@@ -344,15 +356,11 @@
           "package": 300,
           "glassware": 1806,
           "glasswareAtCost": false,
-          "cocktails": 375,
-          "signatureCocktailCount": 3,
-          "signatureCocktailNames": "",
+          "cocktails": 525,
+          "signatureRate": 175,
           "houseCocktails": 0,
-          "houseCocktailCount": 0,
-          "houseCocktailNames": "",
           "cocktailProgram": 0,
-          "featuredCocktailCount": 3,
-          "addons": 775,
+          "addons": 850,
           "addonsList": [
             "Alcohol Procurement & Return Service",
             "Custom Logo Ice (150 cubes)"
@@ -364,10 +372,13 @@
             },
             {
               "name": "Custom Logo Ice (150 cubes)",
-              "amount": 375
+              "amount": 450
             }
           ],
+          "procurementCustom": false,
           "discount": 0,
+          "customDiscount": 0,
+          "customItemsTotal": 1250,
           "customItems": [
             {
               "name": "Second Service Station",
@@ -378,12 +389,10 @@
               "price": 250
             }
           ],
-          "customItemsTotal": 1250,
           "customItemsList": [
             "Second Service Station",
             "Bar Equipment & Accessories"
           ],
-          "customDiscount": 0,
           "customDiscountLabel": ""
         }
       }
@@ -421,15 +430,15 @@
         "matches": false
       },
       "expected": {
-        "total": 7206,
-        "deposit": 3603,
-        "balance": 3603,
+        "total": 7681,
+        "deposit": 3841,
+        "balance": 3840,
         "depositLabel": "Deposit Due Now (50%)",
         "balanceLabel": "Balance Due (14 days prior)",
         "lines": [
           {
             "label": "Base Package (1 bartender, first 3 hrs, ≤50 guests)",
-            "amount": 650
+            "amount": 750
           },
           {
             "label": "Additional Bartenders (4 additional bartenders, first 3 hrs)",
@@ -444,16 +453,16 @@
             "amount": 375
           },
           {
-            "label": "Signature Cocktails (3 @ $125)",
-            "amount": 375
+            "label": "Signature Cocktails (3 @ $175)",
+            "amount": 525
           },
           {
-            "label": "High-Volume Event Adjustment (101+ guests)",
-            "amount": 250
+            "label": "High-Volume Event Adjustment (151+ guests)",
+            "amount": 400
           },
           {
             "label": "Premium Add-Ons (Alcohol Procurement & Return Service, Custom Logo Ice (150 cubes))",
-            "amount": 775
+            "amount": 850
           },
           {
             "label": "Premium Glassware (516 glasses)",
@@ -477,15 +486,21 @@
           "oneWayMiles": 0
         },
         "breakdown": {
-          "base": 650,
           "hours": 5,
           "bartenders": 5,
           "fullBarStaffCount": 5,
           "quoteOptionName": "",
           "clientNotes": "",
+          "signatureCocktailCount": 3,
+          "signatureCocktailNames": "",
+          "houseCocktailCount": 0,
+          "houseCocktailNames": "",
+          "featuredCocktailCount": 3,
+          "base": 750,
           "staffing": 900,
-          "volume": 250,
+          "volume": 400,
           "multiBarOperations": 0,
+          "barCount": 1,
           "twoHrReduction": 0,
           "extraHours": 750,
           "longEventPremium": 75,
@@ -493,15 +508,11 @@
           "package": 375,
           "glassware": 1806,
           "glasswareAtCost": false,
-          "cocktails": 375,
-          "signatureCocktailCount": 3,
-          "signatureCocktailNames": "",
+          "cocktails": 525,
+          "signatureRate": 175,
           "houseCocktails": 0,
-          "houseCocktailCount": 0,
-          "houseCocktailNames": "",
           "cocktailProgram": 0,
-          "featuredCocktailCount": 3,
-          "addons": 775,
+          "addons": 850,
           "addonsList": [
             "Alcohol Procurement & Return Service",
             "Custom Logo Ice (150 cubes)"
@@ -513,10 +524,13 @@
             },
             {
               "name": "Custom Logo Ice (150 cubes)",
-              "amount": 375
+              "amount": 450
             }
           ],
+          "procurementCustom": false,
           "discount": 0,
+          "customDiscount": 0,
+          "customItemsTotal": 1250,
           "customItems": [
             {
               "name": "Second Service Station",
@@ -527,12 +541,10 @@
               "price": 250
             }
           ],
-          "customItemsTotal": 1250,
           "customItemsList": [
             "Second Service Station",
             "Bar Equipment & Accessories"
           ],
-          "customDiscount": 0,
           "customDiscountLabel": ""
         }
       }
@@ -571,15 +583,15 @@
         "matches": false
       },
       "expected": {
-        "total": 7456,
-        "deposit": 3728,
-        "balance": 3728,
+        "total": 7906,
+        "deposit": 3953,
+        "balance": 3953,
         "depositLabel": "Deposit Due Now (50%)",
         "balanceLabel": "Balance Due (14 days prior)",
         "lines": [
           {
             "label": "Base Package (1 bartender, first 3 hrs, ≤50 guests)",
-            "amount": 650
+            "amount": 750
           },
           {
             "label": "Additional Bartenders (4 additional bartenders, first 3 hrs)",
@@ -594,16 +606,20 @@
             "amount": 375
           },
           {
-            "label": "Signature Cocktails (3 @ $125)",
-            "amount": 375
+            "label": "Signature Cocktails (3 @ $175)",
+            "amount": 525
           },
           {
-            "label": "Large Event & Multi-Bar Operations (replaces high-volume adjustment)",
-            "amount": 500
+            "label": "High-Volume Event Adjustment (151+ guests)",
+            "amount": 400
+          },
+          {
+            "label": "Additional bars (2)",
+            "amount": 225
           },
           {
             "label": "Premium Add-Ons (Alcohol Procurement & Return Service, Custom Logo Ice (150 cubes))",
-            "amount": 775
+            "amount": 850
           },
           {
             "label": "Premium Glassware (516 glasses)",
@@ -627,15 +643,21 @@
           "oneWayMiles": 0
         },
         "breakdown": {
-          "base": 650,
           "hours": 5,
           "bartenders": 5,
           "fullBarStaffCount": 5,
           "quoteOptionName": "",
           "clientNotes": "",
+          "signatureCocktailCount": 3,
+          "signatureCocktailNames": "",
+          "houseCocktailCount": 0,
+          "houseCocktailNames": "",
+          "featuredCocktailCount": 3,
+          "base": 750,
           "staffing": 900,
-          "volume": 0,
-          "multiBarOperations": 500,
+          "volume": 400,
+          "multiBarOperations": 225,
+          "barCount": 2,
           "twoHrReduction": 0,
           "extraHours": 750,
           "longEventPremium": 75,
@@ -643,15 +665,11 @@
           "package": 375,
           "glassware": 1806,
           "glasswareAtCost": false,
-          "cocktails": 375,
-          "signatureCocktailCount": 3,
-          "signatureCocktailNames": "",
+          "cocktails": 525,
+          "signatureRate": 175,
           "houseCocktails": 0,
-          "houseCocktailCount": 0,
-          "houseCocktailNames": "",
           "cocktailProgram": 0,
-          "featuredCocktailCount": 3,
-          "addons": 775,
+          "addons": 850,
           "addonsList": [
             "Alcohol Procurement & Return Service",
             "Custom Logo Ice (150 cubes)"
@@ -663,10 +681,13 @@
             },
             {
               "name": "Custom Logo Ice (150 cubes)",
-              "amount": 375
+              "amount": 450
             }
           ],
+          "procurementCustom": false,
           "discount": 0,
+          "customDiscount": 0,
+          "customItemsTotal": 1250,
           "customItems": [
             {
               "name": "Second Service Station",
@@ -677,12 +698,10 @@
               "price": 250
             }
           ],
-          "customItemsTotal": 1250,
           "customItemsList": [
             "Second Service Station",
             "Bar Equipment & Accessories"
           ],
-          "customDiscount": 0,
           "customDiscountLabel": ""
         }
       }
@@ -701,18 +720,18 @@
         "field": "breakdown.base",
         "value": 650,
         "source": "package target",
-        "matches": true
+        "matches": false
       },
       "expected": {
-        "total": 1320,
-        "deposit": 660,
-        "balance": 660,
+        "total": 1420,
+        "deposit": 710,
+        "balance": 710,
         "depositLabel": "Deposit Due Now (50%)",
         "balanceLabel": "Balance Due (14 days prior)",
         "lines": [
           {
             "label": "Base Package (1 bartender, first 3 hrs, ≤50 guests)",
-            "amount": 650
+            "amount": 750
           },
           {
             "label": "Additional Bartenders (1 additional bartender, first 3 hrs)",
@@ -744,15 +763,21 @@
           "oneWayMiles": 0
         },
         "breakdown": {
-          "base": 650,
           "hours": 4,
           "bartenders": 2,
           "fullBarStaffCount": 2,
           "quoteOptionName": "",
           "clientNotes": "",
+          "signatureCocktailCount": 0,
+          "signatureCocktailNames": "",
+          "houseCocktailCount": 0,
+          "houseCocktailNames": "",
+          "featuredCocktailCount": 0,
+          "base": 750,
           "staffing": 225,
           "volume": 175,
           "multiBarOperations": 0,
+          "barCount": 1,
           "twoHrReduction": 0,
           "extraHours": 150,
           "longEventPremium": 0,
@@ -761,21 +786,18 @@
           "glassware": 0,
           "glasswareAtCost": true,
           "cocktails": 0,
-          "signatureCocktailCount": 0,
-          "signatureCocktailNames": "",
+          "signatureRate": 150,
           "houseCocktails": 0,
-          "houseCocktailCount": 0,
-          "houseCocktailNames": "",
           "cocktailProgram": 0,
-          "featuredCocktailCount": 0,
           "addons": 0,
           "addonsList": [],
           "addonItems": [],
+          "procurementCustom": false,
           "discount": 0,
-          "customItems": [],
-          "customItemsTotal": 0,
-          "customItemsList": [],
           "customDiscount": 0,
+          "customItemsTotal": 0,
+          "customItems": [],
+          "customItemsList": [],
           "customDiscountLabel": ""
         }
       }
@@ -794,18 +816,18 @@
       "target": {
         "value": 1445,
         "source": "package target",
-        "matches": true
+        "matches": false
       },
       "expected": {
-        "total": 1445,
-        "deposit": 723,
-        "balance": 722,
+        "total": 1570,
+        "deposit": 785,
+        "balance": 785,
         "depositLabel": "Deposit Due Now (50%)",
         "balanceLabel": "Balance Due (14 days prior)",
         "lines": [
           {
             "label": "Base Package (1 bartender, first 3 hrs, ≤50 guests)",
-            "amount": 650
+            "amount": 750
           },
           {
             "label": "Additional Bartenders (1 additional bartender, first 3 hrs)",
@@ -820,8 +842,8 @@
             "amount": 120
           },
           {
-            "label": "Signature Cocktails (1 @ $125)",
-            "amount": 125
+            "label": "Signature Cocktails (1 @ $150)",
+            "amount": 150
           },
           {
             "label": "High-Volume Event Adjustment (51-100 guests)",
@@ -841,15 +863,21 @@
           "oneWayMiles": 0
         },
         "breakdown": {
-          "base": 650,
           "hours": 4,
           "bartenders": 2,
           "fullBarStaffCount": 2,
           "quoteOptionName": "",
           "clientNotes": "",
+          "signatureCocktailCount": 1,
+          "signatureCocktailNames": "",
+          "houseCocktailCount": 0,
+          "houseCocktailNames": "",
+          "featuredCocktailCount": 1,
+          "base": 750,
           "staffing": 225,
           "volume": 175,
           "multiBarOperations": 0,
+          "barCount": 1,
           "twoHrReduction": 0,
           "extraHours": 150,
           "longEventPremium": 0,
@@ -857,22 +885,19 @@
           "package": 120,
           "glassware": 0,
           "glasswareAtCost": true,
-          "cocktails": 125,
-          "signatureCocktailCount": 1,
-          "signatureCocktailNames": "",
+          "cocktails": 150,
+          "signatureRate": 150,
           "houseCocktails": 0,
-          "houseCocktailCount": 0,
-          "houseCocktailNames": "",
           "cocktailProgram": 0,
-          "featuredCocktailCount": 1,
           "addons": 0,
           "addonsList": [],
           "addonItems": [],
+          "procurementCustom": false,
           "discount": 0,
-          "customItems": [],
-          "customItemsTotal": 0,
-          "customItemsList": [],
           "customDiscount": 0,
+          "customItemsTotal": 0,
+          "customItems": [],
+          "customItemsList": [],
           "customDiscountLabel": ""
         }
       }
@@ -896,18 +921,18 @@
       "target": {
         "value": 3008,
         "source": "package target",
-        "matches": true
+        "matches": false
       },
       "expected": {
-        "total": 3008,
-        "deposit": 1504,
-        "balance": 1504,
+        "total": 3233,
+        "deposit": 1617,
+        "balance": 1616,
         "depositLabel": "Deposit Due Now (50%)",
         "balanceLabel": "Balance Due (14 days prior)",
         "lines": [
           {
             "label": "Base Package (1 bartender, first 3 hrs, ≤50 guests)",
-            "amount": 650
+            "amount": 750
           },
           {
             "label": "Additional Bartenders (1 additional bartender, first 3 hrs)",
@@ -922,8 +947,8 @@
             "amount": 120
           },
           {
-            "label": "Signature Cocktails (2 @ $125)",
-            "amount": 250
+            "label": "Signature Cocktails (2 @ $150)",
+            "amount": 300
           },
           {
             "label": "High-Volume Event Adjustment (51-100 guests)",
@@ -931,7 +956,7 @@
           },
           {
             "label": "Premium Add-Ons (Alcohol Procurement & Return Service, Custom Logo Ice (150 cubes))",
-            "amount": 650
+            "amount": 725
           },
           {
             "label": "Premium Glassware (225 glasses)",
@@ -951,15 +976,21 @@
           "oneWayMiles": 0
         },
         "breakdown": {
-          "base": 650,
           "hours": 4,
           "bartenders": 2,
           "fullBarStaffCount": 2,
           "quoteOptionName": "",
           "clientNotes": "",
+          "signatureCocktailCount": 2,
+          "signatureCocktailNames": "",
+          "houseCocktailCount": 0,
+          "houseCocktailNames": "",
+          "featuredCocktailCount": 2,
+          "base": 750,
           "staffing": 225,
           "volume": 175,
           "multiBarOperations": 0,
+          "barCount": 1,
           "twoHrReduction": 0,
           "extraHours": 150,
           "longEventPremium": 0,
@@ -967,15 +998,11 @@
           "package": 120,
           "glassware": 788,
           "glasswareAtCost": false,
-          "cocktails": 250,
-          "signatureCocktailCount": 2,
-          "signatureCocktailNames": "",
+          "cocktails": 300,
+          "signatureRate": 150,
           "houseCocktails": 0,
-          "houseCocktailCount": 0,
-          "houseCocktailNames": "",
           "cocktailProgram": 0,
-          "featuredCocktailCount": 2,
-          "addons": 650,
+          "addons": 725,
           "addonsList": [
             "Alcohol Procurement & Return Service",
             "Custom Logo Ice (150 cubes)"
@@ -987,14 +1014,15 @@
             },
             {
               "name": "Custom Logo Ice (150 cubes)",
-              "amount": 375
+              "amount": 450
             }
           ],
+          "procurementCustom": false,
           "discount": 0,
-          "customItems": [],
-          "customItemsTotal": 0,
-          "customItemsList": [],
           "customDiscount": 0,
+          "customItemsTotal": 0,
+          "customItems": [],
+          "customItemsList": [],
           "customDiscountLabel": ""
         }
       }
@@ -1018,18 +1046,18 @@
       "target": {
         "value": 2908,
         "source": "package target",
-        "matches": true
+        "matches": false
       },
       "expected": {
-        "total": 2908,
-        "deposit": 1454,
-        "balance": 1454,
+        "total": 3133,
+        "deposit": 1567,
+        "balance": 1566,
         "depositLabel": "Deposit Due Now (50%)",
         "balanceLabel": "Balance Due (14 days prior)",
         "lines": [
           {
             "label": "Base Package (1 bartender, first 3 hrs, ≤50 guests)",
-            "amount": 650
+            "amount": 750
           },
           {
             "label": "Additional Bartenders (1 additional bartender, first 3 hrs)",
@@ -1044,8 +1072,8 @@
             "amount": 120
           },
           {
-            "label": "Signature Cocktails (2 @ $125)",
-            "amount": 250
+            "label": "Signature Cocktails (2 @ $150)",
+            "amount": 300
           },
           {
             "label": "High-Volume Event Adjustment (51-100 guests)",
@@ -1053,7 +1081,7 @@
           },
           {
             "label": "Premium Add-Ons (Alcohol Procurement & Return Service, Custom Logo Ice (150 cubes))",
-            "amount": 550
+            "amount": 625
           },
           {
             "label": "Premium Glassware (225 glasses)",
@@ -1073,15 +1101,21 @@
           "oneWayMiles": 0
         },
         "breakdown": {
-          "base": 650,
           "hours": 4,
           "bartenders": 2,
           "fullBarStaffCount": 2,
           "quoteOptionName": "",
           "clientNotes": "",
+          "signatureCocktailCount": 2,
+          "signatureCocktailNames": "",
+          "houseCocktailCount": 0,
+          "houseCocktailNames": "",
+          "featuredCocktailCount": 2,
+          "base": 750,
           "staffing": 225,
           "volume": 175,
           "multiBarOperations": 0,
+          "barCount": 1,
           "twoHrReduction": 0,
           "extraHours": 150,
           "longEventPremium": 0,
@@ -1089,15 +1123,11 @@
           "package": 120,
           "glassware": 788,
           "glasswareAtCost": false,
-          "cocktails": 250,
-          "signatureCocktailCount": 2,
-          "signatureCocktailNames": "",
+          "cocktails": 300,
+          "signatureRate": 150,
           "houseCocktails": 0,
-          "houseCocktailCount": 0,
-          "houseCocktailNames": "",
           "cocktailProgram": 0,
-          "featuredCocktailCount": 2,
-          "addons": 550,
+          "addons": 625,
           "addonsList": [
             "Alcohol Procurement & Return Service",
             "Custom Logo Ice (150 cubes)"
@@ -1109,14 +1139,15 @@
             },
             {
               "name": "Custom Logo Ice (150 cubes)",
-              "amount": 375
+              "amount": 450
             }
           ],
+          "procurementCustom": false,
           "discount": 0,
-          "customItems": [],
-          "customItemsTotal": 0,
-          "customItemsList": [],
           "customDiscount": 0,
+          "customItemsTotal": 0,
+          "customItems": [],
+          "customItemsList": [],
           "customDiscountLabel": ""
         }
       }
@@ -1154,15 +1185,21 @@
           "oneWayMiles": 0
         },
         "breakdown": {
-          "base": 395,
           "hours": 2,
           "bartenders": 1,
           "fullBarStaffCount": 1,
           "quoteOptionName": "",
           "clientNotes": "",
+          "signatureCocktailCount": 0,
+          "signatureCocktailNames": "",
+          "houseCocktailCount": 0,
+          "houseCocktailNames": "",
+          "featuredCocktailCount": 0,
+          "base": 395,
           "staffing": 0,
           "volume": 0,
           "multiBarOperations": 0,
+          "barCount": 1,
           "twoHrReduction": 0,
           "extraHours": 0,
           "longEventPremium": 0,
@@ -1171,21 +1208,18 @@
           "glassware": 0,
           "glasswareAtCost": true,
           "cocktails": 0,
-          "signatureCocktailCount": 0,
-          "signatureCocktailNames": "",
+          "signatureRate": 125,
           "houseCocktails": 0,
-          "houseCocktailCount": 0,
-          "houseCocktailNames": "",
           "cocktailProgram": 0,
-          "featuredCocktailCount": 0,
           "addons": 0,
           "addonsList": [],
           "addonItems": [],
+          "procurementCustom": false,
           "discount": 0,
-          "customItems": [],
-          "customItemsTotal": 0,
-          "customItemsList": [],
           "customDiscount": 0,
+          "customItemsTotal": 0,
+          "customItems": [],
+          "customItemsList": [],
           "customDiscountLabel": ""
         }
       }
@@ -1197,15 +1231,15 @@
         "guestCount": 50
       },
       "expected": {
-        "total": 650,
-        "deposit": 325,
-        "balance": 325,
+        "total": 750,
+        "deposit": 375,
+        "balance": 375,
         "depositLabel": "Deposit Due Now (50%)",
         "balanceLabel": "Balance Due (14 days prior)",
         "lines": [
           {
             "label": "Base Package (1 bartender, first 3 hrs, ≤50 guests)",
-            "amount": 650
+            "amount": 750
           }
         ],
         "quantities": {
@@ -1221,15 +1255,21 @@
           "oneWayMiles": 0
         },
         "breakdown": {
-          "base": 650,
           "hours": 3,
           "bartenders": 1,
           "fullBarStaffCount": 1,
           "quoteOptionName": "",
           "clientNotes": "",
+          "signatureCocktailCount": 0,
+          "signatureCocktailNames": "",
+          "houseCocktailCount": 0,
+          "houseCocktailNames": "",
+          "featuredCocktailCount": 0,
+          "base": 750,
           "staffing": 0,
           "volume": 0,
           "multiBarOperations": 0,
+          "barCount": 1,
           "twoHrReduction": 0,
           "extraHours": 0,
           "longEventPremium": 0,
@@ -1238,21 +1278,18 @@
           "glassware": 0,
           "glasswareAtCost": true,
           "cocktails": 0,
-          "signatureCocktailCount": 0,
-          "signatureCocktailNames": "",
+          "signatureRate": 125,
           "houseCocktails": 0,
-          "houseCocktailCount": 0,
-          "houseCocktailNames": "",
           "cocktailProgram": 0,
-          "featuredCocktailCount": 0,
           "addons": 0,
           "addonsList": [],
           "addonItems": [],
+          "procurementCustom": false,
           "discount": 0,
-          "customItems": [],
-          "customItemsTotal": 0,
-          "customItemsList": [],
           "customDiscount": 0,
+          "customItemsTotal": 0,
+          "customItems": [],
+          "customItemsList": [],
           "customDiscountLabel": ""
         }
       }
@@ -1264,15 +1301,15 @@
         "guestCount": 51
       },
       "expected": {
-        "total": 825,
-        "deposit": 413,
-        "balance": 412,
+        "total": 925,
+        "deposit": 463,
+        "balance": 462,
         "depositLabel": "Deposit Due Now (50%)",
         "balanceLabel": "Balance Due (14 days prior)",
         "lines": [
           {
             "label": "Base Package (1 bartender, first 3 hrs, ≤50 guests)",
-            "amount": 650
+            "amount": 750
           },
           {
             "label": "High-Volume Event Adjustment (51-100 guests)",
@@ -1292,15 +1329,21 @@
           "oneWayMiles": 0
         },
         "breakdown": {
-          "base": 650,
           "hours": 3,
           "bartenders": 1,
           "fullBarStaffCount": 1,
           "quoteOptionName": "",
           "clientNotes": "",
+          "signatureCocktailCount": 0,
+          "signatureCocktailNames": "",
+          "houseCocktailCount": 0,
+          "houseCocktailNames": "",
+          "featuredCocktailCount": 0,
+          "base": 750,
           "staffing": 0,
           "volume": 175,
           "multiBarOperations": 0,
+          "barCount": 1,
           "twoHrReduction": 0,
           "extraHours": 0,
           "longEventPremium": 0,
@@ -1309,21 +1352,18 @@
           "glassware": 0,
           "glasswareAtCost": true,
           "cocktails": 0,
-          "signatureCocktailCount": 0,
-          "signatureCocktailNames": "",
+          "signatureRate": 125,
           "houseCocktails": 0,
-          "houseCocktailCount": 0,
-          "houseCocktailNames": "",
           "cocktailProgram": 0,
-          "featuredCocktailCount": 0,
           "addons": 0,
           "addonsList": [],
           "addonItems": [],
+          "procurementCustom": false,
           "discount": 0,
-          "customItems": [],
-          "customItemsTotal": 0,
-          "customItemsList": [],
           "customDiscount": 0,
+          "customItemsTotal": 0,
+          "customItems": [],
+          "customItemsList": [],
           "customDiscountLabel": ""
         }
       }
@@ -1335,15 +1375,15 @@
         "guestCount": 100
       },
       "expected": {
-        "total": 825,
-        "deposit": 413,
-        "balance": 412,
+        "total": 925,
+        "deposit": 463,
+        "balance": 462,
         "depositLabel": "Deposit Due Now (50%)",
         "balanceLabel": "Balance Due (14 days prior)",
         "lines": [
           {
             "label": "Base Package (1 bartender, first 3 hrs, ≤50 guests)",
-            "amount": 650
+            "amount": 750
           },
           {
             "label": "High-Volume Event Adjustment (51-100 guests)",
@@ -1363,15 +1403,21 @@
           "oneWayMiles": 0
         },
         "breakdown": {
-          "base": 650,
           "hours": 3,
           "bartenders": 1,
           "fullBarStaffCount": 1,
           "quoteOptionName": "",
           "clientNotes": "",
+          "signatureCocktailCount": 0,
+          "signatureCocktailNames": "",
+          "houseCocktailCount": 0,
+          "houseCocktailNames": "",
+          "featuredCocktailCount": 0,
+          "base": 750,
           "staffing": 0,
           "volume": 175,
           "multiBarOperations": 0,
+          "barCount": 1,
           "twoHrReduction": 0,
           "extraHours": 0,
           "longEventPremium": 0,
@@ -1380,21 +1426,18 @@
           "glassware": 0,
           "glasswareAtCost": true,
           "cocktails": 0,
-          "signatureCocktailCount": 0,
-          "signatureCocktailNames": "",
+          "signatureRate": 150,
           "houseCocktails": 0,
-          "houseCocktailCount": 0,
-          "houseCocktailNames": "",
           "cocktailProgram": 0,
-          "featuredCocktailCount": 0,
           "addons": 0,
           "addonsList": [],
           "addonItems": [],
+          "procurementCustom": false,
           "discount": 0,
-          "customItems": [],
-          "customItemsTotal": 0,
-          "customItemsList": [],
           "customDiscount": 0,
+          "customItemsTotal": 0,
+          "customItems": [],
+          "customItemsList": [],
           "customDiscountLabel": ""
         }
       }
@@ -1406,19 +1449,19 @@
         "guestCount": 101
       },
       "expected": {
-        "total": 900,
-        "deposit": 450,
-        "balance": 450,
+        "total": 1050,
+        "deposit": 525,
+        "balance": 525,
         "depositLabel": "Deposit Due Now (50%)",
         "balanceLabel": "Balance Due (14 days prior)",
         "lines": [
           {
             "label": "Base Package (1 bartender, first 3 hrs, ≤50 guests)",
-            "amount": 650
+            "amount": 750
           },
           {
-            "label": "High-Volume Event Adjustment (101+ guests)",
-            "amount": 250
+            "label": "High-Volume Event Adjustment (101-150 guests)",
+            "amount": 300
           }
         ],
         "quantities": {
@@ -1434,15 +1477,21 @@
           "oneWayMiles": 0
         },
         "breakdown": {
-          "base": 650,
           "hours": 3,
           "bartenders": 1,
           "fullBarStaffCount": 1,
           "quoteOptionName": "",
           "clientNotes": "",
+          "signatureCocktailCount": 0,
+          "signatureCocktailNames": "",
+          "houseCocktailCount": 0,
+          "houseCocktailNames": "",
+          "featuredCocktailCount": 0,
+          "base": 750,
           "staffing": 0,
-          "volume": 250,
+          "volume": 300,
           "multiBarOperations": 0,
+          "barCount": 1,
           "twoHrReduction": 0,
           "extraHours": 0,
           "longEventPremium": 0,
@@ -1451,21 +1500,18 @@
           "glassware": 0,
           "glasswareAtCost": true,
           "cocktails": 0,
-          "signatureCocktailCount": 0,
-          "signatureCocktailNames": "",
+          "signatureRate": 150,
           "houseCocktails": 0,
-          "houseCocktailCount": 0,
-          "houseCocktailNames": "",
           "cocktailProgram": 0,
-          "featuredCocktailCount": 0,
           "addons": 0,
           "addonsList": [],
           "addonItems": [],
+          "procurementCustom": false,
           "discount": 0,
-          "customItems": [],
-          "customItemsTotal": 0,
-          "customItemsList": [],
           "customDiscount": 0,
+          "customItemsTotal": 0,
+          "customItems": [],
+          "customItemsList": [],
           "customDiscountLabel": ""
         }
       }
@@ -1477,19 +1523,19 @@
         "guestCount": 115
       },
       "expected": {
-        "total": 900,
-        "deposit": 450,
-        "balance": 450,
+        "total": 1050,
+        "deposit": 525,
+        "balance": 525,
         "depositLabel": "Deposit Due Now (50%)",
         "balanceLabel": "Balance Due (14 days prior)",
         "lines": [
           {
             "label": "Base Package (1 bartender, first 3 hrs, ≤50 guests)",
-            "amount": 650
+            "amount": 750
           },
           {
-            "label": "High-Volume Event Adjustment (101+ guests)",
-            "amount": 250
+            "label": "High-Volume Event Adjustment (101-150 guests)",
+            "amount": 300
           }
         ],
         "quantities": {
@@ -1505,15 +1551,21 @@
           "oneWayMiles": 0
         },
         "breakdown": {
-          "base": 650,
           "hours": 3,
           "bartenders": 1,
           "fullBarStaffCount": 1,
           "quoteOptionName": "",
           "clientNotes": "",
+          "signatureCocktailCount": 0,
+          "signatureCocktailNames": "",
+          "houseCocktailCount": 0,
+          "houseCocktailNames": "",
+          "featuredCocktailCount": 0,
+          "base": 750,
           "staffing": 0,
-          "volume": 250,
+          "volume": 300,
           "multiBarOperations": 0,
+          "barCount": 1,
           "twoHrReduction": 0,
           "extraHours": 0,
           "longEventPremium": 0,
@@ -1522,21 +1574,18 @@
           "glassware": 0,
           "glasswareAtCost": true,
           "cocktails": 0,
-          "signatureCocktailCount": 0,
-          "signatureCocktailNames": "",
+          "signatureRate": 150,
           "houseCocktails": 0,
-          "houseCocktailCount": 0,
-          "houseCocktailNames": "",
           "cocktailProgram": 0,
-          "featuredCocktailCount": 0,
           "addons": 0,
           "addonsList": [],
           "addonItems": [],
+          "procurementCustom": false,
           "discount": 0,
-          "customItems": [],
-          "customItemsTotal": 0,
-          "customItemsList": [],
           "customDiscount": 0,
+          "customItemsTotal": 0,
+          "customItems": [],
+          "customItemsList": [],
           "customDiscountLabel": ""
         }
       }
@@ -1549,15 +1598,15 @@
         "alcoholProcurement": true
       },
       "expected": {
-        "total": 1000,
-        "deposit": 500,
-        "balance": 500,
+        "total": 1100,
+        "deposit": 550,
+        "balance": 550,
         "depositLabel": "Deposit Due Now (50%)",
         "balanceLabel": "Balance Due (14 days prior)",
         "lines": [
           {
             "label": "Base Package (1 bartender, first 3 hrs, ≤50 guests)",
-            "amount": 650
+            "amount": 750
           },
           {
             "label": "High-Volume Event Adjustment (51-100 guests)",
@@ -1581,15 +1630,21 @@
           "oneWayMiles": 0
         },
         "breakdown": {
-          "base": 650,
           "hours": 3,
           "bartenders": 1,
           "fullBarStaffCount": 1,
           "quoteOptionName": "",
           "clientNotes": "",
+          "signatureCocktailCount": 0,
+          "signatureCocktailNames": "",
+          "houseCocktailCount": 0,
+          "houseCocktailNames": "",
+          "featuredCocktailCount": 0,
+          "base": 750,
           "staffing": 0,
           "volume": 175,
           "multiBarOperations": 0,
+          "barCount": 1,
           "twoHrReduction": 0,
           "extraHours": 0,
           "longEventPremium": 0,
@@ -1598,13 +1653,9 @@
           "glassware": 0,
           "glasswareAtCost": true,
           "cocktails": 0,
-          "signatureCocktailCount": 0,
-          "signatureCocktailNames": "",
+          "signatureRate": 150,
           "houseCocktails": 0,
-          "houseCocktailCount": 0,
-          "houseCocktailNames": "",
           "cocktailProgram": 0,
-          "featuredCocktailCount": 0,
           "addons": 175,
           "addonsList": [
             "Alcohol Procurement & Return Service"
@@ -1615,11 +1666,12 @@
               "amount": 175
             }
           ],
+          "procurementCustom": false,
           "discount": 0,
-          "customItems": [],
-          "customItemsTotal": 0,
-          "customItemsList": [],
           "customDiscount": 0,
+          "customItemsTotal": 0,
+          "customItems": [],
+          "customItemsList": [],
           "customDiscountLabel": ""
         }
       }
@@ -1632,15 +1684,15 @@
         "alcoholProcurement": true
       },
       "expected": {
-        "total": 1100,
-        "deposit": 550,
-        "balance": 550,
+        "total": 1200,
+        "deposit": 600,
+        "balance": 600,
         "depositLabel": "Deposit Due Now (50%)",
         "balanceLabel": "Balance Due (14 days prior)",
         "lines": [
           {
             "label": "Base Package (1 bartender, first 3 hrs, ≤50 guests)",
-            "amount": 650
+            "amount": 750
           },
           {
             "label": "High-Volume Event Adjustment (51-100 guests)",
@@ -1664,15 +1716,21 @@
           "oneWayMiles": 0
         },
         "breakdown": {
-          "base": 650,
           "hours": 3,
           "bartenders": 1,
           "fullBarStaffCount": 1,
           "quoteOptionName": "",
           "clientNotes": "",
+          "signatureCocktailCount": 0,
+          "signatureCocktailNames": "",
+          "houseCocktailCount": 0,
+          "houseCocktailNames": "",
+          "featuredCocktailCount": 0,
+          "base": 750,
           "staffing": 0,
           "volume": 175,
           "multiBarOperations": 0,
+          "barCount": 1,
           "twoHrReduction": 0,
           "extraHours": 0,
           "longEventPremium": 0,
@@ -1681,13 +1739,9 @@
           "glassware": 0,
           "glasswareAtCost": true,
           "cocktails": 0,
-          "signatureCocktailCount": 0,
-          "signatureCocktailNames": "",
+          "signatureRate": 150,
           "houseCocktails": 0,
-          "houseCocktailCount": 0,
-          "houseCocktailNames": "",
           "cocktailProgram": 0,
-          "featuredCocktailCount": 0,
           "addons": 275,
           "addonsList": [
             "Alcohol Procurement & Return Service"
@@ -1698,11 +1752,12 @@
               "amount": 275
             }
           ],
+          "procurementCustom": false,
           "discount": 0,
-          "customItems": [],
-          "customItemsTotal": 0,
-          "customItemsList": [],
           "customDiscount": 0,
+          "customItemsTotal": 0,
+          "customItems": [],
+          "customItemsList": [],
           "customDiscountLabel": ""
         }
       }
@@ -1715,19 +1770,19 @@
         "alcoholProcurement": true
       },
       "expected": {
-        "total": 1175,
-        "deposit": 588,
-        "balance": 587,
+        "total": 1325,
+        "deposit": 663,
+        "balance": 662,
         "depositLabel": "Deposit Due Now (50%)",
         "balanceLabel": "Balance Due (14 days prior)",
         "lines": [
           {
             "label": "Base Package (1 bartender, first 3 hrs, ≤50 guests)",
-            "amount": 650
+            "amount": 750
           },
           {
-            "label": "High-Volume Event Adjustment (101+ guests)",
-            "amount": 250
+            "label": "High-Volume Event Adjustment (101-150 guests)",
+            "amount": 300
           },
           {
             "label": "Premium Add-Ons (Alcohol Procurement & Return Service)",
@@ -1747,15 +1802,21 @@
           "oneWayMiles": 0
         },
         "breakdown": {
-          "base": 650,
           "hours": 3,
           "bartenders": 1,
           "fullBarStaffCount": 1,
           "quoteOptionName": "",
           "clientNotes": "",
+          "signatureCocktailCount": 0,
+          "signatureCocktailNames": "",
+          "houseCocktailCount": 0,
+          "houseCocktailNames": "",
+          "featuredCocktailCount": 0,
+          "base": 750,
           "staffing": 0,
-          "volume": 250,
+          "volume": 300,
           "multiBarOperations": 0,
+          "barCount": 1,
           "twoHrReduction": 0,
           "extraHours": 0,
           "longEventPremium": 0,
@@ -1764,13 +1825,9 @@
           "glassware": 0,
           "glasswareAtCost": true,
           "cocktails": 0,
-          "signatureCocktailCount": 0,
-          "signatureCocktailNames": "",
+          "signatureRate": 150,
           "houseCocktails": 0,
-          "houseCocktailCount": 0,
-          "houseCocktailNames": "",
           "cocktailProgram": 0,
-          "featuredCocktailCount": 0,
           "addons": 275,
           "addonsList": [
             "Alcohol Procurement & Return Service"
@@ -1781,11 +1838,12 @@
               "amount": 275
             }
           ],
+          "procurementCustom": false,
           "discount": 0,
-          "customItems": [],
-          "customItemsTotal": 0,
-          "customItemsList": [],
           "customDiscount": 0,
+          "customItemsTotal": 0,
+          "customItems": [],
+          "customItemsList": [],
           "customDiscountLabel": ""
         }
       }
@@ -1798,19 +1856,19 @@
         "alcoholProcurement": true
       },
       "expected": {
-        "total": 1250,
-        "deposit": 625,
-        "balance": 625,
+        "total": 1500,
+        "deposit": 750,
+        "balance": 750,
         "depositLabel": "Deposit Due Now (50%)",
         "balanceLabel": "Balance Due (14 days prior)",
         "lines": [
           {
             "label": "Base Package (1 bartender, first 3 hrs, ≤50 guests)",
-            "amount": 650
+            "amount": 750
           },
           {
-            "label": "High-Volume Event Adjustment (101+ guests)",
-            "amount": 250
+            "label": "High-Volume Event Adjustment (151+ guests)",
+            "amount": 400
           },
           {
             "label": "Premium Add-Ons (Alcohol Procurement & Return Service)",
@@ -1830,15 +1888,21 @@
           "oneWayMiles": 0
         },
         "breakdown": {
-          "base": 650,
           "hours": 3,
           "bartenders": 1,
           "fullBarStaffCount": 1,
           "quoteOptionName": "",
           "clientNotes": "",
+          "signatureCocktailCount": 0,
+          "signatureCocktailNames": "",
+          "houseCocktailCount": 0,
+          "houseCocktailNames": "",
+          "featuredCocktailCount": 0,
+          "base": 750,
           "staffing": 0,
-          "volume": 250,
+          "volume": 400,
           "multiBarOperations": 0,
+          "barCount": 1,
           "twoHrReduction": 0,
           "extraHours": 0,
           "longEventPremium": 0,
@@ -1847,13 +1911,9 @@
           "glassware": 0,
           "glasswareAtCost": true,
           "cocktails": 0,
-          "signatureCocktailCount": 0,
-          "signatureCocktailNames": "",
+          "signatureRate": 175,
           "houseCocktails": 0,
-          "houseCocktailCount": 0,
-          "houseCocktailNames": "",
           "cocktailProgram": 0,
-          "featuredCocktailCount": 0,
           "addons": 350,
           "addonsList": [
             "Alcohol Procurement & Return Service"
@@ -1864,11 +1924,12 @@
               "amount": 350
             }
           ],
+          "procurementCustom": false,
           "discount": 0,
-          "customItems": [],
-          "customItemsTotal": 0,
-          "customItemsList": [],
           "customDiscount": 0,
+          "customItemsTotal": 0,
+          "customItems": [],
+          "customItemsList": [],
           "customDiscountLabel": ""
         }
       }
@@ -1881,19 +1942,19 @@
         "alcoholProcurement": true
       },
       "expected": {
-        "total": 1250,
-        "deposit": 625,
-        "balance": 625,
+        "total": 1500,
+        "deposit": 750,
+        "balance": 750,
         "depositLabel": "Deposit Due Now (50%)",
         "balanceLabel": "Balance Due (14 days prior)",
         "lines": [
           {
             "label": "Base Package (1 bartender, first 3 hrs, ≤50 guests)",
-            "amount": 650
+            "amount": 750
           },
           {
-            "label": "High-Volume Event Adjustment (101+ guests)",
-            "amount": 250
+            "label": "High-Volume Event Adjustment (151+ guests)",
+            "amount": 400
           },
           {
             "label": "Premium Add-Ons (Alcohol Procurement & Return Service)",
@@ -1913,15 +1974,21 @@
           "oneWayMiles": 0
         },
         "breakdown": {
-          "base": 650,
           "hours": 3,
           "bartenders": 1,
           "fullBarStaffCount": 1,
           "quoteOptionName": "",
           "clientNotes": "",
+          "signatureCocktailCount": 0,
+          "signatureCocktailNames": "",
+          "houseCocktailCount": 0,
+          "houseCocktailNames": "",
+          "featuredCocktailCount": 0,
+          "base": 750,
           "staffing": 0,
-          "volume": 250,
+          "volume": 400,
           "multiBarOperations": 0,
+          "barCount": 1,
           "twoHrReduction": 0,
           "extraHours": 0,
           "longEventPremium": 0,
@@ -1930,13 +1997,9 @@
           "glassware": 0,
           "glasswareAtCost": true,
           "cocktails": 0,
-          "signatureCocktailCount": 0,
-          "signatureCocktailNames": "",
+          "signatureRate": 175,
           "houseCocktails": 0,
-          "houseCocktailCount": 0,
-          "houseCocktailNames": "",
           "cocktailProgram": 0,
-          "featuredCocktailCount": 0,
           "addons": 350,
           "addonsList": [
             "Alcohol Procurement & Return Service"
@@ -1947,11 +2010,12 @@
               "amount": 350
             }
           ],
+          "procurementCustom": false,
           "discount": 0,
-          "customItems": [],
-          "customItemsTotal": 0,
-          "customItemsList": [],
           "customDiscount": 0,
+          "customItemsTotal": 0,
+          "customItems": [],
+          "customItemsList": [],
           "customDiscountLabel": ""
         }
       }
@@ -1964,19 +2028,19 @@
         "alcoholProcurement": true
       },
       "expected": {
-        "total": 1300,
-        "deposit": 650,
-        "balance": 650,
+        "total": 1550,
+        "deposit": 775,
+        "balance": 775,
         "depositLabel": "Deposit Due Now (50%)",
         "balanceLabel": "Balance Due (14 days prior)",
         "lines": [
           {
             "label": "Base Package (1 bartender, first 3 hrs, ≤50 guests)",
-            "amount": 650
+            "amount": 750
           },
           {
-            "label": "High-Volume Event Adjustment (101+ guests)",
-            "amount": 250
+            "label": "High-Volume Event Adjustment (151+ guests)",
+            "amount": 400
           },
           {
             "label": "Premium Add-Ons (Alcohol Procurement & Return Service)",
@@ -1996,15 +2060,21 @@
           "oneWayMiles": 0
         },
         "breakdown": {
-          "base": 650,
           "hours": 3,
           "bartenders": 1,
           "fullBarStaffCount": 1,
           "quoteOptionName": "",
           "clientNotes": "",
+          "signatureCocktailCount": 0,
+          "signatureCocktailNames": "",
+          "houseCocktailCount": 0,
+          "houseCocktailNames": "",
+          "featuredCocktailCount": 0,
+          "base": 750,
           "staffing": 0,
-          "volume": 250,
+          "volume": 400,
           "multiBarOperations": 0,
+          "barCount": 1,
           "twoHrReduction": 0,
           "extraHours": 0,
           "longEventPremium": 0,
@@ -2013,13 +2083,9 @@
           "glassware": 0,
           "glasswareAtCost": true,
           "cocktails": 0,
-          "signatureCocktailCount": 0,
-          "signatureCocktailNames": "",
+          "signatureRate": 175,
           "houseCocktails": 0,
-          "houseCocktailCount": 0,
-          "houseCocktailNames": "",
           "cocktailProgram": 0,
-          "featuredCocktailCount": 0,
           "addons": 400,
           "addonsList": [
             "Alcohol Procurement & Return Service"
@@ -2030,11 +2096,12 @@
               "amount": 400
             }
           ],
+          "procurementCustom": false,
           "discount": 0,
-          "customItems": [],
-          "customItemsTotal": 0,
-          "customItemsList": [],
           "customDiscount": 0,
+          "customItemsTotal": 0,
+          "customItems": [],
+          "customItemsList": [],
           "customDiscountLabel": ""
         }
       }
@@ -2047,19 +2114,19 @@
         "alcoholProcurement": true
       },
       "expected": {
-        "total": 1300,
-        "deposit": 650,
-        "balance": 650,
+        "total": 1550,
+        "deposit": 775,
+        "balance": 775,
         "depositLabel": "Deposit Due Now (50%)",
         "balanceLabel": "Balance Due (14 days prior)",
         "lines": [
           {
             "label": "Base Package (1 bartender, first 3 hrs, ≤50 guests)",
-            "amount": 650
+            "amount": 750
           },
           {
-            "label": "High-Volume Event Adjustment (101+ guests)",
-            "amount": 250
+            "label": "High-Volume Event Adjustment (151+ guests)",
+            "amount": 400
           },
           {
             "label": "Premium Add-Ons (Alcohol Procurement & Return Service)",
@@ -2079,15 +2146,21 @@
           "oneWayMiles": 0
         },
         "breakdown": {
-          "base": 650,
           "hours": 3,
           "bartenders": 1,
           "fullBarStaffCount": 1,
           "quoteOptionName": "",
           "clientNotes": "",
+          "signatureCocktailCount": 0,
+          "signatureCocktailNames": "",
+          "houseCocktailCount": 0,
+          "houseCocktailNames": "",
+          "featuredCocktailCount": 0,
+          "base": 750,
           "staffing": 0,
-          "volume": 250,
+          "volume": 400,
           "multiBarOperations": 0,
+          "barCount": 1,
           "twoHrReduction": 0,
           "extraHours": 0,
           "longEventPremium": 0,
@@ -2096,13 +2169,9 @@
           "glassware": 0,
           "glasswareAtCost": true,
           "cocktails": 0,
-          "signatureCocktailCount": 0,
-          "signatureCocktailNames": "",
+          "signatureRate": 175,
           "houseCocktails": 0,
-          "houseCocktailCount": 0,
-          "houseCocktailNames": "",
           "cocktailProgram": 0,
-          "featuredCocktailCount": 0,
           "addons": 400,
           "addonsList": [
             "Alcohol Procurement & Return Service"
@@ -2113,11 +2182,12 @@
               "amount": 400
             }
           ],
+          "procurementCustom": false,
           "discount": 0,
-          "customItems": [],
-          "customItemsTotal": 0,
-          "customItemsList": [],
           "customDiscount": 0,
+          "customItemsTotal": 0,
+          "customItems": [],
+          "customItemsList": [],
           "customDiscountLabel": ""
         }
       }
@@ -2130,19 +2200,19 @@
         "alcoholProcurement": true
       },
       "expected": {
-        "total": 900,
-        "deposit": 450,
-        "balance": 450,
+        "total": 1150,
+        "deposit": 575,
+        "balance": 575,
         "depositLabel": "Deposit Due Now (50%)",
         "balanceLabel": "Balance Due (14 days prior)",
         "lines": [
           {
             "label": "Base Package (1 bartender, first 3 hrs, ≤50 guests)",
-            "amount": 650
+            "amount": 750
           },
           {
-            "label": "High-Volume Event Adjustment (101+ guests)",
-            "amount": 250
+            "label": "High-Volume Event Adjustment (151+ guests)",
+            "amount": 400
           }
         ],
         "quantities": {
@@ -2158,15 +2228,21 @@
           "oneWayMiles": 0
         },
         "breakdown": {
-          "base": 650,
           "hours": 3,
           "bartenders": 1,
           "fullBarStaffCount": 1,
           "quoteOptionName": "",
           "clientNotes": "",
+          "signatureCocktailCount": 0,
+          "signatureCocktailNames": "",
+          "houseCocktailCount": 0,
+          "houseCocktailNames": "",
+          "featuredCocktailCount": 0,
+          "base": 750,
           "staffing": 0,
-          "volume": 250,
+          "volume": 400,
           "multiBarOperations": 0,
+          "barCount": 1,
           "twoHrReduction": 0,
           "extraHours": 0,
           "longEventPremium": 0,
@@ -2175,22 +2251,18 @@
           "glassware": 0,
           "glasswareAtCost": true,
           "cocktails": 0,
-          "signatureCocktailCount": 0,
-          "signatureCocktailNames": "",
+          "signatureRate": 175,
           "houseCocktails": 0,
-          "houseCocktailCount": 0,
-          "houseCocktailNames": "",
           "cocktailProgram": 0,
-          "featuredCocktailCount": 0,
           "addons": 0,
           "addonsList": [],
           "addonItems": [],
-          "discount": 0,
           "procurementCustom": true,
-          "customItems": [],
-          "customItemsTotal": 0,
-          "customItemsList": [],
+          "discount": 0,
           "customDiscount": 0,
+          "customItemsTotal": 0,
+          "customItems": [],
+          "customItemsList": [],
           "customDiscountLabel": ""
         }
       }
@@ -2202,15 +2274,15 @@
         "houseCocktailCount": 1
       },
       "expected": {
-        "total": 700,
-        "deposit": 350,
-        "balance": 350,
+        "total": 800,
+        "deposit": 400,
+        "balance": 400,
         "depositLabel": "Deposit Due Now (50%)",
         "balanceLabel": "Balance Due (14 days prior)",
         "lines": [
           {
             "label": "Base Package (1 bartender, first 3 hrs, ≤50 guests)",
-            "amount": 650
+            "amount": 750
           },
           {
             "label": "House Featured Cocktails (1 @ $50)",
@@ -2230,15 +2302,21 @@
           "oneWayMiles": 0
         },
         "breakdown": {
-          "base": 650,
           "hours": 3,
           "bartenders": 1,
           "fullBarStaffCount": 1,
           "quoteOptionName": "",
           "clientNotes": "",
+          "signatureCocktailCount": 0,
+          "signatureCocktailNames": "",
+          "houseCocktailCount": 1,
+          "houseCocktailNames": "",
+          "featuredCocktailCount": 1,
+          "base": 750,
           "staffing": 0,
           "volume": 0,
           "multiBarOperations": 0,
+          "barCount": 1,
           "twoHrReduction": 0,
           "extraHours": 0,
           "longEventPremium": 0,
@@ -2247,21 +2325,18 @@
           "glassware": 0,
           "glasswareAtCost": true,
           "cocktails": 0,
-          "signatureCocktailCount": 0,
-          "signatureCocktailNames": "",
+          "signatureRate": 125,
           "houseCocktails": 50,
-          "houseCocktailCount": 1,
-          "houseCocktailNames": "",
           "cocktailProgram": 0,
-          "featuredCocktailCount": 1,
           "addons": 0,
           "addonsList": [],
           "addonItems": [],
+          "procurementCustom": false,
           "discount": 0,
-          "customItems": [],
-          "customItemsTotal": 0,
-          "customItemsList": [],
           "customDiscount": 0,
+          "customItemsTotal": 0,
+          "customItems": [],
+          "customItemsList": [],
           "customDiscountLabel": ""
         }
       }
@@ -2274,15 +2349,15 @@
         "houseCocktailCount": 2
       },
       "expected": {
-        "total": 1000,
-        "deposit": 500,
-        "balance": 500,
+        "total": 1100,
+        "deposit": 550,
+        "balance": 550,
         "depositLabel": "Deposit Due Now (50%)",
         "balanceLabel": "Balance Due (14 days prior)",
         "lines": [
           {
             "label": "Base Package (1 bartender, first 3 hrs, ≤50 guests)",
-            "amount": 650
+            "amount": 750
           },
           {
             "label": "Signature Cocktails (2 @ $125)",
@@ -2306,15 +2381,21 @@
           "oneWayMiles": 0
         },
         "breakdown": {
-          "base": 650,
           "hours": 3,
           "bartenders": 1,
           "fullBarStaffCount": 1,
           "quoteOptionName": "",
           "clientNotes": "",
+          "signatureCocktailCount": 2,
+          "signatureCocktailNames": "",
+          "houseCocktailCount": 2,
+          "houseCocktailNames": "",
+          "featuredCocktailCount": 4,
+          "base": 750,
           "staffing": 0,
           "volume": 0,
           "multiBarOperations": 0,
+          "barCount": 1,
           "twoHrReduction": 0,
           "extraHours": 0,
           "longEventPremium": 0,
@@ -2323,21 +2404,18 @@
           "glassware": 0,
           "glasswareAtCost": true,
           "cocktails": 250,
-          "signatureCocktailCount": 2,
-          "signatureCocktailNames": "",
+          "signatureRate": 125,
           "houseCocktails": 100,
-          "houseCocktailCount": 2,
-          "houseCocktailNames": "",
           "cocktailProgram": 0,
-          "featuredCocktailCount": 4,
           "addons": 0,
           "addonsList": [],
           "addonItems": [],
+          "procurementCustom": false,
           "discount": 0,
-          "customItems": [],
-          "customItemsTotal": 0,
-          "customItemsList": [],
           "customDiscount": 0,
+          "customItemsTotal": 0,
+          "customItems": [],
+          "customItemsList": [],
           "customDiscountLabel": ""
         }
       }
@@ -2350,15 +2428,15 @@
         "houseCocktailCount": 2
       },
       "expected": {
-        "total": 1375,
-        "deposit": 688,
-        "balance": 687,
+        "total": 1475,
+        "deposit": 738,
+        "balance": 737,
         "depositLabel": "Deposit Due Now (50%)",
         "balanceLabel": "Balance Due (14 days prior)",
         "lines": [
           {
             "label": "Base Package (1 bartender, first 3 hrs, ≤50 guests)",
-            "amount": 650
+            "amount": 750
           },
           {
             "label": "Signature Cocktails (3 @ $125)",
@@ -2386,15 +2464,21 @@
           "oneWayMiles": 0
         },
         "breakdown": {
-          "base": 650,
           "hours": 3,
           "bartenders": 1,
           "fullBarStaffCount": 1,
           "quoteOptionName": "",
           "clientNotes": "",
+          "signatureCocktailCount": 3,
+          "signatureCocktailNames": "",
+          "houseCocktailCount": 2,
+          "houseCocktailNames": "",
+          "featuredCocktailCount": 5,
+          "base": 750,
           "staffing": 0,
           "volume": 0,
           "multiBarOperations": 0,
+          "barCount": 1,
           "twoHrReduction": 0,
           "extraHours": 0,
           "longEventPremium": 0,
@@ -2403,21 +2487,18 @@
           "glassware": 0,
           "glasswareAtCost": true,
           "cocktails": 375,
-          "signatureCocktailCount": 3,
-          "signatureCocktailNames": "",
+          "signatureRate": 125,
           "houseCocktails": 100,
-          "houseCocktailCount": 2,
-          "houseCocktailNames": "",
           "cocktailProgram": 250,
-          "featuredCocktailCount": 5,
           "addons": 0,
           "addonsList": [],
           "addonItems": [],
+          "procurementCustom": false,
           "discount": 0,
-          "customItems": [],
-          "customItemsTotal": 0,
-          "customItemsList": [],
           "customDiscount": 0,
+          "customItemsTotal": 0,
+          "customItems": [],
+          "customItemsList": [],
           "customDiscountLabel": ""
         }
       }
@@ -2430,15 +2511,15 @@
         "houseCocktailCount": 3
       },
       "expected": {
-        "total": 1550,
-        "deposit": 775,
-        "balance": 775,
+        "total": 1650,
+        "deposit": 825,
+        "balance": 825,
         "depositLabel": "Deposit Due Now (50%)",
         "balanceLabel": "Balance Due (14 days prior)",
         "lines": [
           {
             "label": "Base Package (1 bartender, first 3 hrs, ≤50 guests)",
-            "amount": 650
+            "amount": 750
           },
           {
             "label": "Signature Cocktails (4 @ $125)",
@@ -2466,15 +2547,21 @@
           "oneWayMiles": 0
         },
         "breakdown": {
-          "base": 650,
           "hours": 3,
           "bartenders": 1,
           "fullBarStaffCount": 1,
           "quoteOptionName": "",
           "clientNotes": "",
+          "signatureCocktailCount": 4,
+          "signatureCocktailNames": "",
+          "houseCocktailCount": 3,
+          "houseCocktailNames": "",
+          "featuredCocktailCount": 7,
+          "base": 750,
           "staffing": 0,
           "volume": 0,
           "multiBarOperations": 0,
+          "barCount": 1,
           "twoHrReduction": 0,
           "extraHours": 0,
           "longEventPremium": 0,
@@ -2483,21 +2570,18 @@
           "glassware": 0,
           "glasswareAtCost": true,
           "cocktails": 500,
-          "signatureCocktailCount": 4,
-          "signatureCocktailNames": "",
+          "signatureRate": 125,
           "houseCocktails": 150,
-          "houseCocktailCount": 3,
-          "houseCocktailNames": "",
           "cocktailProgram": 250,
-          "featuredCocktailCount": 7,
           "addons": 0,
           "addonsList": [],
           "addonItems": [],
+          "procurementCustom": false,
           "discount": 0,
-          "customItems": [],
-          "customItemsTotal": 0,
-          "customItemsList": [],
           "customDiscount": 0,
+          "customItemsTotal": 0,
+          "customItems": [],
+          "customItemsList": [],
           "customDiscountLabel": ""
         }
       }
@@ -2510,15 +2594,15 @@
         "houseCocktailCount": 4
       },
       "expected": {
-        "total": 1850,
-        "deposit": 925,
-        "balance": 925,
+        "total": 1950,
+        "deposit": 975,
+        "balance": 975,
         "depositLabel": "Deposit Due Now (50%)",
         "balanceLabel": "Balance Due (14 days prior)",
         "lines": [
           {
             "label": "Base Package (1 bartender, first 3 hrs, ≤50 guests)",
-            "amount": 650
+            "amount": 750
           },
           {
             "label": "Signature Cocktails (4 @ $125)",
@@ -2546,15 +2630,21 @@
           "oneWayMiles": 0
         },
         "breakdown": {
-          "base": 650,
           "hours": 3,
           "bartenders": 1,
           "fullBarStaffCount": 1,
           "quoteOptionName": "",
           "clientNotes": "",
+          "signatureCocktailCount": 4,
+          "signatureCocktailNames": "",
+          "houseCocktailCount": 4,
+          "houseCocktailNames": "",
+          "featuredCocktailCount": 8,
+          "base": 750,
           "staffing": 0,
           "volume": 0,
           "multiBarOperations": 0,
+          "barCount": 1,
           "twoHrReduction": 0,
           "extraHours": 0,
           "longEventPremium": 0,
@@ -2563,21 +2653,18 @@
           "glassware": 0,
           "glasswareAtCost": true,
           "cocktails": 500,
-          "signatureCocktailCount": 4,
-          "signatureCocktailNames": "",
+          "signatureRate": 125,
           "houseCocktails": 200,
-          "houseCocktailCount": 4,
-          "houseCocktailNames": "",
           "cocktailProgram": 500,
-          "featuredCocktailCount": 8,
           "addons": 0,
           "addonsList": [],
           "addonItems": [],
+          "procurementCustom": false,
           "discount": 0,
-          "customItems": [],
-          "customItemsTotal": 0,
-          "customItemsList": [],
           "customDiscount": 0,
+          "customItemsTotal": 0,
+          "customItems": [],
+          "customItemsList": [],
           "customDiscountLabel": ""
         }
       }
@@ -2590,19 +2677,23 @@
         "multiBarOperations": true
       },
       "expected": {
-        "total": 1150,
-        "deposit": 575,
-        "balance": 575,
+        "total": 1275,
+        "deposit": 638,
+        "balance": 637,
         "depositLabel": "Deposit Due Now (50%)",
         "balanceLabel": "Balance Due (14 days prior)",
         "lines": [
           {
             "label": "Base Package (1 bartender, first 3 hrs, ≤50 guests)",
-            "amount": 650
+            "amount": 750
           },
           {
-            "label": "Large Event & Multi-Bar Operations (replaces high-volume adjustment)",
-            "amount": 500
+            "label": "High-Volume Event Adjustment (101-150 guests)",
+            "amount": 300
+          },
+          {
+            "label": "Additional bars (2)",
+            "amount": 225
           }
         ],
         "quantities": {
@@ -2618,15 +2709,21 @@
           "oneWayMiles": 0
         },
         "breakdown": {
-          "base": 650,
           "hours": 3,
           "bartenders": 1,
           "fullBarStaffCount": 1,
           "quoteOptionName": "",
           "clientNotes": "",
+          "signatureCocktailCount": 0,
+          "signatureCocktailNames": "",
+          "houseCocktailCount": 0,
+          "houseCocktailNames": "",
+          "featuredCocktailCount": 0,
+          "base": 750,
           "staffing": 0,
-          "volume": 0,
-          "multiBarOperations": 500,
+          "volume": 300,
+          "multiBarOperations": 225,
+          "barCount": 2,
           "twoHrReduction": 0,
           "extraHours": 0,
           "longEventPremium": 0,
@@ -2635,21 +2732,18 @@
           "glassware": 0,
           "glasswareAtCost": true,
           "cocktails": 0,
-          "signatureCocktailCount": 0,
-          "signatureCocktailNames": "",
+          "signatureRate": 150,
           "houseCocktails": 0,
-          "houseCocktailCount": 0,
-          "houseCocktailNames": "",
           "cocktailProgram": 0,
-          "featuredCocktailCount": 0,
           "addons": 0,
           "addonsList": [],
           "addonItems": [],
+          "procurementCustom": false,
           "discount": 0,
-          "customItems": [],
-          "customItemsTotal": 0,
-          "customItemsList": [],
           "customDiscount": 0,
+          "customItemsTotal": 0,
+          "customItems": [],
+          "customItemsList": [],
           "customDiscountLabel": ""
         }
       }
@@ -2662,15 +2756,15 @@
         "bartenderCount": 2
       },
       "expected": {
-        "total": 1205,
-        "deposit": 603,
-        "balance": 602,
+        "total": 1305,
+        "deposit": 653,
+        "balance": 652,
         "depositLabel": "Deposit Due Now (50%)",
         "balanceLabel": "Balance Due (14 days prior)",
         "lines": [
           {
             "label": "Base Package (1 bartender, first 3 hrs, ≤50 guests)",
-            "amount": 650
+            "amount": 750
           },
           {
             "label": "Additional Bartenders (1 additional bartender, first 3 hrs)",
@@ -2694,15 +2788,21 @@
           "oneWayMiles": 0
         },
         "breakdown": {
-          "base": 650,
           "hours": 5,
           "bartenders": 2,
           "fullBarStaffCount": 1,
           "quoteOptionName": "",
           "clientNotes": "",
+          "signatureCocktailCount": 0,
+          "signatureCocktailNames": "",
+          "houseCocktailCount": 0,
+          "houseCocktailNames": "",
+          "featuredCocktailCount": 0,
+          "base": 750,
           "staffing": 225,
           "volume": 0,
           "multiBarOperations": 0,
+          "barCount": 1,
           "twoHrReduction": 0,
           "extraHours": 300,
           "longEventPremium": 30,
@@ -2711,21 +2811,18 @@
           "glassware": 0,
           "glasswareAtCost": true,
           "cocktails": 0,
-          "signatureCocktailCount": 0,
-          "signatureCocktailNames": "",
+          "signatureRate": 125,
           "houseCocktails": 0,
-          "houseCocktailCount": 0,
-          "houseCocktailNames": "",
           "cocktailProgram": 0,
-          "featuredCocktailCount": 0,
           "addons": 0,
           "addonsList": [],
           "addonItems": [],
+          "procurementCustom": false,
           "discount": 0,
-          "customItems": [],
-          "customItemsTotal": 0,
-          "customItemsList": [],
           "customDiscount": 0,
+          "customItemsTotal": 0,
+          "customItems": [],
+          "customItemsList": [],
           "customDiscountLabel": ""
         }
       }
@@ -2738,15 +2835,15 @@
         "bartenderCount": 2
       },
       "expected": {
-        "total": 1385,
-        "deposit": 693,
-        "balance": 692,
+        "total": 1485,
+        "deposit": 743,
+        "balance": 742,
         "depositLabel": "Deposit Due Now (50%)",
         "balanceLabel": "Balance Due (14 days prior)",
         "lines": [
           {
             "label": "Base Package (1 bartender, first 3 hrs, ≤50 guests)",
-            "amount": 650
+            "amount": 750
           },
           {
             "label": "Additional Bartenders (1 additional bartender, first 3 hrs)",
@@ -2770,15 +2867,21 @@
           "oneWayMiles": 0
         },
         "breakdown": {
-          "base": 650,
           "hours": 6,
           "bartenders": 2,
           "fullBarStaffCount": 1,
           "quoteOptionName": "",
           "clientNotes": "",
+          "signatureCocktailCount": 0,
+          "signatureCocktailNames": "",
+          "houseCocktailCount": 0,
+          "houseCocktailNames": "",
+          "featuredCocktailCount": 0,
+          "base": 750,
           "staffing": 225,
           "volume": 0,
           "multiBarOperations": 0,
+          "barCount": 1,
           "twoHrReduction": 0,
           "extraHours": 450,
           "longEventPremium": 60,
@@ -2787,21 +2890,18 @@
           "glassware": 0,
           "glasswareAtCost": true,
           "cocktails": 0,
-          "signatureCocktailCount": 0,
-          "signatureCocktailNames": "",
+          "signatureRate": 125,
           "houseCocktails": 0,
-          "houseCocktailCount": 0,
-          "houseCocktailNames": "",
           "cocktailProgram": 0,
-          "featuredCocktailCount": 0,
           "addons": 0,
           "addonsList": [],
           "addonItems": [],
+          "procurementCustom": false,
           "discount": 0,
-          "customItems": [],
-          "customItemsTotal": 0,
-          "customItemsList": [],
           "customDiscount": 0,
+          "customItemsTotal": 0,
+          "customItems": [],
+          "customItemsList": [],
           "customDiscountLabel": ""
         }
       }
@@ -2816,15 +2916,15 @@
         "fullBarStaffCount": 2
       },
       "expected": {
-        "total": 1445,
-        "deposit": 723,
-        "balance": 722,
+        "total": 1545,
+        "deposit": 773,
+        "balance": 772,
         "depositLabel": "Deposit Due Now (50%)",
         "balanceLabel": "Balance Due (14 days prior)",
         "lines": [
           {
             "label": "Base Package (1 bartender, first 3 hrs, ≤50 guests)",
-            "amount": 650
+            "amount": 750
           },
           {
             "label": "Additional Bartenders (2 additional bartenders, first 3 hrs)",
@@ -2852,15 +2952,21 @@
           "oneWayMiles": 0
         },
         "breakdown": {
-          "base": 650,
           "hours": 4,
           "bartenders": 3,
           "fullBarStaffCount": 2,
           "quoteOptionName": "",
           "clientNotes": "",
+          "signatureCocktailCount": 0,
+          "signatureCocktailNames": "",
+          "houseCocktailCount": 0,
+          "houseCocktailNames": "",
+          "featuredCocktailCount": 0,
+          "base": 750,
           "staffing": 450,
           "volume": 0,
           "multiBarOperations": 0,
+          "barCount": 1,
           "twoHrReduction": 0,
           "extraHours": 225,
           "longEventPremium": 0,
@@ -2869,21 +2975,18 @@
           "glassware": 0,
           "glasswareAtCost": true,
           "cocktails": 0,
-          "signatureCocktailCount": 0,
-          "signatureCocktailNames": "",
+          "signatureRate": 125,
           "houseCocktails": 0,
-          "houseCocktailCount": 0,
-          "houseCocktailNames": "",
           "cocktailProgram": 0,
-          "featuredCocktailCount": 0,
           "addons": 0,
           "addonsList": [],
           "addonItems": [],
+          "procurementCustom": false,
           "discount": 0,
-          "customItems": [],
-          "customItemsTotal": 0,
-          "customItemsList": [],
           "customDiscount": 0,
+          "customItemsTotal": 0,
+          "customItems": [],
+          "customItemsList": [],
           "customDiscountLabel": ""
         }
       }
@@ -2895,19 +2998,19 @@
         "promoCode": "FIRST10"
       },
       "expected": {
-        "total": 585,
-        "deposit": 293,
-        "balance": 292,
+        "total": 675,
+        "deposit": 338,
+        "balance": 337,
         "depositLabel": "Deposit Due Now (50%)",
         "balanceLabel": "Balance Due (14 days prior)",
         "lines": [
           {
             "label": "Base Package (1 bartender, first 3 hrs, ≤50 guests)",
-            "amount": 650
+            "amount": 750
           },
           {
             "label": "Promo Discount FIRST10",
-            "amount": -65
+            "amount": -75
           }
         ],
         "quantities": {
@@ -2923,15 +3026,21 @@
           "oneWayMiles": 0
         },
         "breakdown": {
-          "base": 650,
           "hours": 3,
           "bartenders": 1,
           "fullBarStaffCount": 1,
           "quoteOptionName": "",
           "clientNotes": "",
+          "signatureCocktailCount": 0,
+          "signatureCocktailNames": "",
+          "houseCocktailCount": 0,
+          "houseCocktailNames": "",
+          "featuredCocktailCount": 0,
+          "base": 750,
           "staffing": 0,
           "volume": 0,
           "multiBarOperations": 0,
+          "barCount": 1,
           "twoHrReduction": 0,
           "extraHours": 0,
           "longEventPremium": 0,
@@ -2940,21 +3049,18 @@
           "glassware": 0,
           "glasswareAtCost": true,
           "cocktails": 0,
-          "signatureCocktailCount": 0,
-          "signatureCocktailNames": "",
+          "signatureRate": 125,
           "houseCocktails": 0,
-          "houseCocktailCount": 0,
-          "houseCocktailNames": "",
           "cocktailProgram": 0,
-          "featuredCocktailCount": 0,
           "addons": 0,
           "addonsList": [],
           "addonItems": [],
-          "discount": 65,
-          "customItems": [],
-          "customItemsTotal": 0,
-          "customItemsList": [],
+          "procurementCustom": false,
+          "discount": 75,
           "customDiscount": 0,
+          "customItemsTotal": 0,
+          "customItems": [],
+          "customItemsList": [],
           "customDiscountLabel": ""
         }
       }
@@ -2966,15 +3072,15 @@
         "promoCode": "VENDOR50"
       },
       "expected": {
-        "total": 600,
-        "deposit": 300,
-        "balance": 300,
+        "total": 700,
+        "deposit": 350,
+        "balance": 350,
         "depositLabel": "Deposit Due Now (50%)",
         "balanceLabel": "Balance Due (14 days prior)",
         "lines": [
           {
             "label": "Base Package (1 bartender, first 3 hrs, ≤50 guests)",
-            "amount": 650
+            "amount": 750
           },
           {
             "label": "Promo Discount VENDOR50",
@@ -2994,15 +3100,21 @@
           "oneWayMiles": 0
         },
         "breakdown": {
-          "base": 650,
           "hours": 3,
           "bartenders": 1,
           "fullBarStaffCount": 1,
           "quoteOptionName": "",
           "clientNotes": "",
+          "signatureCocktailCount": 0,
+          "signatureCocktailNames": "",
+          "houseCocktailCount": 0,
+          "houseCocktailNames": "",
+          "featuredCocktailCount": 0,
+          "base": 750,
           "staffing": 0,
           "volume": 0,
           "multiBarOperations": 0,
+          "barCount": 1,
           "twoHrReduction": 0,
           "extraHours": 0,
           "longEventPremium": 0,
@@ -3011,21 +3123,18 @@
           "glassware": 0,
           "glasswareAtCost": true,
           "cocktails": 0,
-          "signatureCocktailCount": 0,
-          "signatureCocktailNames": "",
+          "signatureRate": 125,
           "houseCocktails": 0,
-          "houseCocktailCount": 0,
-          "houseCocktailNames": "",
           "cocktailProgram": 0,
-          "featuredCocktailCount": 0,
           "addons": 0,
           "addonsList": [],
           "addonItems": [],
+          "procurementCustom": false,
           "discount": 50,
-          "customItems": [],
-          "customItemsTotal": 0,
-          "customItemsList": [],
           "customDiscount": 0,
+          "customItemsTotal": 0,
+          "customItems": [],
+          "customItemsList": [],
           "customDiscountLabel": ""
         }
       }
@@ -3037,15 +3146,15 @@
         "distance": 40
       },
       "expected": {
-        "total": 663,
-        "deposit": 332,
-        "balance": 331,
+        "total": 763,
+        "deposit": 382,
+        "balance": 381,
         "depositLabel": "Deposit Due Now (50%)",
         "balanceLabel": "Balance Due (14 days prior)",
         "lines": [
           {
             "label": "Base Package (1 bartender, first 3 hrs, ≤50 guests)",
-            "amount": 650
+            "amount": 750
           },
           {
             "label": "Travel Fee (10 extra miles)",
@@ -3065,15 +3174,21 @@
           "oneWayMiles": 40
         },
         "breakdown": {
-          "base": 650,
           "hours": 3,
           "bartenders": 1,
           "fullBarStaffCount": 1,
           "quoteOptionName": "",
           "clientNotes": "",
+          "signatureCocktailCount": 0,
+          "signatureCocktailNames": "",
+          "houseCocktailCount": 0,
+          "houseCocktailNames": "",
+          "featuredCocktailCount": 0,
+          "base": 750,
           "staffing": 0,
           "volume": 0,
           "multiBarOperations": 0,
+          "barCount": 1,
           "twoHrReduction": 0,
           "extraHours": 0,
           "longEventPremium": 0,
@@ -3082,21 +3197,18 @@
           "glassware": 0,
           "glasswareAtCost": true,
           "cocktails": 0,
-          "signatureCocktailCount": 0,
-          "signatureCocktailNames": "",
+          "signatureRate": 125,
           "houseCocktails": 0,
-          "houseCocktailCount": 0,
-          "houseCocktailNames": "",
           "cocktailProgram": 0,
-          "featuredCocktailCount": 0,
           "addons": 0,
           "addonsList": [],
           "addonItems": [],
+          "procurementCustom": false,
           "discount": 0,
-          "customItems": [],
-          "customItemsTotal": 0,
-          "customItemsList": [],
           "customDiscount": 0,
+          "customItemsTotal": 0,
+          "customItems": [],
+          "customItemsList": [],
           "customDiscountLabel": ""
         }
       }
@@ -3108,15 +3220,15 @@
         "eventDate": "2026-11-10"
       },
       "expected": {
-        "total": 650,
-        "deposit": 650,
+        "total": 750,
+        "deposit": 750,
         "balance": 0,
         "depositLabel": "Full Amount Due at Signing",
         "balanceLabel": "Remaining Balance",
         "lines": [
           {
             "label": "Base Package (1 bartender, first 3 hrs, ≤50 guests)",
-            "amount": 650
+            "amount": 750
           }
         ],
         "quantities": {
@@ -3132,15 +3244,21 @@
           "oneWayMiles": 0
         },
         "breakdown": {
-          "base": 650,
           "hours": 3,
           "bartenders": 1,
           "fullBarStaffCount": 1,
           "quoteOptionName": "",
           "clientNotes": "",
+          "signatureCocktailCount": 0,
+          "signatureCocktailNames": "",
+          "houseCocktailCount": 0,
+          "houseCocktailNames": "",
+          "featuredCocktailCount": 0,
+          "base": 750,
           "staffing": 0,
           "volume": 0,
           "multiBarOperations": 0,
+          "barCount": 1,
           "twoHrReduction": 0,
           "extraHours": 0,
           "longEventPremium": 0,
@@ -3149,21 +3267,18 @@
           "glassware": 0,
           "glasswareAtCost": true,
           "cocktails": 0,
-          "signatureCocktailCount": 0,
-          "signatureCocktailNames": "",
+          "signatureRate": 125,
           "houseCocktails": 0,
-          "houseCocktailCount": 0,
-          "houseCocktailNames": "",
           "cocktailProgram": 0,
-          "featuredCocktailCount": 0,
           "addons": 0,
           "addonsList": [],
           "addonItems": [],
+          "procurementCustom": false,
           "discount": 0,
-          "customItems": [],
-          "customItemsTotal": 0,
-          "customItemsList": [],
           "customDiscount": 0,
+          "customItemsTotal": 0,
+          "customItems": [],
+          "customItemsList": [],
           "customDiscountLabel": ""
         }
       }
@@ -3175,15 +3290,15 @@
         "eventDate": "2026-11-21"
       },
       "expected": {
-        "total": 650,
-        "deposit": 325,
-        "balance": 325,
+        "total": 750,
+        "deposit": 375,
+        "balance": 375,
         "depositLabel": "Deposit Due Now (50%)",
         "balanceLabel": "Balance Due (14 days prior)",
         "lines": [
           {
             "label": "Base Package (1 bartender, first 3 hrs, ≤50 guests)",
-            "amount": 650
+            "amount": 750
           }
         ],
         "quantities": {
@@ -3199,15 +3314,21 @@
           "oneWayMiles": 0
         },
         "breakdown": {
-          "base": 650,
           "hours": 3,
           "bartenders": 1,
           "fullBarStaffCount": 1,
           "quoteOptionName": "",
           "clientNotes": "",
+          "signatureCocktailCount": 0,
+          "signatureCocktailNames": "",
+          "houseCocktailCount": 0,
+          "houseCocktailNames": "",
+          "featuredCocktailCount": 0,
+          "base": 750,
           "staffing": 0,
           "volume": 0,
           "multiBarOperations": 0,
+          "barCount": 1,
           "twoHrReduction": 0,
           "extraHours": 0,
           "longEventPremium": 0,
@@ -3216,21 +3337,18 @@
           "glassware": 0,
           "glasswareAtCost": true,
           "cocktails": 0,
-          "signatureCocktailCount": 0,
-          "signatureCocktailNames": "",
+          "signatureRate": 125,
           "houseCocktails": 0,
-          "houseCocktailCount": 0,
-          "houseCocktailNames": "",
           "cocktailProgram": 0,
-          "featuredCocktailCount": 0,
           "addons": 0,
           "addonsList": [],
           "addonItems": [],
+          "procurementCustom": false,
           "discount": 0,
-          "customItems": [],
-          "customItemsTotal": 0,
-          "customItemsList": [],
           "customDiscount": 0,
+          "customItemsTotal": 0,
+          "customItems": [],
+          "customItemsList": [],
           "customDiscountLabel": ""
         }
       }
@@ -3247,15 +3365,15 @@
         ]
       },
       "expected": {
-        "total": 1650,
-        "deposit": 825,
-        "balance": 825,
+        "total": 1750,
+        "deposit": 875,
+        "balance": 875,
         "depositLabel": "Deposit Due Now (50%)",
         "balanceLabel": "Balance Due (14 days prior)",
         "lines": [
           {
             "label": "Base Package (1 bartender, first 3 hrs, ≤50 guests)",
-            "amount": 650
+            "amount": 750
           },
           {
             "label": "Custom Items (Second Service Station)",
@@ -3275,15 +3393,21 @@
           "oneWayMiles": 0
         },
         "breakdown": {
-          "base": 650,
           "hours": 3,
           "bartenders": 1,
           "fullBarStaffCount": 1,
           "quoteOptionName": "",
           "clientNotes": "",
+          "signatureCocktailCount": 0,
+          "signatureCocktailNames": "",
+          "houseCocktailCount": 0,
+          "houseCocktailNames": "",
+          "featuredCocktailCount": 0,
+          "base": 750,
           "staffing": 0,
           "volume": 0,
           "multiBarOperations": 0,
+          "barCount": 1,
           "twoHrReduction": 0,
           "extraHours": 0,
           "longEventPremium": 0,
@@ -3292,28 +3416,25 @@
           "glassware": 0,
           "glasswareAtCost": true,
           "cocktails": 0,
-          "signatureCocktailCount": 0,
-          "signatureCocktailNames": "",
+          "signatureRate": 125,
           "houseCocktails": 0,
-          "houseCocktailCount": 0,
-          "houseCocktailNames": "",
           "cocktailProgram": 0,
-          "featuredCocktailCount": 0,
           "addons": 0,
           "addonsList": [],
           "addonItems": [],
+          "procurementCustom": false,
           "discount": 0,
+          "customDiscount": 0,
+          "customItemsTotal": 1000,
           "customItems": [
             {
               "name": "Second Service Station",
               "price": 1000
             }
           ],
-          "customItemsTotal": 1000,
           "customItemsList": [
             "Second Service Station"
           ],
-          "customDiscount": 0,
           "customDiscountLabel": ""
         }
       }
@@ -3343,15 +3464,15 @@
       "expected": {
         "events": [
           {
-            "total": 650,
-            "deposit": 325,
-            "balance": 325,
+            "total": 750,
+            "deposit": 375,
+            "balance": 375,
             "depositLabel": "Deposit Due Now (50%)",
             "balanceLabel": "Balance Due (14 days prior)",
             "lines": [
               {
                 "label": "Base Package (1 bartender, first 3 hrs, ≤50 guests)",
-                "amount": 650
+                "amount": 750
               }
             ],
             "quantities": {
@@ -3367,15 +3488,21 @@
               "oneWayMiles": 0
             },
             "breakdown": {
-              "base": 650,
               "hours": 3,
               "bartenders": 1,
               "fullBarStaffCount": 1,
               "quoteOptionName": "",
               "clientNotes": "",
+              "signatureCocktailCount": 0,
+              "signatureCocktailNames": "",
+              "houseCocktailCount": 0,
+              "houseCocktailNames": "",
+              "featuredCocktailCount": 0,
+              "base": 750,
               "staffing": 0,
               "volume": 0,
               "multiBarOperations": 0,
+              "barCount": 1,
               "twoHrReduction": 0,
               "extraHours": 0,
               "longEventPremium": 0,
@@ -3384,34 +3511,31 @@
               "glassware": 0,
               "glasswareAtCost": true,
               "cocktails": 0,
-              "signatureCocktailCount": 0,
-              "signatureCocktailNames": "",
+              "signatureRate": 125,
               "houseCocktails": 0,
-              "houseCocktailCount": 0,
-              "houseCocktailNames": "",
               "cocktailProgram": 0,
-              "featuredCocktailCount": 0,
               "addons": 0,
               "addonsList": [],
               "addonItems": [],
+              "procurementCustom": false,
               "discount": 0,
-              "customItems": [],
-              "customItemsTotal": 0,
-              "customItemsList": [],
               "customDiscount": 0,
+              "customItemsTotal": 0,
+              "customItems": [],
+              "customItemsList": [],
               "customDiscountLabel": ""
             }
           },
           {
-            "total": 1445,
-            "deposit": 723,
-            "balance": 722,
+            "total": 1570,
+            "deposit": 785,
+            "balance": 785,
             "depositLabel": "Deposit Due Now (50%)",
             "balanceLabel": "Balance Due (14 days prior)",
             "lines": [
               {
                 "label": "Base Package (1 bartender, first 3 hrs, ≤50 guests)",
-                "amount": 650
+                "amount": 750
               },
               {
                 "label": "Additional Bartenders (1 additional bartender, first 3 hrs)",
@@ -3426,8 +3550,8 @@
                 "amount": 120
               },
               {
-                "label": "Signature Cocktails (1 @ $125)",
-                "amount": 125
+                "label": "Signature Cocktails (1 @ $150)",
+                "amount": 150
               },
               {
                 "label": "High-Volume Event Adjustment (51-100 guests)",
@@ -3447,15 +3571,21 @@
               "oneWayMiles": 0
             },
             "breakdown": {
-              "base": 650,
               "hours": 4,
               "bartenders": 2,
               "fullBarStaffCount": 2,
               "quoteOptionName": "",
               "clientNotes": "",
+              "signatureCocktailCount": 1,
+              "signatureCocktailNames": "",
+              "houseCocktailCount": 0,
+              "houseCocktailNames": "",
+              "featuredCocktailCount": 1,
+              "base": 750,
               "staffing": 225,
               "volume": 175,
               "multiBarOperations": 0,
+              "barCount": 1,
               "twoHrReduction": 0,
               "extraHours": 150,
               "longEventPremium": 0,
@@ -3463,29 +3593,26 @@
               "package": 120,
               "glassware": 0,
               "glasswareAtCost": true,
-              "cocktails": 125,
-              "signatureCocktailCount": 1,
-              "signatureCocktailNames": "",
+              "cocktails": 150,
+              "signatureRate": 150,
               "houseCocktails": 0,
-              "houseCocktailCount": 0,
-              "houseCocktailNames": "",
               "cocktailProgram": 0,
-              "featuredCocktailCount": 1,
               "addons": 0,
               "addonsList": [],
               "addonItems": [],
+              "procurementCustom": false,
               "discount": 0,
-              "customItems": [],
-              "customItemsTotal": 0,
-              "customItemsList": [],
               "customDiscount": 0,
+              "customItemsTotal": 0,
+              "customItems": [],
+              "customItemsList": [],
               "customDiscountLabel": ""
             }
           }
         ],
-        "total": 2095,
-        "deposit": 1048,
-        "balance": 1047,
+        "total": 2320,
+        "deposit": 1160,
+        "balance": 1160,
         "depositLabel": "Combined Deposit (50%)"
       }
     },
@@ -3503,15 +3630,15 @@
         ]
       },
       "expected": {
-        "total": 2631,
-        "deposit": 1316,
-        "balance": 1315,
+        "total": 2731,
+        "deposit": 1366,
+        "balance": 1365,
         "depositLabel": "Deposit Due Now (50%)",
         "balanceLabel": "Balance Due (14 days prior)",
         "lines": [
           {
             "label": "Base Package (1 bartender, first 3 hrs, ≤50 guests)",
-            "amount": 650
+            "amount": 750
           },
           {
             "label": "High-Volume Event Adjustment (51-100 guests)",
@@ -3535,15 +3662,21 @@
           "oneWayMiles": 0
         },
         "breakdown": {
-          "base": 650,
           "hours": 3,
           "bartenders": 1,
           "fullBarStaffCount": 1,
           "quoteOptionName": "",
           "clientNotes": "",
+          "signatureCocktailCount": 0,
+          "signatureCocktailNames": "",
+          "houseCocktailCount": 0,
+          "houseCocktailNames": "",
+          "featuredCocktailCount": 0,
+          "base": 750,
           "staffing": 0,
           "volume": 175,
           "multiBarOperations": 0,
+          "barCount": 1,
           "twoHrReduction": 0,
           "extraHours": 0,
           "longEventPremium": 0,
@@ -3552,21 +3685,18 @@
           "glassware": 1806,
           "glasswareAtCost": false,
           "cocktails": 0,
-          "signatureCocktailCount": 0,
-          "signatureCocktailNames": "",
+          "signatureRate": 150,
           "houseCocktails": 0,
-          "houseCocktailCount": 0,
-          "houseCocktailNames": "",
           "cocktailProgram": 0,
-          "featuredCocktailCount": 0,
           "addons": 0,
           "addonsList": [],
           "addonItems": [],
+          "procurementCustom": false,
           "discount": 0,
-          "customItems": [],
-          "customItemsTotal": 0,
-          "customItemsList": [],
           "customDiscount": 0,
+          "customItemsTotal": 0,
+          "customItems": [],
+          "customItemsList": [],
           "customDiscountLabel": ""
         },
         "changeSnapshots": [
@@ -3575,12 +3705,12 @@
               "guestCount": 100
             },
             "before": {
-              "total": 2706,
+              "total": 2956,
               "guests": 200,
               "glasses": 516
             },
             "after": {
-              "total": 2631,
+              "total": 2731,
               "guests": 100,
               "glasses": 516
             }

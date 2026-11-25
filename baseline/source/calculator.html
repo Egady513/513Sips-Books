@@ -852,9 +852,9 @@
                     <div class="counter-header">
                         <div>
                             <div class="counter-title">Signature Cocktails</div>
-                            <div class="counter-subtitle">Custom recipe or dedicated housemade prep created for the event</div>
+                            <div class="counter-subtitle">Custom recipe or dedicated housemade prep created for the event. $125 up to 75 guests, $150 for 76 to 150, $175 for 151 and over.</div>
                         </div>
-                        <div class="counter-price">$125<span style="font-size: 0.6em; color: var(--text-muted);">/each</span></div>
+                        <div class="counter-price" id="signaturePriceLabel">$125<span style="font-size: 0.6em; color: var(--text-muted);">/each</span></div>
                     </div>
                     <div class="counter-controls">
                         <button type="button" class="counter-btn" onclick="updateCounter(-1)">−</button>
@@ -885,11 +885,11 @@
                 
                 <!-- Other Add-ons -->
                 <div class="checkbox-group">
-                    <label class="checkbox-item">
-                        <input type="checkbox" id="multiBarOperations" onchange="saveAndCalculate()">
-                        <span class="checkbox-label">Large Event &amp; Multi-Bar Operations</span>
-                        <span class="checkbox-price">+$500</span>
-                    </label>
+                    <div class="form-group" id="barCountGroup">
+                        <label for="barCount">Number of bars</label>
+                        <input type="number" id="barCount" min="1" step="1" value="1" onchange="saveAndCalculate()" oninput="saveAndCalculate()">
+                        <div style="font-size:0.78em; color:var(--text-muted); margin-top:4px;">First extra bar $225, each one after $150.</div>
+                    </div>
                     <div id="multiBarReminder" style="display:none; font-size:0.78em; color:#f59e0b; margin:-4px 0 10px 4px;">
                         Required whenever more than one station is set up and operated, including sequential use. Count the no-charge 513Sips bar and confirmed venue bars before external rentals.
                     </div>
@@ -918,13 +918,13 @@
                     <label class="checkbox-item">
                         <input type="checkbox" id="drinkBigIce" onchange="toggleDrinkBigIce()">
                         <span class="checkbox-label">Custom Logo Ice by DrinkBigIce</span>
-                        <span class="checkbox-price">$2.50/cube</span>
+                        <span class="checkbox-price">$3.00/cube</span>
                     </label>
                     <div id="iceCountWrap" style="display: none; padding: 6px 0 8px 30px;">
                         <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
                             <input type="number" id="iceCount" min="0" value="100" onchange="saveAndCalculate()"
                                 style="width: 80px; padding: 8px 10px; background: var(--navy); border: 1px solid rgba(212,175,55,0.35); border-radius: 8px; color: var(--text-light); font-size: 0.9em;">
-                            <span style="color: var(--text-muted); font-size: 0.82em;">cubes &nbsp;·&nbsp; 50 = $125 &nbsp;·&nbsp; 100 = $250 &nbsp;·&nbsp; 150 = $375</span>
+                            <span style="color: var(--text-muted); font-size: 0.82em;">cubes &nbsp;·&nbsp; 50 = $150 &nbsp;·&nbsp; 100 = $300 &nbsp;·&nbsp; 150 = $450</span>
                         </div>
                         <small style="color: #f59e0b; font-size: 0.8em; display: block; margin-top: 5px;">⏱ 2-week lead time required — order ahead</small>
                     </div>
@@ -961,7 +961,7 @@
                 
                 <div class="total-display">
                     <div class="total-label">Estimated Total</div>
-                    <div class="total-amount" id="totalPrice">$650</div>
+                    <div class="total-amount" id="totalPrice">$750</div>
                 </div>
                 
                 <div class="breakdown" id="breakdown">
@@ -970,17 +970,18 @@
                             <span id="baseLabel">Base Package (1 bartender, first 3 hrs, ≤50 guests)</span>
                             <span class="tooltip-icon">?</span>
                             <div class="tooltip-content">
-                                <h4>✨ Base Package Breakdown ($650)</h4>
+                                <h4>✨ Base Package Breakdown ($750)</h4>
                                 <ul>
                                     <li>Bartending Service (3 hrs @ $75/hr) <span class="price">$225</span></li>
                                     <li>Single-Event Liability Insurance <span class="price">$150</span></li>
                                     <li>Ice Collection Service (coordination fee) <span class="price">$125</span></li>
                                     <li>Travel (within 30 miles) <span class="price">$30</span></li>
-                                    <li>Operating Expenses, Admin & Margin <span class="price">$120</span></li>
+                                    <li>Event photos and marketing <span class="price">$75</span></li>
+                                    <li>Operating Expenses, Admin & Margin <span class="price">$145</span></li>
                                 </ul>
                             </div>
                         </div>
-                        <span id="basePrice">$650</span>
+                        <span id="basePrice">$750</span>
                     </div>
                     <div class="breakdown-item" id="staffingRow" style="display: none;">
                         <span id="staffingLabel">Additional Bartenders</span>
@@ -1019,7 +1020,7 @@
                         <span id="volumePrice">$0</span>
                     </div>
                     <div class="breakdown-item addon" id="multiBarOperationsRow" style="display: none;">
-                        <span>Large Event &amp; Multi-Bar Operations</span>
+                        <span id="multiBarOperationsLabel">Additional bars</span>
                         <span id="multiBarOperationsPrice">$0</span>
                     </div>
                     <div class="breakdown-item addon" id="addonsRow" style="display: none;">
@@ -1059,7 +1060,7 @@
                     </div>
                     <div class="deposit-row highlight">
                         <span>Total Event Investment</span>
-                        <span id="grandTotal">$650</span>
+                        <span id="grandTotal">$750</span>
                     </div>
                 </div>
                 
@@ -1103,6 +1104,7 @@
         </div>
     </div>
     
+    <script src="calculator-pricing.js"></script>
     <script>
         // Promo codes configuration
         const PROMO_CODES = {
@@ -1217,7 +1219,7 @@
                     hours: '3', packageType: 'beerwine', glassware: 'plastic_at_cost',
                     glassCount: '0', distance: '0', cocktailCount: '0', houseCocktailCount: '0',
                     signatureCocktailNames: '', houseCocktailNames: '', fullBarStaffCount: '1',
-                    bartenderCount: '1', smallGroup: false, multiBarOperations: false, alcoholProcurement: false,
+                    bartenderCount: '1', smallGroup: false, barCount: '1', alcoholProcurement: false,
                     coffeeService: false, archBackdrop: false, drinkBigIce: false,
                     iceCount: '100', tentRental: false,
                     promoCode: '', customItems: []
@@ -1263,7 +1265,8 @@
             if (typeof bd.houseCocktailNames === 'string') cfg.houseCocktailNames = bd.houseCocktailNames;
             if (typeof bd.quoteOptionName === 'string') cfg.quoteOptionName = bd.quoteOptionName;
             if (typeof bd.clientNotes === 'string') cfg.clientNotes = bd.clientNotes;
-            if (typeof bd.multiBarOperations === 'number' && bd.multiBarOperations > 0) cfg.multiBarOperations = true;
+            if (typeof bd.barCount === 'number' && bd.barCount > 0) cfg.barCount = String(bd.barCount);
+            else cfg.barCount = String(window.Sips513Pricing.legacyBarCount(bd.multiBarOperations));
             if (bd.package > 0) cfg.packageType = 'fullbar';
 
             // Legacy paid plastic is retired. Preserve formal counts where they can be recovered;
@@ -1367,7 +1370,7 @@
                             signatureCocktailNames: '', houseCocktailNames: '', quoteOptionName: '', clientNotes: '',
                             bartenderCount: String(evt?.bartenders || 1),
                             fullBarStaffCount: String(evt?.bartenders || 1),
-                            smallGroup: false, multiBarOperations: false, alcoholProcurement: false,
+                            smallGroup: false, barCount: '1', alcoholProcurement: false,
                             coffeeService: false, archBackdrop: false, drinkBigIce: false,
                             iceCount: '100', tentRental: false,
                             promoCode: '', customItems: []
@@ -1476,7 +1479,7 @@
                 bartenderCount: document.getElementById('bartenderCount').value,
                 fullBarStaffCount: document.getElementById('fullBarStaffCount').value,
                 smallGroup: document.getElementById('smallGroup').checked,
-                multiBarOperations: document.getElementById('multiBarOperations').checked,
+                barCount: document.getElementById('barCount').value,
                 alcoholProcurement: document.getElementById('alcoholProcurement').checked,
                 coffeeService: document.getElementById('coffeeService').checked,
                 archBackdrop: document.getElementById('archBackdrop').checked,
@@ -1513,7 +1516,7 @@
             document.getElementById('houseCocktailNames').value = cfg.houseCocktailNames || '';
             document.getElementById('bartenderCount').value = cfg.bartenderCount || '1';
             syncFullBarStaffOptions(cfg.fullBarStaffCount || cfg.bartenderCount || '1');
-            document.getElementById('multiBarOperations').checked = !!cfg.multiBarOperations;
+            document.getElementById('barCount').value = String(cfg.barCount ? Math.max(1, parseInt(cfg.barCount) || 1) : window.Sips513Pricing.legacyBarCount(cfg.multiBarOperations));
             document.getElementById('alcoholProcurement').checked = !!cfg.alcoholProcurement;
             document.getElementById('coffeeService').checked = !!cfg.coffeeService;
             document.getElementById('archBackdrop').checked = !!cfg.archBackdrop;
@@ -1670,7 +1673,7 @@
                 signatureCocktailNames: document.getElementById('signatureCocktailNames').value,
                 houseCocktailNames: document.getElementById('houseCocktailNames').value,
                 fullBarStaffCount: document.getElementById('fullBarStaffCount').value,
-                multiBarOperations: document.getElementById('multiBarOperations').checked,
+                barCount: document.getElementById('barCount').value,
                 alcoholProcurement: document.getElementById('alcoholProcurement').checked,
                 coffeeService: document.getElementById('coffeeService').checked,
                 archBackdrop: document.getElementById('archBackdrop').checked,
@@ -1706,7 +1709,8 @@
                 if (data.houseCocktailCount) document.getElementById('houseCocktailCount').textContent = data.houseCocktailCount;
                 if (data.signatureCocktailNames) document.getElementById('signatureCocktailNames').value = data.signatureCocktailNames;
                 if (data.houseCocktailNames) document.getElementById('houseCocktailNames').value = data.houseCocktailNames;
-                if (data.multiBarOperations) document.getElementById('multiBarOperations').checked = true;
+                if (data.barCount) document.getElementById('barCount').value = String(Math.max(1, parseInt(data.barCount) || 1));
+                else if (data.multiBarOperations) document.getElementById('barCount').value = String(window.Sips513Pricing.legacyBarCount(data.multiBarOperations));
                 if (data.alcoholProcurement) document.getElementById('alcoholProcurement').checked = true;
                 if (data.coffeeService) document.getElementById('coffeeService').checked = true;
                 if (data.archBackdrop) document.getElementById('archBackdrop').checked = true;
@@ -1833,10 +1837,6 @@
         // Replaced the flat $200 on 2026-08-12; the flat rate had never been set or defended by any
         // decision and did not scale with bartenders (a 2-station wedding paid the same as a house party).
         const FULL_BAR_HOURLY = 15;
-        const HOUSE_COCKTAIL_RATE = 50;
-        const COCKTAIL_PROGRAM_EXPANDED = 250;
-        const COCKTAIL_PROGRAM_EXTENSIVE = 500;
-        const MULTI_BAR_OPERATIONS_FEE = 500;
 
         // Bartender labour rate — used for extra hours, additional bartenders, and the
         // 2-hour reduction. Named so quote lines can print the rate instead of a bare total.
@@ -1853,15 +1853,9 @@
         // Hours track trips and units, not guest count, so the curve is deliberately flat:
         // Jordan was 115 guests and took 7 hrs. Under the old flat $175 that paid ~$25/hr,
         // below what Eddie pays a bartender to pour. It now lands in the $275 band at ~$39/hr.
-        const PROCUREMENT_TIERS = [
-            { max: 99,       fee: 175 },
-            { max: 150,      fee: 275 },
-            { max: 199,      fee: 350 },
-            { max: 250,      fee: 400 },
-            { max: Infinity, fee: null },   // null = custom quote required
-        ];
+        // The tiers now live in tools/calculator-pricing.js with the rest of the price math.
         function procurementFee(guests) {
-            return PROCUREMENT_TIERS.find(t => guests <= t.max).fee;
+            return window.Sips513Pricing.procurementFee(guests);
         }
 
         // ---- What Eddie PAYS staff. Cost side only; never added to the client total. ----
@@ -1969,180 +1963,61 @@
                 bartenders,
                 parseInt(document.getElementById('fullBarStaffCount').value) || bartenders
             );
-            const multiBarOperationsSelected = document.getElementById('multiBarOperations').checked;
+            const barCount = Math.max(1, parseInt(document.getElementById('barCount').value) || 1);
+            const baseHours = isSmallGroup ? 2 : 3;
+            const customItems = getCustomItems();
 
-            let breakdown = {
-                base: isSmallGroup ? 395 : 650,
+            const priced = window.Sips513Pricing.calculatePricing({
+                guests: guestCount,
+                hours: hours,
+                bartenders: bartenders,
+                fullBarStaffCount: fullBarStaffCount,
+                barCount: barCount,
+                smallGroup: isSmallGroup,
+                distance: distance,
+                packageType: document.getElementById('packageType').value,
+                glassware: document.getElementById('glassware').value,
+                glassCount: glassCount,
+                signatureCount: cocktailCount,
+                houseCount: houseCocktailCount,
+                alcoholProcurement: document.getElementById('alcoholProcurement').checked,
+                coffeeService: document.getElementById('coffeeService').checked,
+                archBackdrop: document.getElementById('archBackdrop').checked,
+                drinkBigIce: document.getElementById('drinkBigIce').checked,
+                iceCount: parseInt(document.getElementById('iceCount').value) || 0,
+                tentRental: document.getElementById('tentRental').checked,
+                customItemsTotal: customItems.reduce((sum, item) => sum + item.price, 0),
+                promo: currentPromo,
+                customPromo: customPromo
+            });
+
+            let breakdown = Object.assign({
                 // Carried so downstream consumers (Books quote PDF, contract) can print the
-                // RATE on each line rather than a bare total. Not money — never summed.
+                // RATE on each line rather than a bare total. Not money, never summed.
                 hours: hours,
                 bartenders: bartenders,
                 fullBarStaffCount: fullBarStaffCount,
                 quoteOptionName: document.getElementById('quoteOptionName').value.trim(),
                 clientNotes: document.getElementById('clientNotes').value.trim(),
-                staffing: 0,
-                volume: 0,
-                multiBarOperations: 0,
-                twoHrReduction: 0,
-                extraHours: 0,
-                longEventPremium: 0,
-                travel: 0,
-                package: 0,
-                glassware: 0,
-                glasswareAtCost: false,
-                cocktails: 0,
                 signatureCocktailCount: cocktailCount,
                 signatureCocktailNames: document.getElementById('signatureCocktailNames').value.trim(),
-                houseCocktails: 0,
                 houseCocktailCount: houseCocktailCount,
                 houseCocktailNames: document.getElementById('houseCocktailNames').value.trim(),
-                cocktailProgram: 0,
-                featuredCocktailCount: featuredCocktailCount,
-                addons: 0,
-                addonsList: [],
-                addonItems: [],
-                discount: 0
-            };
+                featuredCocktailCount: featuredCocktailCount
+            }, priced.breakdown);
 
-            function addPricedAddon(name, amount) {
-                breakdown.addons += amount;
-                breakdown.addonsList.push(name);
-                breakdown.addonItems.push({ name, amount });
-            }
+            breakdown.customItems = customItems;
+            breakdown.customItemsList = customItems.map(item => item.name);
+            breakdown.customDiscountLabel = customPromo ? customPromo.label : '';
 
-            // Staffing costs for additional bartenders (base hours only)
-            const baseHours = isSmallGroup ? 2 : 3;
-            if (bartenders > 1) {
-                breakdown.staffing = (bartenders - 1) * HOURLY_RATE * baseHours;
-            }
+            let total = priced.total;
 
-            // Large multi-bar events use the operations fee instead of stacking the older
-            // guest-count adjustment. The checkbox stays manual because venue layout matters.
-            if (multiBarOperationsSelected) {
-                breakdown.multiBarOperations = MULTI_BAR_OPERATIONS_FEE;
-            } else if (guestCount > 50 && guestCount <= 100) {
-                breakdown.volume = 175;
-            } else if (guestCount > 100) {
-                breakdown.volume = 250;
-            }
-
-            // 2-hour reduction: standard event only, saves 1 hour of bartender labor
-            if (hours < baseHours && !isSmallGroup) {
-                breakdown.twoHrReduction = (baseHours - hours) * HOURLY_RATE * bartenders;
-            }
-
-            // Extra hours - all bartenders get paid
-            // Small group base covers 2 hrs; standard base covers 3 hrs
-            if (hours > baseHours) {
-                breakdown.extraHours = (hours - baseHours) * HOURLY_RATE * bartenders;
-            }
-
-            // Hours 5+ carry an additional $15 per bartender, funding the increase
-            // from the $35 base staff wage to the $50 long-event wage.
-            const longEventPremiumHours = Math.max(0, hours - LONG_EVENT_PREMIUM_START_HOUR + 1);
-            breakdown.longEventPremium = longEventPremiumHours * LONG_EVENT_PREMIUM * bartenders;
-            
-            // Travel
-            if (distance > 30) {
-                breakdown.travel = Math.round((distance - 30) * 0.67 * 2);
-            }
-            
-            // Full Bar Service is charged only for the people assigned to liquor/cocktail
-            // coverage. Total staffing can be higher when another person handles beer/wine,
-            // a satellite station or barback rotation.
-            if (document.getElementById('packageType').value === 'fullbar') {
-                breakdown.package = FULL_BAR_HOURLY * hours * fullBarStaffCount;
-            }
-            
-            // Glassware
-            const glassware = document.getElementById('glassware').value;
-            if (glassware === 'plastic_at_cost') {
-                breakdown.glasswareAtCost = true;
-            } else if (glassware === 'formal') {
-                breakdown.glassware = Math.round(glassCount * 3.50);
-            }
-            
-            // Signature cocktails
-            if (cocktailCount > 0) {
-                breakdown.cocktails = cocktailCount * 125;
-            }
-            if (houseCocktailCount > 0) {
-                breakdown.houseCocktails = houseCocktailCount * HOUSE_COCKTAIL_RATE;
-            }
-            if (featuredCocktailCount >= 8) {
-                breakdown.cocktailProgram = COCKTAIL_PROGRAM_EXTENSIVE;
-            } else if (featuredCocktailCount >= 5) {
-                breakdown.cocktailProgram = COCKTAIL_PROGRAM_EXPANDED;
-            }
-            
-            // Add-ons
             const procFee = procurementFee(guestCount);
             const procLabel = document.getElementById('procurementPrice');
             if (procLabel) procLabel.textContent = procFee === null ? 'Custom' : '+$' + procFee;
-            if (document.getElementById('alcoholProcurement').checked) {
-                if (procFee === null) {
-                    // 250+ guests has no tier — flag it rather than silently billing zero.
-                    breakdown.procurementCustom = true;
-                } else {
-                    addPricedAddon('Alcohol Procurement & Return Service', procFee);
-                }
-            }
-            if (document.getElementById('coffeeService').checked) {
-                addPricedAddon('Coffee Service', 100);
-            }
-            if (document.getElementById('archBackdrop').checked) {
-                addPricedAddon('Arch Backdrop', 350);
-            }
-            if (document.getElementById('drinkBigIce').checked) {
-                const iceCount = parseInt(document.getElementById('iceCount').value) || 0;
-                if (iceCount > 0) {
-                    addPricedAddon('Custom Logo Ice (' + iceCount + ' cubes)', iceCount * 2.50);
-                }
-            }
-            if (document.getElementById('tentRental').checked) {
-                addPricedAddon('Tent Rental', 250);
-            }
-            // Custom items
-            const customItems = getCustomItems();
-            breakdown.customItems = customItems;
-            breakdown.customItemsTotal = 0;
-            breakdown.customItemsList = [];
-            customItems.forEach(item => {
-                breakdown.customItemsTotal += item.price;
-                breakdown.customItemsList.push(item.name);
-            });
+            const sigPriceEl = document.getElementById('signaturePriceLabel');
+            if (sigPriceEl) sigPriceEl.firstChild.nodeValue = '$' + breakdown.signatureRate;
 
-            // Calculate subtotal
-            let subtotal = breakdown.base + breakdown.staffing + breakdown.volume + breakdown.multiBarOperations +
-                          breakdown.extraHours + breakdown.longEventPremium - breakdown.twoHrReduction +
-                          breakdown.travel + breakdown.package +
-                          breakdown.glassware + breakdown.cocktails + breakdown.houseCocktails +
-                          breakdown.cocktailProgram + breakdown.addons +
-                          breakdown.customItemsTotal;
-            
-            // Apply pre-defined promo
-            if (currentPromo) {
-                if (currentPromo.type === 'percent') {
-                    breakdown.discount = Math.round(subtotal * currentPromo.value);
-                } else {
-                    breakdown.discount = currentPromo.value;
-                }
-            }
-
-            // Apply custom discount (stacks on top of pre-defined promo)
-            breakdown.customDiscount = 0;
-            breakdown.customDiscountLabel = '';
-            if (customPromo) {
-                if (customPromo.type === 'percent') {
-                    breakdown.customDiscount = Math.round((subtotal - breakdown.discount) * customPromo.value);
-                } else {
-                    breakdown.customDiscount = customPromo.value;
-                }
-                breakdown.customDiscountLabel = customPromo.label;
-            }
-
-            let total = subtotal - breakdown.discount - breakdown.customDiscount;
-            
             // Update base label and price dynamically
             document.getElementById('baseLabel').textContent = isSmallGroup
                 ? 'Small Group Package (1 bartender, first 2 hrs, ≤20 guests)'
@@ -2166,10 +2041,13 @@
                     + ', first ' + baseHours + ' hrs)' : '');
 
             updateBreakdownRow('volumeRow', 'volumePrice', breakdown.volume,
-                breakdown.volume > 0 ? (guestCount <= 100 ? '(51-100 guests)' : '(101+ guests)') : '');
+                breakdown.volume > 0 ? (guestCount <= 100 ? '(51-100 guests)' : guestCount <= 150 ? '(101-150 guests)' : '(151+ guests)') : '');
 
+            const barsLabel = document.getElementById('multiBarOperationsLabel');
+            barsLabel.setAttribute('data-base', 'Additional bars (' + barCount + ')');
+            barsLabel.textContent = barsLabel.getAttribute('data-base');
             updateBreakdownRow('multiBarOperationsRow', 'multiBarOperationsPrice', breakdown.multiBarOperations,
-                breakdown.multiBarOperations > 0 ? '(replaces high-volume adjustment)' : '');
+                '');
 
             // 2hr reduction row (discount style — shown as negative)
             const twoHrEl = document.getElementById('twoHrReductionRow');
@@ -2202,7 +2080,7 @@
                 breakdown.travel > 0 ? '(' + (distance - 30) + ' extra miles)' : '');
             
             updateBreakdownRow('cocktailsRow', 'cocktailsPrice', breakdown.cocktails,
-                breakdown.cocktails > 0 ? '(' + cocktailCount + ' @ $125)' : '');
+                breakdown.cocktails > 0 ? '(' + cocktailCount + ' @ $' + breakdown.signatureRate + ')' : '');
 
             updateBreakdownRow('houseCocktailsRow', 'houseCocktailsPrice', breakdown.houseCocktails,
                 breakdown.houseCocktails > 0 ? '(' + houseCocktailCount + ' @ $50)' : '');
@@ -2585,7 +2463,7 @@
                 document.getElementById('houseCocktailCount').textContent = '0';
                 document.getElementById('signatureCocktailNames').value = '';
                 document.getElementById('houseCocktailNames').value = '';
-                document.getElementById('multiBarOperations').checked = false;
+                document.getElementById('barCount').value = '1';
                 document.getElementById('alcoholProcurement').checked = false;
                 document.getElementById('coffeeService').checked = false;
                 document.getElementById('archBackdrop').checked = false;

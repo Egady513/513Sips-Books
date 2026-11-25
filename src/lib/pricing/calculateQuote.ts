@@ -4,28 +4,32 @@ import {
   COCKTAIL_PROGRAM_EXTENSIVE,
   COFFEE_SERVICE_PRICE,
   CUSTOM_LOGO_ICE_RATE,
+  EACH_LATER_BAR,
   EXCESS_MILEAGE_RATE,
   EXPANDED_COCKTAIL_MINIMUM,
   EXTENSIVE_COCKTAIL_MINIMUM,
   FORMAL_GLASS_PRICE,
+  FIRST_EXTRA_BAR,
   FULL_BAR_HOURLY,
   HOURLY_RATE,
   HOUSE_COCKTAIL_RATE,
   INCLUDED_ONE_WAY_MILES,
   LONG_EVENT_PREMIUM,
   LONG_EVENT_PREMIUM_START_HOUR,
-  MULTI_BAR_OPERATIONS_FEE,
   PROCUREMENT_TIERS,
   PROMO_CODES,
   QUOTE_VALIDITY_MONTHS,
   SHORT_NOTICE_DAYS,
-  SIGNATURE_COCKTAIL_RATE,
+  SIGNATURE_COCKTAIL_RATE_151_PLUS,
+  SIGNATURE_COCKTAIL_RATE_76_TO_150,
+  SIGNATURE_COCKTAIL_RATE_UP_TO_75,
   SMALL_GROUP_BASE_HOURS,
   SMALL_GROUP_BASE_PRICE,
   STANDARD_BASE_HOURS,
   STANDARD_BASE_PRICE,
   TENT_RENTAL_PRICE,
-  VOLUME_ADJUSTMENT_101_PLUS,
+  VOLUME_ADJUSTMENT_101_TO_150,
+  VOLUME_ADJUSTMENT_151_PLUS,
   VOLUME_ADJUSTMENT_51_TO_100,
 } from './rates.ts'
 import type {
@@ -98,12 +102,23 @@ function procurementFee(guestCount: number): number | null {
   return PROCUREMENT_TIERS.find((tier) => guestCount <= tier.maxGuests)?.fee ?? null
 }
 
+function barCharge(barCount: number): number {
+  return barCount >= 2 ? FIRST_EXTRA_BAR + EACH_LATER_BAR * (barCount - 2) : 0
+}
+
+function signatureCocktailRate(guestCount: number): number {
+  if (guestCount > 150) return SIGNATURE_COCKTAIL_RATE_151_PLUS
+  if (guestCount > 75) return SIGNATURE_COCKTAIL_RATE_76_TO_150
+  return SIGNATURE_COCKTAIL_RATE_UP_TO_75
+}
+
 export function calculateQuote(input: QuoteInput, options: CalculateQuoteOptions): QuoteResult {
   const lines: PricingLine[] = []
   const baseHours = input.isSmallGroup ? SMALL_GROUP_BASE_HOURS : STANDARD_BASE_HOURS
   const basePrice = input.isSmallGroup ? SMALL_GROUP_BASE_PRICE : STANDARD_BASE_PRICE
   const fullBarStaff = Math.min(input.bartenderCount, input.fullBarStaffCount || input.bartenderCount)
   const featuredCocktails = input.signatureCocktailCount + input.houseCocktailCount
+  const signatureRate = signatureCocktailRate(input.guestCount)
 
   const baseLabel = input.isSmallGroup
     ? 'Small Group Package (1 bartender, first 2 hrs, ≤20 guests)'
@@ -163,10 +178,10 @@ export function calculateQuote(input: QuoteInput, options: CalculateQuoteOptions
   if (input.signatureCocktailCount > 0) {
     lines.push({
       code: 'signature-cocktails',
-      label: `Signature Cocktails (${input.signatureCocktailCount} @ $125)`,
+      label: `Signature Cocktails (${input.signatureCocktailCount} @ $${signatureRate})`,
       quantity: input.signatureCocktailCount,
-      unitPrice: SIGNATURE_COCKTAIL_RATE,
-      amount: input.signatureCocktailCount * SIGNATURE_COCKTAIL_RATE,
+      unitPrice: signatureRate,
+      amount: input.signatureCocktailCount * signatureRate,
     })
   }
 
@@ -192,23 +207,34 @@ export function calculateQuote(input: QuoteInput, options: CalculateQuoteOptions
     })
   }
 
-  if (input.hasMultiBarOperations) {
-    lines.push({
-      code: 'multi-bar-operations',
-      label: 'Large Event & Multi-Bar Operations (replaces high-volume adjustment)',
-      quantity: 1,
-      unitPrice: MULTI_BAR_OPERATIONS_FEE,
-      amount: MULTI_BAR_OPERATIONS_FEE,
-    })
-  } else if (input.guestCount > 50) {
-    const amount = input.guestCount <= 100 ? VOLUME_ADJUSTMENT_51_TO_100 : VOLUME_ADJUSTMENT_101_PLUS
-    const range = input.guestCount <= 100 ? '51-100 guests' : '101+ guests'
+  if (input.guestCount > 50) {
+    const amount = input.guestCount <= 100
+      ? VOLUME_ADJUSTMENT_51_TO_100
+      : input.guestCount <= 150
+        ? VOLUME_ADJUSTMENT_101_TO_150
+        : VOLUME_ADJUSTMENT_151_PLUS
+    const range = input.guestCount <= 100
+      ? '51-100 guests'
+      : input.guestCount <= 150
+        ? '101-150 guests'
+        : '151+ guests'
     lines.push({
       code: 'volume-adjustment',
       label: `High-Volume Event Adjustment (${range})`,
       quantity: 1,
       unitPrice: amount,
       amount,
+    })
+  }
+
+  const additionalBarsAmount = barCharge(input.barCount)
+  if (additionalBarsAmount > 0) {
+    lines.push({
+      code: 'multi-bar-operations',
+      label: `Additional bars (${input.barCount})`,
+      quantity: 1,
+      unitPrice: additionalBarsAmount,
+      amount: additionalBarsAmount,
     })
   }
 

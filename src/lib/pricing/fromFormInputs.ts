@@ -20,6 +20,15 @@ function pageNumber(value: unknown, fallback = 0): number {
   return parsed || fallback
 }
 
+function barCount(input: BaselineFormInput): number {
+  const parsed = Math.max(1, pageInteger(input.barCount, 1))
+  if (input.barCount !== undefined && input.barCount !== null && input.barCount !== '') return parsed
+  return input.multiBarOperations === true
+    || (typeof input.multiBarOperations === 'number' && input.multiBarOperations > 0)
+    ? 2
+    : 1
+}
+
 function text(value: unknown): string {
   return typeof value === 'string' ? value.trim() : ''
 }
@@ -80,7 +89,7 @@ export function fromFormInputs(input: BaselineFormInput = {}): QuoteInput {
     houseCocktailCount: pageInteger(input.houseCocktailCount, 0),
     signatureCocktailNames: text(input.signatureCocktailNames),
     houseCocktailNames: text(input.houseCocktailNames),
-    hasMultiBarOperations: Boolean(input.multiBarOperations),
+    barCount: barCount(input),
     hasAlcoholProcurement: Boolean(input.alcoholProcurement),
     hasCoffeeService: Boolean(input.coffeeService),
     hasArchBackdrop: Boolean(input.archBackdrop),
