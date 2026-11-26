@@ -1,4 +1,4 @@
-import { ArrowLeft, LockKeyhole } from 'lucide-react'
+import { ArrowLeft, LockKeyhole, Pencil } from 'lucide-react'
 import { Link, useParams } from 'react-router-dom'
 import { Card } from '../components/ui/Card'
 import StatusBadge from '../components/ui/StatusBadge'
@@ -92,7 +92,10 @@ export default function SavedQuotePage() {
       <Link to="/leads" className="inline-flex items-center gap-2 text-sm text-cream/50 hover:text-gold"><ArrowLeft size={15} /> Back to leads</Link>
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div><p className="text-xs uppercase tracking-widest text-gold/70">Saved quote</p><h1 className="mt-1 text-2xl font-bold text-cream">Quote {quote.id.slice(0, 8)}</h1></div>
-        <StatusBadge status={quote.status} />
+        <div className="flex items-center gap-3">
+          <Link to={`/quotes/${quote.id}/edit`} className="inline-flex items-center justify-center gap-2 rounded-lg border border-gold-dim bg-navy-lighter px-4 py-2 text-sm text-gold transition-colors hover:border-gold"><Pencil size={15} /> Edit quote</Link>
+          <StatusBadge status={quote.status} />
+        </div>
       </div>
 
       <div className="flex items-start gap-3 rounded-lg border border-gold/25 bg-gold/5 px-4 py-3">
