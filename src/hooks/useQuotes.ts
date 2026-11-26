@@ -20,7 +20,7 @@ export interface Quote {
   guest_count?: number
   hours?: number
   bartenders?: number
-  event_date?: string
+  event_date?: string | null
   breakdown?: unknown
   promo_code?: string
   addon_notes?: string
