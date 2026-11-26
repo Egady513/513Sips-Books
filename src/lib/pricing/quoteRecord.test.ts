@@ -41,7 +41,7 @@ test('toFormConfig returns the calculator getCurrentConfig shape', () => {
     guestCount: '80', hours: '5', packageType: 'fullbar', glassware: 'plastic_at_cost',
     glassCount: '0', distance: '0', cocktailCount: '0', houseCocktailCount: '0',
     signatureCocktailNames: '', houseCocktailNames: '', bartenderCount: '3',
-    fullBarStaffCount: '2', smallGroup: false, multiBarOperations: false,
+    fullBarStaffCount: '2', smallGroup: false, barCount: '1',
     alcoholProcurement: false, coffeeService: false, archBackdrop: false,
     drinkBigIce: false, iceCount: '100', tentRental: false, promoCode: '', customItems: [],
     customPromo: { label: 'Partner', type: 'percent', value: 0.1, raw: 10 },
@@ -62,6 +62,19 @@ test('buildQuoteRecord creates a website-compatible draft row', () => {
     versionNum: 1, total: result.total, deposit: result.deposit, balance: result.balance,
     status: 'draft', created_at: '2026-10-31T00:00:00.000Z',
   }])
+})
+
+test('saved record keeps the calculated result as its immutable price snapshot', () => {
+  const input = fromFormInputs({ guestCount: 50 })
+  const savedResult = calculateQuote(input, { today })
+  const record = buildQuoteRecord({ leadId: 'lead-123', input, result: savedResult, today })
+
+  input.guestCount = 151
+  const currentResult = calculateQuote(input, { today })
+
+  assert.equal(record.total, 750)
+  assert.equal(record.breakdown.engine.result.total, 750)
+  assert.equal(currentResult.total, 1150)
 })
 
 test('buildQuoteRecord refuses multi-event input', () => {

@@ -29,7 +29,7 @@ for (let i = 0; i < N; i++) {
     distance: pick([0, 0, 10, 30, 31, 45, 90]),
     cocktailCount: int(0, 6),
     houseCocktailCount: int(0, 4),
-    multiBarOperations: bool(0.2),
+    barCount: bool(0.2) ? int(2, 5) : 1,
     alcoholProcurement: bool(0.4),
     coffeeService: bool(0.15),
     archBackdrop: bool(0.15),
@@ -42,7 +42,7 @@ for (let i = 0; i < N; i++) {
   let page, eng;
   try { page = await runCalculator(input); } catch (e) { console.log('PAGE ERROR', i, e.message); bad++; continue; }
   try { eng = calculateQuote(fromFormInputs(input), { today: '2026-10-31' }); } catch (e) { console.log('ENGINE ERROR', i, e.message, JSON.stringify(input)); bad++; continue; }
-  if (small) covered.small++; if (input.packageType === 'fullbar') covered.fullbar++; if (input.multiBarOperations) covered.multibar++;
+  if (small) covered.small++; if (input.packageType === 'fullbar') covered.fullbar++; if (input.barCount > 1) covered.multibar++;
   if (input.promoCode) covered.promo++; if (input.customItems.length) covered.custom++; if (input.hours >= 5) covered.long++;
   const eLines = eng.lines.map(({ label, amount }) => ({ label, amount }));
   const same = page.total === eng.total && page.deposit === eng.deposit && page.balance === eng.balance

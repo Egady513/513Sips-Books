@@ -44,7 +44,7 @@ export interface QuoteInput {
   houseCocktailCount: number
   signatureCocktailNames: string
   houseCocktailNames: string
-  hasMultiBarOperations: boolean
+  barCount: number
   hasAlcoholProcurement: boolean
   hasCoffeeService: boolean
   hasArchBackdrop: boolean

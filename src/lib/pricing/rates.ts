@@ -1,7 +1,7 @@
 import type { PromoCode } from './types.ts'
 
 // Page lines 1974-1975.
-export const STANDARD_BASE_PRICE = 650
+export const STANDARD_BASE_PRICE = 750
 export const SMALL_GROUP_BASE_PRICE = 395
 
 // Page lines 2013-2017.
@@ -24,10 +24,12 @@ export const STAFF_WAGE_5_PLUS = 50
 
 // Page lines 2023-2026.
 export const VOLUME_ADJUSTMENT_51_TO_100 = 175
-export const VOLUME_ADJUSTMENT_101_PLUS = 250
+export const VOLUME_ADJUSTMENT_101_TO_150 = 300
+export const VOLUME_ADJUSTMENT_151_PLUS = 400
 
-// Page line 1839 and lines 2019-2027.
-export const MULTI_BAR_OPERATIONS_FEE = 500
+// The first extra bar costs $225. Each later bar costs $150.
+export const FIRST_EXTRA_BAR = 225
+export const EACH_LATER_BAR = 150
 
 // Page lines 2045-2048.
 export const INCLUDED_ONE_WAY_MILES = 30
@@ -35,7 +37,9 @@ export const EXCESS_MILEAGE_RATE = 0.67
 
 // Page lines 2057-2068.
 export const FORMAL_GLASS_PRICE = 3.5
-export const SIGNATURE_COCKTAIL_RATE = 125
+export const SIGNATURE_COCKTAIL_RATE_UP_TO_75 = 125
+export const SIGNATURE_COCKTAIL_RATE_76_TO_150 = 150
+export const SIGNATURE_COCKTAIL_RATE_151_PLUS = 175
 
 // Page lines 1836-1838 and 2069-2076.
 export const HOUSE_COCKTAIL_RATE = 50
@@ -47,7 +51,7 @@ export const EXTENSIVE_COCKTAIL_MINIMUM = 8
 // Page lines 2090-2104.
 export const COFFEE_SERVICE_PRICE = 100
 export const ARCH_BACKDROP_PRICE = 350
-export const CUSTOM_LOGO_ICE_RATE = 2.5
+export const CUSTOM_LOGO_ICE_RATE = 3
 export const TENT_RENTAL_PRICE = 250
 
 // Page lines 1850-1865. null means a custom quote is required.

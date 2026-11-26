@@ -4,21 +4,25 @@ import {
   COCKTAIL_PROGRAM_EXTENSIVE,
   COFFEE_SERVICE_PRICE,
   CUSTOM_LOGO_ICE_RATE,
+  EACH_LATER_BAR,
   FORMAL_GLASS_PRICE,
+  FIRST_EXTRA_BAR,
   FULL_BAR_HOURLY,
   HOURLY_RATE,
   HOUSE_COCKTAIL_RATE,
   LONG_EVENT_PREMIUM,
   LONG_EVENT_PREMIUM_START_HOUR,
-  MULTI_BAR_OPERATIONS_FEE,
   PROCUREMENT_TIERS,
-  SIGNATURE_COCKTAIL_RATE,
+  SIGNATURE_COCKTAIL_RATE_151_PLUS,
+  SIGNATURE_COCKTAIL_RATE_76_TO_150,
+  SIGNATURE_COCKTAIL_RATE_UP_TO_75,
   SMALL_GROUP_BASE_HOURS,
   SMALL_GROUP_BASE_PRICE,
   STANDARD_BASE_HOURS,
   STANDARD_BASE_PRICE,
   TENT_RENTAL_PRICE,
-  VOLUME_ADJUSTMENT_101_PLUS,
+  VOLUME_ADJUSTMENT_101_TO_150,
+  VOLUME_ADJUSTMENT_151_PLUS,
   VOLUME_ADJUSTMENT_51_TO_100,
 } from './rates.ts'
 import type { QuoteInput, QuoteResult } from './types.ts'
@@ -38,6 +42,7 @@ export interface LegacyBreakdown {
   staffing: number
   volume: number
   multiBarOperations: number
+  barCount: number
   twoHrReduction: number
   extraHours: number
   longEventPremium: number
@@ -46,6 +51,7 @@ export interface LegacyBreakdown {
   glassware: number
   glasswareAtCost: boolean
   cocktails: number
+  signatureRate: number
   signatureCocktailCount: number
   signatureCocktailNames: string
   houseCocktails: number
@@ -57,7 +63,7 @@ export interface LegacyBreakdown {
   addonsList: string[]
   addonItems: LegacyAddonItem[]
   discount: number
-  procurementCustom?: boolean
+  procurementCustom: boolean
   customItems: QuoteInput['customItems']
   customItemsTotal: number
   customItemsList: string[]
@@ -83,7 +89,7 @@ export interface FormConfig {
   bartenderCount: string
   fullBarStaffCount: string
   smallGroup: boolean
-  multiBarOperations: boolean
+  barCount: string
   alcoholProcurement: boolean
   coffeeService: boolean
   archBackdrop: boolean
@@ -133,6 +139,12 @@ function procurementFee(guestCount: number): number | null {
   return PROCUREMENT_TIERS.find((tier) => guestCount <= tier.maxGuests)?.fee ?? null
 }
 
+function signatureCocktailRate(guestCount: number): number {
+  if (guestCount > 150) return SIGNATURE_COCKTAIL_RATE_151_PLUS
+  if (guestCount > 75) return SIGNATURE_COCKTAIL_RATE_76_TO_150
+  return SIGNATURE_COCKTAIL_RATE_UP_TO_75
+}
+
 export function toLegacyBreakdown(result: QuoteResult, input: QuoteInput): LegacyBreakdown {
   const baseHours = input.isSmallGroup ? SMALL_GROUP_BASE_HOURS : STANDARD_BASE_HOURS
   const fullBarStaffCount = Math.min(input.bartenderCount, input.fullBarStaffCount || input.bartenderCount)
@@ -140,6 +152,7 @@ export function toLegacyBreakdown(result: QuoteResult, input: QuoteInput): Legac
   const addonItems: LegacyAddonItem[] = []
   const addAddon = (name: string, amount: number) => addonItems.push({ name, amount })
   const procurement = procurementFee(input.guestCount)
+  const signatureRate = signatureCocktailRate(input.guestCount)
 
   if (input.hasAlcoholProcurement && procurement !== null) addAddon('Alcohol Procurement & Return Service', procurement)
   if (input.hasCoffeeService) addAddon('Coffee Service', COFFEE_SERVICE_PRICE)
@@ -158,14 +171,17 @@ export function toLegacyBreakdown(result: QuoteResult, input: QuoteInput): Legac
     quoteOptionName: input.quoteOptionName,
     clientNotes: input.clientNotes,
     staffing: Math.max(0, input.bartenderCount - 1) * HOURLY_RATE * baseHours,
-    volume: input.hasMultiBarOperations
-      ? 0
+    volume: input.guestCount > 150
+      ? VOLUME_ADJUSTMENT_151_PLUS
       : input.guestCount > 100
-        ? VOLUME_ADJUSTMENT_101_PLUS
+        ? VOLUME_ADJUSTMENT_101_TO_150
         : input.guestCount > 50
           ? VOLUME_ADJUSTMENT_51_TO_100
           : 0,
-    multiBarOperations: input.hasMultiBarOperations ? MULTI_BAR_OPERATIONS_FEE : 0,
+    multiBarOperations: input.barCount >= 2
+      ? FIRST_EXTRA_BAR + EACH_LATER_BAR * (input.barCount - 2)
+      : 0,
+    barCount: input.barCount,
     twoHrReduction: input.serviceHours < baseHours && !input.isSmallGroup
       ? (baseHours - input.serviceHours) * HOURLY_RATE * input.bartenderCount
       : 0,
@@ -177,7 +193,8 @@ export function toLegacyBreakdown(result: QuoteResult, input: QuoteInput): Legac
     package: input.packageType === 'fullbar' ? FULL_BAR_HOURLY * input.serviceHours * fullBarStaffCount : 0,
     glassware: input.glasswareType === 'formal' ? Math.round(input.glassCount * FORMAL_GLASS_PRICE) : 0,
     glasswareAtCost: input.glasswareType === 'plastic_at_cost',
-    cocktails: input.signatureCocktailCount * SIGNATURE_COCKTAIL_RATE,
+    cocktails: input.signatureCocktailCount * signatureRate,
+    signatureRate,
     signatureCocktailCount: input.signatureCocktailCount,
     signatureCocktailNames: input.signatureCocktailNames,
     houseCocktails: input.houseCocktailCount * HOUSE_COCKTAIL_RATE,
@@ -198,8 +215,8 @@ export function toLegacyBreakdown(result: QuoteResult, input: QuoteInput): Legac
     customItemsList: input.customItems.map((item) => item.name),
     customDiscount: result.discounts.custom,
     customDiscountLabel: input.customDiscount?.label ?? '',
+    procurementCustom: result.procurementRequiresCustomQuote,
   }
-  if (result.procurementRequiresCustomQuote) legacy.procurementCustom = true
   return legacy
 }
 
@@ -224,7 +241,7 @@ export function toFormConfig(input: QuoteInput): FormConfig {
     bartenderCount: String(input.bartenderCount),
     fullBarStaffCount: String(input.fullBarStaffCount),
     smallGroup: input.isSmallGroup,
-    multiBarOperations: input.hasMultiBarOperations,
+    barCount: String(input.barCount),
     alcoholProcurement: input.hasAlcoholProcurement,
     coffeeService: input.hasCoffeeService,
     archBackdrop: input.hasArchBackdrop,
